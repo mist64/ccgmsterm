@@ -478,12 +478,9 @@ bell
  ldx #$11
  stx 54290
  rts
-.if 0
 gongm1 .byte 24,6,13,20,4,11,18,15,8,1,5,19,12,14,7,0,4,11,18,24
 gongm2 .byte 47,0,0,0,0,0,0,4,8,16,13,13,11,28,48,68,21,21,21,15
-.endif
 gong
-.if 0
  pha
  ldx #0
 gong1
@@ -495,7 +492,6 @@ gong1
  cpx #20
  bcc gong1
  pla
-.endif
  rts
 scrtog   ;toggle screen #1-4
  txa     ;(swap screen memory with
