@@ -1124,10 +1124,10 @@ al 0018C3 .satoca1
 al 0018B9 .ansi1
 al 00187A .ansionecolors
 al 00188F .ansizerocolors
-al 001875 .coloron2
 al 001903 .cexit
 al 001870 .outtahere
 al 0018A9 .ansimend
+al 00181F .ansimend2
 al 001861 .leftbracketansi
 al 00189F .semion
 al 001845 .turn1on
@@ -1135,6 +1135,7 @@ al 00184D .code4on
 al 00183D .turn0on
 al 00186B .coloron
 al 001857 .clrhomeansi
+al 001875 .coloron2
 al 0017F3 .ansion
 al 0018B1 .satoca2
 al 0017DF .ansi1colors

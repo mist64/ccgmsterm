@@ -903,7 +903,7 @@ satoca
  jeq satoca2;no ansi, but check for ansi
 ansion
  cmp #$02;is ansi color code on?
- .byte 0,0 ;beq coloron2 ;MIST
+ beq coloron2
  pla
  cmp #'2'
  beq clrhomeansi
@@ -922,9 +922,12 @@ ansion
  cmp #'['
  beq leftbracketansi;[ after escape code
  cmp #'M'
- jeq ansimend
+ bne :+
+ansimend2:
+ jmp ansimend
+:
  cmp #'m'
- .byte 0,0 ; jeq ansimend ; MIST
+ beq ansimend2
  cmp #'J'
  beq ansimend
  cmp #'j'
