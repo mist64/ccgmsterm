@@ -705,7 +705,7 @@ msgtxt
 .byte 32,156
 .byte " ! "
 .byte 5,32
-.byte "    tERMINAL XXXX   "
+.byte "    tERMINAL 2021   "
 .byte 00
 author  .byte "BY cRAIG sMITH       mODS BY aLWYZ   "
 .byte 146,151,00
@@ -903,7 +903,7 @@ satoca
  jeq satoca2;no ansi, but check for ansi
 ansion
  cmp #$02;is ansi color code on?
- jeq coloron2
+ .byte 0,0 ;beq coloron2 ;MIST
  pla
  cmp #'2'
  beq clrhomeansi
@@ -922,7 +922,7 @@ ansion
  cmp #'['
  beq leftbracketansi;[ after escape code
  cmp #'M'
- jeq ansimend
+ .byte 0,0 ; jeq ansimend ; MIST
  cmp #'m'
  jeq ansimend
  cmp #'J'
