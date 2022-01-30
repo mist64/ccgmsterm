@@ -29,22 +29,22 @@ rssetup
 		jmp clear232
 
 bdloc
-ntsc232    .word 3408,851,425    ; transmit times
+ntsc232	.word 3408,851,425    ; transmit times
 	.word 4915,1090,459   ; startup bit times
 	.word 3410,845,421    ; full bit times
-pal232     .word 3283,820,409    ; transmit times for PAL
+pal232	.word 3283,820,409    ; transmit times for PAL
 	.word 4735,1050,442   ; startup bit times for PAL
 	.word 3285,814,406    ; full bit times for PAL
 
 isbyte	.byte 0
-lastring .byte 0
+lastring	.byte 0
 
-rsget 	lda $99
+rsget		lda $99
 	cmp #2                ; see if default input is modem
 	beq jbgetrs
 	jmp ogetin               ; nope, go back to original
 
-jbgetrs jsr rsgetxfer
+jbgetrs	jsr rsgetxfer
 		bcs  :+                ; if no character, then return 0 in a
 	rts
 :	clc
@@ -63,23 +63,23 @@ rsgetxfer
 :	rts
 
 
-nmi64   pha             ; new nmi handler
+nmi64	pha             ; new nmi handler
 	txa
 	pha
 	tya
 	pha
-nmi128  cld
+nmi128	cld
 	ldx $dd07       ; sample timer b hi byte
 	lda #$7f        ; disable cia nmi's
 	sta $dd0d
 	lda $dd0d       ; read/clear flags
 	;bpl notcia      ; (restore key)
-nmi1    cpx $dd07
+nmi1	cpx $dd07
 	ldy $dd01
 	bcs mask
 	ora #$02
 	ora $dd0d
-mask    and $02a1
+mask	and $02a1
 	tax
 	lsr
 	bcc ckflag
@@ -87,12 +87,12 @@ mask    and $02a1
 	and #$fb
 	ora $b5
 	sta $dd00
-ckflag  txa
+ckflag	txa
 	and #$10
 	beq nmion
-strtlo  lda #0
+strtlo	lda #0
 	sta $dd06
-strthi  lda #0
+strthi	lda #0
 	sta $dd07
 	lda #$11
 	sta $dd0f
@@ -100,16 +100,16 @@ strthi  lda #0
 	eor $02a1
 	sta $02a1
 	sta $dd0d
-fulllo  lda #0
+fulllo	lda #0
 	sta $dd06
-fullhi  lda #0
+fullhi	lda #0
 	sta $dd07
 	lda #$08
 	sta $a8
 	jmp chktxd
-notcia  ;ldy #$00
+notcia	;ldy #$00
 	;jmp rstkey      ; or jmp norest
-nmion   lda $02a1          ;  receive a bit/byte
+nmion	lda $02a1          ;  receive a bit/byte
 	sta $dd0d
 	txa
 	and #$02
@@ -123,53 +123,53 @@ nmion   lda $02a1          ;  receive a bit/byte
 		ldx rtail         ;index to buffer
 		sta ribuf,x     ;and store it
 		inc rtail         ;move index to next slot
-switch0 lda #$00
+switch0	lda #$00
 	sta $dd0f
 	lda #$12
-switch  ldy #$7f
+switch	ldy #$7f
 	sty $dd0d
 	sty $dd0d
 	eor $02a1
 	sta $02a1
 	sta $dd0d
-txd     txa
+txd	txa
 	lsr
-chktxd  bcc nmiflow
+chktxd	bcc nmiflow
 	dec $b4
 	bmi endbyte
 	lda #$04
 	ror $b6
 	bcs store
-low     lda #$00
-store   sta $b5
-nmiflow lda $a8
+low	lda #$00
+store	sta $b5
+nmiflow	lda $a8
 		and #$08
 		beq nmiexit
 		clc
-nmiexit pla
+nmiexit	pla
 	tay
 	pla
 	tax
 	pla
 	rti
 
-endbyte lda #0
+endbyte	lda #0
 	sta isbyte
-txoff   ldx #$00            ;  turn transmit int off
+txoff	ldx #$00            ;  turn transmit int off
 	stx $dd0e
 	lda #$01
 	bne switch
 		jmp disabl
 
-rsout   pha             ; new bsout
+rsout	pha             ; new bsout
 	lda $9a
 	cmp #02
 	bne notmod
 	pla
-rsout5  sta $97
+rsout5	sta $97
 		stx $9e
 		sty $9f
-rsout2  lda $97
+rsout2	lda $97
 		sta $b6
 	lda #0
 	sta $b5
@@ -177,14 +177,14 @@ rsout2  lda $97
 	sta $b4
 	lda #$ff
 	sta isbyte
-xmitlo  lda #0
+xmitlo	lda #0
 	sta $dd04
-xmithi  lda #0
+xmithi	lda #0
 	sta $dd05
 	lda #$11
 	sta $dd0e
 	lda #$81
-change  sta $dd0d
+change	sta $dd0d
 	php
 	sei
 	ldy #$7f
@@ -194,17 +194,17 @@ change  sta $dd0d
 	sta $02a1
 	sta $dd0d
 	plp
-rsout3  bit isbyte
+rsout3	bit isbyte
 	bmi rsout3
-ret1    clc
+ret1	clc
 		ldx $9e
 		ldy $9f
 		lda $97
 		rts
-notmod  pla
+notmod	pla
 		jmp  oldout
 
-disabl  pha
+disabl	pha
 :	;lda $02a1;this fucks shit up... get rid of it...
 	;and #$03
 	;bne :-
@@ -219,7 +219,7 @@ disabl  pha
 	pla
 	rts
 
-inable  stx $9e         ; enable rs232 input
+inable	stx $9e         ; enable rs232 input
 		sty $9f
 	sta $97
 		lda $02a1
@@ -229,11 +229,11 @@ inable  stx $9e         ; enable rs232 input
 	lda #$90
 	jmp change
 
-setbaud232 lda baudrt
-setbd0  asl
+setbaud232	lda baudrt
+setbd0	asl
 	clc
 	adc ntsc
-setbd1  tay
+setbd1	tay
 	lda bdloc,y
 	sta xmitlo+1
 	lda bdloc+1,y
@@ -250,10 +250,10 @@ setbd1  tay
 
 ;----Swiftlink - Jeff Brown Adaptation of Novaterm version
 
-stopsw        = 1
-startsw        = 0
+stopsw	= 1
+startsw	= 0
 
-swift = $de00               ; can be d to df00 or d700 depending
+swift	= $de00               ; can be d to df00 or d700 depending
 
 sw_data = swift                ; swiftlink registers
 sw_stat = swift+1
@@ -261,7 +261,7 @@ sw_cmd  = swift+2
 sw_ctrl = swift+3
 sw_baud = swift+7
 
-nmisw        	pha
+nmisw		pha
 				txa
 				pha
 				tya
@@ -271,10 +271,10 @@ sm1				lda sw_stat
 				bne sm2 ; get outta here if interrupts are disabled (disk access etc)
 				sec		; set carry upon return
 				bcs recch1
-sm2        		lda         sw_cmd
+sm2			lda         sw_cmd
 				ora         #%00000010        ; disable receive interrupts
-sm3        		sta         sw_cmd
-sm4 			lda         sw_data
+sm3			sta         sw_cmd
+sm4				lda         sw_data
 				ldx         rtail
 				sta         ribuf,x
 				inc         rtail
@@ -286,11 +286,11 @@ sm4 			lda         sw_data
 				stx paused ;x=1 for stop, by the way
 				jsr         flow
 recch0
-sm5        		lda         sw_cmd
+sm5			lda         sw_cmd
 				and         #%11111101        ; re-enable receive interrupt
-sm6        		sta         sw_cmd
-recch2        	clc
-recch1        	pla
+sm6			sta         sw_cmd
+recch2		clc
+recch1		pla
 				tay
 				pla
 				tax
@@ -298,28 +298,28 @@ recch1        	pla
 				rti
 
 flow
-sm7         	lda         sw_cmd
+sm7		lda         sw_cmd
 				and         #%11110011
 				cpx         #stopsw
 				beq         fl1
 				ora         #%00001000
 fl1
-sm8        	sta         sw_cmd
+sm8		sta         sw_cmd
 				rts
 
 swwait
-sm9        		lda         sw_cmd
+sm9			lda         sw_cmd
 				ora         #%00001000        ; enable transmitter
-sm10       		sta         sw_cmd
-sm11       		lda         sw_stat
+sm10			sta         sw_cmd
+sm11			lda         sw_stat
 				and         #%00110000
 				beq         swwait
 				rts
 
 disablsw
-sm12        	lda         sw_cmd
+sm12		lda         sw_cmd
 				ora #%00000010	; disable receive interrupt
-sm13        	sta         sw_cmd
+sm13		sta         sw_cmd
 			rts
 
 inablesw
@@ -344,7 +344,7 @@ swsetup
 ;             :::: :::
 ;             :::: :::.--- DTR control, 1=DTR low
 	lda   #%00001001
-sm16      		sta   sw_cmd
+sm16			sta   sw_cmd
 
 ;             .------------------------- 0 = one stop bit
 ;             :
@@ -358,14 +358,14 @@ sm16      		sta   sw_cmd
 ;             :::: ::.--- bits   ;1010 == 4800 baud, changes later
 ;             :::: :::.-- 0-3
 	lda   #%00010000
-sm17     		sta sw_ctrl
+sm17			sta sw_ctrl
 
 	lda         baudrt               ;0=300, 1=1200, 2=2400,3=4800,4=9600, 5=19200, 6=38400
-setbaud        	tax
-sm18        	lda         sw_ctrl
+setbaud		tax
+sm18		lda         sw_ctrl
 				and         #$f0
 				ora         swbaud,x
-sm19        	sta         sw_ctrl
+sm19		sta         sw_ctrl
 
 	lda        #<newout
 	ldx        #>newout
@@ -386,7 +386,7 @@ sm19        	sta         sw_ctrl
 		cli
 	rts
 
-newout        	pha                        ;dupliciaton of original kernal routines
+newout		pha                        ;dupliciaton of original kernal routines
 				lda         $9a                  ;test dfault output device for
 				cmp         #$02                   ;screen, and...
 		        beq         :+
@@ -398,14 +398,14 @@ rsoutsw
 				sta $97
 				stx $9e
 				sty $9f
-sm20        	lda         sw_cmd
+sm20		lda         sw_cmd
 				sta         temp
 				jsr         swwait
 				lda         $97
-sm21        	sta         sw_data
+sm21		sta         sw_data
 				jsr         swwait
 				lda         temp                ; restore rts state
-sm22        	sta         sw_cmd
+sm22		sta         sw_cmd
 				lda $97
 				ldx $9e
 				ldy $9f
@@ -424,12 +424,12 @@ wait30	bit $a2
 sm25	sta sw_cmd
 	rts
 
-newin   lda $99
+newin	lda $99
 	cmp #2                ; see if default input is modem
 	beq jbgetsw
 	jmp ogetin               ; nope, go back to original
 
-jbgetsw jsr swgetxfer
+jbgetsw	jsr swgetxfer
 		bcs  :+                ; if no character, then return 0 in a
 	rts
 :	clc
@@ -456,11 +456,11 @@ swgetxfer
 		pla
 @1   rts
 
-temp        .byte        0
+temp	.byte        0
 
-paused .byte $00
+paused	.byte $00
 
-swbaud .byte $15,$17,$18,$1a,$1c,$1e,$1f,$10,$10,$10
+swbaud	.byte $15,$17,$18,$1a,$1c,$1e,$1f,$10,$10,$10
 
 ;--------------------------------------------------------------
 UP9600
@@ -482,7 +482,7 @@ nmi_startbit:
 		lda  #>nmi_bytrdy       ; on next NMI call nmi_bytrdy
 	sta  $0319           ; (triggered by SDR full)
 
-nv1 pla	; ignore, if NMI was triggered by RESTORE-key
+nv1	pla	; ignore, if NMI was triggered by RESTORE-key
 	tay
 		pla
 		tax
@@ -558,7 +558,7 @@ upsetup
 
 	;; enable serial interface (IRQ+NMI)
 
-enableup        sei
+enableup	sei
 
 	ldx  #<new_irq          ; install new IRQ-handler
 	ldy  #>new_irq
@@ -578,14 +578,14 @@ enableup        sei
 	txa
 	asl  a
 
-a7e0c   eor  #$00               ; ** time constant for sender **
-a7e0e   ldx  #$00                 ; 51 or 55 depending on PAL/NTSC version
+a7e0c	eor  #$00               ; ** time constant for sender **
+a7e0e	ldx  #$00                 ; 51 or 55 depending on PAL/NTSC version
 	sta  $dc04              ; start value for timerA (of CIA1)
 	stx  $dc05              ; (time is around 1/(2*baudrate) )
 
-a8e0c   lda  #$00
+a8e0c	lda  #$00
 	    sta  $dd06              ; start value for timerB (of CIA2)
-a8e0e   lda  #$00
+a8e0e	lda  #$00
 		sta  $dd07              ; (time is around 1/baudrate )
 
 	lda  #$41               ; start timerA of CIA1, SP1 used as output
@@ -621,11 +621,11 @@ new_irq:
 	beq  b7d70
 	dex
 	stx  $a9;outstat
-b7d70   bcc  b7da6
-b7d72   cli
+b7d70	bcc  b7da6
+b7d72	cli
 	jsr  $ffea ;$ffea - update jiffy clock
-b7da3   jsr  $ea87 ;$ea87 (jmp) - scan keyboard
-b7da6   jmp  $ea81
+b7da3	jsr  $ea87 ;$ea87 (jmp) - scan keyboard
+b7da6	jmp  $ea81
 
 ilotab:
 	.byte $95
@@ -636,7 +636,7 @@ ihitab:
 
 setbaudup
 	lda baudrt
-b7e56   asl
+b7e56	asl
 	ora ntsc
 	tax
 	lda f7e6c,x
@@ -650,64 +650,64 @@ b7e56   asl
 	rts
 
 ;recv
-f7e6c 	.byte $b0 ;0300
-f7e6d 	.byte $70
-f7e6e   .byte $a8;1200
-f7e6f   .byte $98
-f7e70   .byte $d4;2400
-f7e71   .byte $cc
-f7e72   .byte $6a ;4800
-f7e73   .byte $66
-f7e74   .byte $35;9600 ntsc
-f7e75   .byte $33;9600 pal
-f7e76   .byte $06;300
-f7e77   .byte $06
-f7e78   .byte $01;1200
-f7e79   .byte $01
-f7e7a 	.byte $00;2400
-f7e7b  	.byte $00
-f7e7c  	.byte $00;4800
-f7e7d  	.byte $00
-f7e7e  	.byte $00;9600 ntsc
-f7e7f  	.byte $00;9600 pal
+f7e6c		.byte $b0 ;0300
+f7e6d		.byte $70
+f7e6e	.byte $a8;1200
+f7e6f	.byte $98
+f7e70	.byte $d4;2400
+f7e71	.byte $cc
+f7e72	.byte $6a ;4800
+f7e73	.byte $66
+f7e74	.byte $35;9600 ntsc
+f7e75	.byte $33;9600 pal
+f7e76	.byte $06;300
+f7e77	.byte $06
+f7e78	.byte $01;1200
+f7e79	.byte $01
+f7e7a		.byte $00;2400
+f7e7b		.byte $00
+f7e7c		.byte $00;4800
+f7e7d		.byte $00
+f7e7e		.byte $00;9600 ntsc
+f7e7f		.byte $00;9600 pal
 
 ;send (x2 of receive)
-f8e6c 	.byte $50 ;0300
-f8e6d 	.byte $d0
-f8e6e   .byte $50;1200
-f8e6f   .byte $30
-f8e70   .byte $a8;2400
-f8e71   .byte $98
-f8e72   .byte $d4 ;4800
-f8e73   .byte $cc
-f8e74   .byte $6a;9600 ntsc
-f8e75   .byte $66;9600 pal
-f8e76   .byte $0d;300
-f8e77   .byte $0c
-f8e78   .byte $03;1200
-f8e79   .byte $03
-f8e7a 	.byte $01;2400
-f8e7b  	.byte $01
-f8e7c  	.byte $00;4800
-f8e7d  	.byte $00
-f8e7e  	.byte $00;9600 ntsc
-f8e7f  	.byte $00;9600 pal
+f8e6c		.byte $50 ;0300
+f8e6d		.byte $d0
+f8e6e	.byte $50;1200
+f8e6f	.byte $30
+f8e70	.byte $a8;2400
+f8e71	.byte $98
+f8e72	.byte $d4 ;4800
+f8e73	.byte $cc
+f8e74	.byte $6a;9600 ntsc
+f8e75	.byte $66;9600 pal
+f8e76	.byte $0d;300
+f8e77	.byte $0c
+f8e78	.byte $03;1200
+f8e79	.byte $03
+f8e7a		.byte $01;2400
+f8e7b		.byte $01
+f8e7c		.byte $00;4800
+f8e7d		.byte $00
+f8e7e		.byte $00;9600 ntsc
+f8e7f		.byte $00;9600 pal
 
 	;; get byte from serial interface
 
-newinup lda $99
+newinup	lda $99
 	cmp #2                ; see if default input is modem
 	beq jbgetup
 	jmp ogetin               ; nope, go back to original
 
-jbgetup jsr upgetxfer
+jbgetup	jsr upgetxfer
 		bcs  :+                ; if no character, then return 0 in a
 	rts
 :	clc
 	lda #0
 	rts
 
-upgetxfer ; refer to this routine only if you wanna use it for protocols (xmodem.punter etc)
+upgetxfer	; refer to this routine only if you wanna use it for protocols (xmodem.punter etc)
 		ldx rhead
 	cpx rtail
 	beq @1                ; skip (empty buffer, return with carry set)
@@ -729,7 +729,7 @@ upgetxfer ; refer to this routine only if you wanna use it for protocols (xmodem
 
 	;; put byte to serial interface
 
-newoutup  pha                        ;dupliciaton of original kernal routines
+newoutup	pha                        ;dupliciaton of original kernal routines
 	lda  $9a                  ;test dfault output device for
 	cmp  #$02                   ;screen, and...
 	beq  :+
@@ -740,25 +740,25 @@ newoutup  pha                        ;dupliciaton of original kernal routines
 	sta $97
 		stx $9e
 		sty $9f
-rsoutup pha
+rsoutup	pha
 		cmp  #$80
 		and  #$7f
 	tax
-s7e80   cli
+s7e80	cli
 	lda #$fd
 	sta $a2
-b7e85   lda $a9
+b7e85	lda $a9
 	beq b7e8d
 	bit $a2
 	bmi b7e85
-b7e8d   lda  #$04
+b7e8d	lda  #$04
 		ora  $dd00
 		sta  $dd00
-b7d3c   lda  $dd01    ;cia2: data port register b
+b7d3c	lda  $dd01    ;cia2: data port register b
 	and  #$44
 	eor  #$04
 	beq  b7d3c
-b7d45   lda  revtabup,x
+b7d45	lda  revtabup,x
 	adc  #$00
 	lsr
 	sta  $dc0c    ;cia1: synchronous serial i/o data buffer
@@ -917,7 +917,7 @@ modget
 
 	jmp swgetxfer
 
-modgetup jmp upgetxfer
+modgetup	jmp upgetxfer
 
-modgetrs jmp rsgetxfer
+modgetrs	jmp rsgetxfer
 

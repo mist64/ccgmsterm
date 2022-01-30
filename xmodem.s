@@ -1,14 +1,14 @@
 
 ;XMODEM
 ;xmodem routines
-xmstat .byte 0
-xmoblk .byte 0
-xmochk .byte 0
-xmobad .byte 0
-xmowbf .byte 0
-xmodel .byte 0
-xmoend .byte 0
-xmostk .byte $ff
+xmstat	.byte 0
+xmoblk	.byte 0
+xmochk	.byte 0
+xmobad	.byte 0
+xmowbf	.byte 0
+xmodel	.byte 0
+xmoend	.byte 0
+xmostk	.byte $ff
 ;
 xmosnd;crc mods here
 	tsx
@@ -21,7 +21,7 @@ xmosnd;crc mods here
 	lda #crc
 	ldx #133
 	jmp promoveon
-pronak lda #nak
+pronak	lda #nak
 	ldx #132
 promoveon
 	sta promod+1
@@ -30,11 +30,11 @@ xmupl1
 	lda #6    ;60 secs
 	jsr xmmget
 	beq xmupl2
-xmupab jmp xmabrt
+xmupab	jmp xmabrt
 xmupl2
 	cmp #can
 	beq xmupab
-promod cmp #nak
+promod	cmp #nak
 	bne xmupl1
 xmupll
 	jsr xmocbf
@@ -86,7 +86,7 @@ xmsnd7;crc mod
 	lda (xmobuf),y
 	jsr chrout
 	iny
-promod2 cpy #132
+promod2	cpy #132
 	bcc xmsnd7
 xmmcontinue
 	jsr clrchn
@@ -125,12 +125,12 @@ calccrc1	lda	(xmobuf),y		;
 		bne	calccrc1	; no, get next
 		rts			; 128 bytes achieved, 4-131 (#03-#130)
 ;end crc mods
-xmsnd8 cmp #nak
+xmsnd8	cmp #nak
 	bne xmsnd9
 xmsnbd
 	jsr chrout
 	jmp xmsnd6
-xmsnd9 cmp #ack
+xmsnd9	cmp #ack
 	bne xmsnbd
 xmsnnx
 	lda #'-'
@@ -189,7 +189,7 @@ xmocb1
 	sta xmobuf+1
 	dex
 	bne xmocb1
-xmocb2  ldy #0
+xmocb2	ldy #0
 	sty xmochk
 	sty xmoend
 	rts
@@ -222,27 +222,27 @@ xmmgt2
 	ldx #1
 	rts
 xmmrtc
-f69b ldx #$00
-f69d inc rtca2
-f69f bne f6a7
-f6a1 inc rtca1
-f6a3 bne f6a7
-f6a5 inc rtca0
-f6a7 sec
-f6a8 lda rtca2
-f6aa sbc #$01
-f6ac lda rtca1
-f6ae sbc #$1a
-f6b0 lda rtca0
-f6b2 sbc #$4f
-f6b4 bcc f6bc
-f6b6 stx rtca0
-f6b8 stx rtca1
-f6ba stx rtca2
-f6bc rts
-rtca1 .byte $00
-rtca2 .byte $00
-rtca0 .byte $00
+f69b	ldx #$00
+f69d	inc rtca2
+f69f	bne f6a7
+f6a1	inc rtca1
+f6a3	bne f6a7
+f6a5	inc rtca0
+f6a7	sec
+f6a8	lda rtca2
+f6aa	sbc #$01
+f6ac	lda rtca1
+f6ae	sbc #$1a
+f6b0	lda rtca0
+f6b2	sbc #$4f
+f6b4	bcc f6bc
+f6b6	stx rtca0
+f6b8	stx rtca1
+f6ba	stx rtca2
+f6bc	rts
+rtca1	.byte $00
+rtca2	.byte $00
+rtca0	.byte $00
 xincbd
 	lda #':'
 	jsr goobad
@@ -256,19 +256,19 @@ xchkcm
 	cpx #2
 	beq xmcmab
 	rts
-xmfnok lda #'*'
+xmfnok	lda #'*'
 	jsr goobad
 	lda #0
 	.byte $2c
-xmabrt lda #1
+xmabrt	lda #1
 	.byte $2c
-xmneot lda #2
+xmneot	lda #2
 	.byte $2c
-xmtrys lda #3
+xmtrys	lda #3
 	.byte $2c
-xmsync lda #4
+xmsync	lda #4
 	.byte $2c
-xmcmab lda #5
+xmcmab	lda #5
 	sta xmstat
 xmoext
 	tsx
@@ -325,7 +325,7 @@ oldxmodemout
 newcrcout
 	sta crcrcvfix1+1
 	stx crcrcvfix2+1
-crcrcvfix1 lda #nak
+crcrcvfix1	lda #nak
 	jsr chrout
 	jsr clrchn
 xmorcl
@@ -337,7 +337,7 @@ xmorci
 	lda xmoend
 	cmp #10
 	bcc xmorc1
-xmrcab jmp xmabrt
+xmrcab	jmp xmabrt
 xmorc2
 	cmp #can
 	beq xmrcab
@@ -358,7 +358,7 @@ xmorc3
 xmorc4
 	sta (xmobuf),y
 	iny
-crcrcvfix2 cpy #132
+crcrcvfix2	cpy #132
 	bcc xmorc3
 ;doing the old checksum check
 	ldy #1
@@ -370,7 +370,7 @@ crcrcvfix2 cpy #132
 	jsr disablexfer
 	lda protoc
 	cmp #$02
-jeq receivecheck;bypass the checksum and go to the crc check for xmodem-crc
+jeq	receivecheck;bypass the checksum and go to the crc check for xmodem-crc
 	lda #0
 xmorc5
 	iny
@@ -382,7 +382,7 @@ xmorc5
 xmorc6
 	sta xmochk
 	cmp (xmobuf),y;132(#131-checksum byte)
-jne xmorc0
+jne	xmorc0
 ;old checksum is done
 backcrc
 	ldy #1
@@ -397,7 +397,7 @@ backcrc
 	lda #'/'
 	jsr goobad
 	jmp xmorc9
-xmorsa  jmp xmsync
+xmorsa	jmp xmsync
 xmorc7
 	jsr clrchn
 	jsr disablexfer
@@ -446,9 +446,9 @@ receivecheck
 		cmp	(xmobuf),y
 		bne badcrc
 	jmp backcrc
-badcrc jmp xmorc0
+badcrc	jmp xmorc0
 ;
-xmopsu .byte 2,'PRG, ',2,'SEQ, or ',2,'USR? ',0
+xmopsu	.byte 2,'PRG, ',2,'SEQ, or ',2,'USR? ',0
 xmotyp
 	lda #<xmopsu
 	ldy #>xmopsu
@@ -470,10 +470,10 @@ xmoty4
 	rts
 ;
 ;crc mods here
-xmo1er .byte 13,'tRANSFER cANCELLED.',0
-xmo2er .byte 13,'eot nOT aCKNOWLEGED.',0
-xmo3er .byte 13,'tOO mANY bAD bLOCKS!',0
-xmo4er .byte 13,c,'sYNC lOST!',0
+xmo1er	.byte 13,'tRANSFER cANCELLED.',0
+xmo2er	.byte 13,'eot nOT aCKNOWLEGED.',0
+xmo3er	.byte 13,'tOO mANY bAD bLOCKS!',0
+xmo4er	.byte 13,c,'sYNC lOST!',0
 xmoupl
 	jsr xmosnd
 	jmp xmodon
@@ -499,7 +499,7 @@ xmodn3
 	lda #<xmo2er
 	ldy #>xmo2er
 	bne xmodnp
-xmodn4 cmp #3
+xmodn4	cmp #3
 	bne xmodn5
 	lda #<xmo3er
 	ldy #>xmo3er

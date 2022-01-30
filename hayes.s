@@ -1,6 +1,6 @@
 ;CARRIER / BUSY / NO ANSWER DETECT
 
-bustemp .byte $00
+bustemp	.byte $00
 
 haybus
 	ldy #$00
@@ -10,7 +10,7 @@ haybus2
 haybus3
 	jsr puthayes
 	cpy #$ff
-jeq hayout;get out of routine. send data to terminal, and set connect!
+jeq	hayout;get out of routine. send data to terminal, and set connect!
 	jsr newgethayes
 	cmp #$62  ;b
 	bne haynocarr;move to check for no carrier
@@ -44,7 +44,7 @@ haynocarr
 	jsr puthayes
 	jsr newgethayes
 	cmp #$63  ;c
-jne haynoanswer
+jne	haynoanswer
 	jsr puthayes
 	jsr newgethayes
 	cmp #$61  ;a
@@ -182,4 +182,4 @@ puthayes
 	sta tempbuf,y
 	rts
 
-waittemp .byte $00
+waittemp	.byte $00

@@ -1,7 +1,7 @@
 ;
 ;phone book stuff begins here
-entcol .byte 5
-hilcol .byte 158
+entcol	.byte 5
+hilcol	.byte 158
 phhtxt
 	.byte 19,13
 	.byte 5,18,161
@@ -30,14 +30,14 @@ phhtxt
 	.byte 152,3,5,0,18
 	.byte "           >>>pHONE bOOK<<<           "
 	.byte 29,20,32,157,148,32,13,0
-stattx .byte 152,3,21,0,18
+stattx	.byte 152,3,21,0,18
 	.byte "                                      "
 	.byte 29,20
 	.byte 32,157,148,32,13,145,18,0
-staptx .byte 152,3,21,0,18,32,0
+staptx	.byte 152,3,21,0,18,32,0
 	.byte 0
-toetxt .byte 3,6,0,0
-curbtx .byte 3,22,1,159
+toetxt	.byte 3,6,0,0
+curbtx	.byte 3,22,1,159
 	.byte "nAME:"
 	.byte 13
 	.byte "   ip:"
@@ -48,7 +48,7 @@ curbtx .byte 3,22,1,159
 	.byte 29,29,29,29,29,29,29,29,29,29,29
 	.byte " tRY: "
 	.byte 29,29,29,29,20,145,13,0
-curbt3 .byte 3,22,1,159
+curbt3	.byte 3,22,1,159
 	.byte "nAME:"
 	.byte 13
 	.byte " dIAL:"
@@ -59,24 +59,24 @@ curbt3 .byte 3,22,1,159
 	.byte 29,29,29,29,29,29,29,29,29,29,29
 	.byte " tRY: "
 	.byte 29,29,29,29,20,145,13,0
-curbt2 .byte 159," pw:             ",0
-curbt4 .byte 159," id: ",0
-nontxt .byte 5
+curbt2	.byte 159," pw:             ",0
+curbt4	.byte 159," id: ",0
+nontxt	.byte 5
 	.byte "(nONE)             "
 	.byte 13,0
-clrlnt .byte 3,22,7
+clrlnt	.byte 3,22,7
 	.byte "                  "
 	.byte 3,22,7,5,0
-empbbs .byte 151,164,164,164,164,164,164,164,164,164,164,164,164
+empbbs	.byte 151,164,164,164,164,164,164,164,164,164,164,164,164
 	.byte 164,164,164,164,164,164
-curbbs .byte 146
-colbbs .byte 153
-nambbs .byte "                "
+curbbs	.byte 146
+colbbs	.byte 153
+nambbs	.byte "                "
 	.byte 146,5,0
-curpik .byte 0
-tmppik .byte 0
-bautmp .byte 6
-gratmp .byte 0
+curpik	.byte 0
+tmppik	.byte 0
+bautmp	.byte 6
+gratmp	.byte 0
 prtstt
 	pha
 	tya
@@ -89,12 +89,12 @@ prtstt
 	pla
 	jsr outstr
 	lda #$20
-prtst2  ldx 211
+prtst2	ldx 211
 	cpx #39
 	bcs prtst3
 	jsr chrout
 	bne prtst2
-prtst3  rts
+prtst3	rts
 phnptr
 	lda curpik
 	sta nlocat
@@ -102,15 +102,15 @@ phnptr
 	sta nlocat+1
 	jsr multpy
 	jmp phnpt4
-multpy  clc
+multpy	clc
 	lda #$00
 	ldx #$08
-phnpt2  ror a
+phnpt2	ror a
 	ror nlocat
 	bcc phnpt3
 	clc
 	adc nlocat+1
-phnpt3  dex
+phnpt3	dex
 	bpl phnpt2
 	sta nlocat+1
 	rts
@@ -129,16 +129,16 @@ onpent
 	bne prten0
 prtent
 	lda entcol
-prten0  sta colbbs
-prten1  lda #146
+prten0	sta colbbs
+prten1	lda #146
 	sta curbbs
 	ldy #0
 	lda (nlocat),y
 	beq prtcur
 	lda #18
 	sta curbbs
-prtcur   ldy #2
-prten2   lda (nlocat),y;print bbs name in list
+prtcur	ldy #2
+prten2	lda (nlocat),y;print bbs name in list
 	sta nambbs-2,y
 	iny
 	cpy #20;length of bbs name
@@ -146,7 +146,7 @@ prten2   lda (nlocat),y;print bbs name in list
 	lda nambbs
 	bne prten4
 	ldy #1
-prten3  lda empbbs,y;print lines in place of empty bbs names
+prten3	lda empbbs,y;print lines in place of empty bbs names
 	sta colbbs,y
 	iny
 	cpy #19
@@ -158,12 +158,12 @@ prten3  lda empbbs,y;print lines in place of empty bbs names
 	sta colbbs
 prten4
 	ldy #$00
-prten5  lda curbbs,y
+prten5	lda curbbs,y
 	beq prten6
 	jsr chrout
 	iny
 	bne prten5
-prten6  lda #$0d
+prten6	lda #$0d
 	jmp chrout
 ;
 clrent
@@ -204,7 +204,7 @@ phini2
 	lda #<toetxt
 	ldy #>toetxt
 	jsr outstr
-phini3  lda #21  ;col 21
+phini3	lda #21  ;col 21
 	sta 211
 	jsr phnptr
 	jsr prtent
@@ -221,8 +221,8 @@ phini3  lda #21  ;col 21
 	ldy #>curbtx
 	jsr outstr
 	rts
-phnroc .byte 3,0,0,0
-arrowt .byte 32,93,93,32,60,125,109,62,32,32,0
+phnroc	.byte 3,0,0,0
+arrowt	.byte 32,93,93,32,60,125,109,62,32,32,0
 hilcur
 	ldx curpik
 	inx
@@ -301,7 +301,7 @@ posnam
 	sta 211
 	rts
 ;
-shocol .byte 1,1
+shocol	.byte 1,1
 shocur
 	jsr posnam
 	lda #5
@@ -315,17 +315,17 @@ shocur
 	ldy #>nontxt
 	jsr outstr
 	jmp shocr0
-shocrp jsr prtcur;print current on top list
-shocr0 lda #7
+shocrp	jsr prtcur;print current on top list
+shocr0	lda #7
 	sta 211
 	ldy #20
-shocr1 lda (nlocat),y
+shocr1	lda (nlocat),y
 	beq shocr2
 	jsr chrout
 	iny
 	cpy #52;length of ip address
 	bcc shocr1
-shocr2  lda #$20
+shocr2	lda #$20
 	ldx 211
 	cpx #39;clear line for next one
 	bcs shocr3
@@ -346,30 +346,30 @@ shobau;start display of bottom line
 	lda unlisted
 	bne shocr5
 	ldy #53
-shocr4 lda (nlocat),y
+shocr4	lda (nlocat),y
 	beq shocr5
 	jsr chrout
 	iny
 	cpy #58;end of port
 	bcc shocr4
-shocr5  lda #$20
+shocr5	lda #$20
 	ldx 211
 	cpx #12;clear line for next one
 	bcs shocr66
 	jsr chrout
 	bne shocr5
-shocr66  lda #17
+shocr66	lda #17
 	sta 211
 	lda unlisted
 	bne shocr7
 	ldy #59;start of user id
-shocr6 lda (nlocat),y
+shocr6	lda (nlocat),y
 	beq shocr7
 	jsr chrout
 	iny
 	cpy #70;end of user id
 	bcc shocr6
-shocr7  lda #$20
+shocr7	lda #$20
 	ldx 211
 	cpx #29;clear line for next one
 	bcs shocr8
@@ -417,7 +417,7 @@ xorent
 	ldy #2
 	lda (nlocat),y
 	bne xortog
-xorabt rts
+xorabt	rts
 xortog
 	ldy #0
 	lda (nlocat),y
@@ -447,12 +447,12 @@ newent
 	jmp newen4
 newen2
 	ldy #17
-newenl lda nambbs,y
+newenl	lda nambbs,y
 	cmp #$20
 	bne newen3
 	dey
 	bpl newenl
-newen3 iny
+newen3	iny
 	tya
 	clc
 	adc 211
@@ -465,14 +465,14 @@ newen4
 	sta inpbuf,x
 	cpx #0
 	bne neweok
-newugh jmp zerent
+newugh	jmp zerent
 neweok
 	lda inpbuf
 	cmp #$20
 	beq newugh
 	ldy #19
 	lda #$20
-newen5  sta (nlocat),y
+newen5	sta (nlocat),y
 	dey
 	cpy #1
 	bne newen5
@@ -481,7 +481,7 @@ newen5  sta (nlocat),y
 	sta (nlocat),y
 	ldx #0
 	ldy #2
-newen6 lda inpbuf,x
+newen6	lda inpbuf,x
 	beq newen7
 	sta (nlocat),y
 	iny
@@ -497,12 +497,12 @@ newen7;start of ip address
 	ldx #32;max length of entry
 	jsr inpset
 	ldy #20;top of entry
-newen8 lda (nlocat),y
+newen8	lda (nlocat),y
 	beq newen9
 	iny
 	cpy #52;end of entry
 	bcc newen8
-newen9 tya
+newen9	tya
 	sec
 	sbc #20;start of entry
 	clc
@@ -519,7 +519,7 @@ newen9 tya
 newpok
 	tax
 	ldy #20;start of entry
-newena  lda inpbuf,x
+newena	lda inpbuf,x
 	sta (nlocat),y
 	beq newenb
 	iny
@@ -529,7 +529,7 @@ newena  lda inpbuf,x
 newenb
 	ldy #23
 	lda #$20
-dalun2p sta 1996,y;$079f
+dalun2p	sta 1996,y;$079f
 	dey
 	bpl dalun2p
 newen7a
@@ -541,12 +541,12 @@ newen7a
 	ldx #5;max length of entry
 	jsr inpset
 	ldy #53;top of entry
-newen8a lda (nlocat),y
+newen8a	lda (nlocat),y
 	beq newen9a
 	iny
 	cpy #58;end marker of entry
 	bcc newen8a
-newen9a tya
+newen9a	tya
 	sec
 	sbc #53;top marker of entry
 	clc
@@ -565,7 +565,7 @@ newen9a tya
 newpoka
 	tax
 	ldy #53;top of entry
-newenaa  lda inpbuf,x
+newenaa	lda inpbuf,x
 	sta (nlocat),y
 	beq newenba
 	iny
@@ -586,7 +586,7 @@ newen7id
 	lda #17
 	sta 211
 	ldy #59;start of password
-shocr6id lda (nlocat),y
+shocr6id	lda (nlocat),y
 	beq newen7b
 	jsr chrout
 	iny
@@ -600,12 +600,12 @@ newen7b
 	ldx #11;max length of entry
 	jsr inpset
 	ldy #59;top of entry
-newen8b lda (nlocat),y
+newen8b	lda (nlocat),y
 	beq newen9b
 	iny
 	cpy #70;end marker of entry
 	bcc newen8b
-newen9b tya
+newen9b	tya
 	sec
 	sbc #59;top marker of entry
 	clc
@@ -622,7 +622,7 @@ newen9b tya
 newpokb
 	tax
 	ldy #59;top of entry
-newenab  lda inpbuf,x
+newenab	lda inpbuf,x
 	sta (nlocat),y
 	beq newenbb
 	iny
@@ -640,10 +640,10 @@ newen7c
 	lda #5
 	jsr chrout
 ;display current pw
-shocr66a  lda #17
+shocr66a	lda #17
 	sta 211
 	ldy #71;start of password
-shocr6a lda (nlocat),y
+shocr6a	lda (nlocat),y
 	beq shocr7a
 	jsr chrout
 	iny
@@ -656,12 +656,12 @@ shocr7a
 	ldx #11;max length of entry
 	jsr inpset
 	ldy #71;top of entry
-newen8c lda (nlocat),y
+newen8c	lda (nlocat),y
 	beq newen9c
 	iny
 	cpy #82;end marker of entry
 	bcc newen8c
-newen9c tya
+newen9c	tya
 	sec
 	sbc #71;top marker of entry
 	clc
@@ -678,7 +678,7 @@ newen9c tya
 newpokc
 	tax
 	ldy #71;top of entry
-newenac  lda inpbuf,x
+newenac	lda inpbuf,x
 	sta (nlocat),y
 	beq newenbc
 	iny
@@ -692,14 +692,14 @@ newenbc
 zerent
 	ldy #83
 	lda #0
-zeren2  sta (nlocat),y
+zeren2	sta (nlocat),y
 	dey
 	bpl zeren2
 	rts
 ;
-tmpopt .byte 00
-tmpmax .byte 00
-tmptmp .byte 00
+tmpopt	.byte 00
+tmpmax	.byte 00
+tmptmp	.byte 00
 newsel
 	jsr getin
 	cmp #$2b;+
@@ -710,9 +710,9 @@ newsel
 	bcc newsl1
 	lda #0
 	sta tmpmax
-newsl1 sec
+newsl1	sec
 	rts
-newsl2 cmp #$2d
+newsl2	cmp #$2d
 	bne newsl3
 	dec tmpopt
 	bpl newsl1
@@ -721,7 +721,7 @@ newsl2 cmp #$2d
 	stx tmpopt
 	sec
 	rts
-newsl3 cmp #$0d
+newsl3	cmp #$0d
 	bne newsel
 	clc
 	rts
@@ -749,7 +749,7 @@ phbget
 	bcs phnupd
 	adc #30
 	jmp phnupd
-phb2  cmp #29 ;right
+phb2	cmp #29 ;right
 	bne phb3
 	lda curpik
 	clc
@@ -758,14 +758,14 @@ phb2  cmp #29 ;right
 	bcc phnupd
 	sbc #30
 	jmp phnupd
-phb3  cmp #145 ;up
+phb3	cmp #145 ;up
 	bne phb4
 	lda curpik
 	sbc #1
 	bcs phnupd
 	adc #30
 	jmp phnupd
-phb4  cmp #17  ;down
+phb4	cmp #17  ;down
 	bne phb5
 	lda curpik
 	clc
@@ -784,7 +784,7 @@ phnupd
 phb5
 	cmp #19
 	bne phb6
-phbhom  lda #0
+phbhom	lda #0
 	beq phnupd
 phb6
 	cmp #$93
@@ -802,17 +802,17 @@ phb8
 	beq phnsel
 	cmp #$0d
 	bne phb9
-phnsel  ldy #2
+phnsel	ldy #2
 	lda (nlocat),y
 	bne phntog
-phabrt jmp phbget
+phabrt	jmp phbget
 phntog
 	ldy #0
 	lda (nlocat),y
 	eor #$01
 	sta (nlocat),y
 	jmp phloop
-phb9  cmp #$52;r
+phb9	cmp #$52;r
 	bne phb10
 	jsr xorall
 	jsr phinit
@@ -848,7 +848,7 @@ dialcr
 	jsr xferidpw
 	jsr phnptr
 	ldy #20
-dialc1 lda (nlocat),y
+dialc1	lda (nlocat),y
 	beq dialc2
 	sta numbuf-20,y
 	iny
@@ -862,7 +862,7 @@ dialc5
 	tax
 	inx
 	ldy #53
-dialc4 lda (nlocat),y
+dialc4	lda (nlocat),y
 	beq dialc6
 	sta numbuf-20,x
 	iny
@@ -895,7 +895,7 @@ dalnv
 	jsr prtstt
 	lda #$e0
 	sta $a2
-dalfcl  lda $a2
+dalfcl	lda $a2
 	bne dalfcl
 	lda #$0f
 	sta $d418
@@ -904,7 +904,7 @@ dalfcl  lda $a2
 ;bcc dalfc1
 ;jsr gong
 ;jmp dalfc2
-dalfc1 jsr bell
+dalfc1	jsr bell
 dalfc2
 dalterm
 	jmp term
@@ -929,7 +929,7 @@ dalslc
 	ldy #>stattx
 	jsr outstr
 	jmp dalsl0
-dalsel  ;dial selected
+dalsel	;dial selected
 	lda #$30
 	sta trycnt
 	sta trycnt+1
@@ -983,8 +983,8 @@ prtunl
 	.byte 145,13,32,159
 	.byte "dIAL: "
 	.byte 05,0
-unlisted .byte $00
-unltemp .byte $00
+unlisted	.byte $00
+unltemp	.byte $00
 dalunl
 	lda #1
 	sta daltyp
@@ -1007,7 +1007,7 @@ dalun1
 	jsr outstr
 	ldy #80
 	lda #$20
-dalun2 sta 1951,y;$079f
+dalun2	sta 1951,y;$079f
 	dey
 	bpl dalun2
 	lda #7
@@ -1032,7 +1032,7 @@ dalun6
 dalun7
 	ldy #80
 	lda #$20
-dalun9 sta 1951,y;$079f
+dalun9	sta 1951,y;$079f
 	dey
 	bpl dalun9
 	lda #<curunl
@@ -1048,7 +1048,7 @@ dalun9 sta 1951,y;$079f
 dalun8
 	ldx #$00
 	ldy unltemp
-dalun4  lda inpbuf,x
+dalun4	lda inpbuf,x
 	sta numbuf,y
 	inx
 	iny
@@ -1072,17 +1072,17 @@ dalun4  lda inpbuf,x
 	sta unlisted
 	jmp dial
 ;
-calctx .byte 'cALL cURRENT nUMBER...',0
-dalstx .byte 'dIAL sELECTED nUMBERS...',0
-dulstx .byte 'dIAL uNLISTED nUMBER.',0
-unlstx .byte 'uNLISTED.',13,0
-wcrtxt .byte 'wAITING fOR cARRIER...',0
-pabtxt .byte 'dIALING...  ',cp,'RESS ',cs,t,o,cp,' TO ABORT.',0
-numptr .byte 0
-trycnt .byte 0,0,0 ;how many tries?
-daltyp .byte 0 ;0=curr, 1=unlisted
+calctx	.byte 'cALL cURRENT nUMBER...',0
+dalstx	.byte 'dIAL sELECTED nUMBERS...',0
+dulstx	.byte 'dIAL uNLISTED nUMBER.',0
+unlstx	.byte 'uNLISTED.',13,0
+wcrtxt	.byte 'wAITING fOR cARRIER...',0
+pabtxt	.byte 'dIALING...  ',cp,'RESS ',cs,t,o,cp,' TO ABORT.',0
+numptr	.byte 0
+trycnt	.byte 0,0,0 ;how many tries?
+daltyp	.byte 0 ;0=curr, 1=unlisted
 	;2=selected
-whahap .byte 0 ;status after call
+whahap	.byte 0 ;status after call
 ;0=busy/no carrier, 1=connect
 ;2=aborted w/stop , 3=dunno(1660)
 ;
@@ -1122,7 +1122,7 @@ await2
 	inc trycnt
 	lda trycnt
 	cmp #$3a
-jeq dlabrt
+jeq	dlabrt
 	lda #$30
 	sta trycnt+1
 dialnoinc
@@ -1130,14 +1130,14 @@ dialnoinc
 dialin
 	ldy #31
 	lda #1
-dlwhtl sta 56223,y
+dlwhtl	sta 56223,y
 	dey
 	bpl dlwhtl
 dlinit
 	lda #<pabtxt  ;print stop aborts
 	ldy #>pabtxt  ;
 	jsr prtstt
-smrtdl      ;hayes/paradyne dial
+smrtdl	;hayes/paradyne dial
 	jsr clear232
 	jsr enablemodem
 	ldx #$05
@@ -1156,7 +1156,7 @@ haydat
 haydatcont
 	jsr outstr
 	ldx #$00
-hayda4  stx numptr
+hayda4	stx numptr
 	ldx numptr
 	lda #14
 	sta 56223,x
@@ -1182,7 +1182,7 @@ haybak
 haybk2
 	lda #$c8
 	sta $a2
-haybk3  lda $a2
+haybk3	lda $a2
 	bne haybk3
 	jsr haydel
 	jmp redial
@@ -1196,7 +1196,7 @@ haydel
 	sta $a2
 	ldx #$05
 	jsr chkin
-haydll  jsr getin
+haydll	jsr getin
 	cmp #$0d
 	beq haydlo
 	lda $a2
@@ -1217,7 +1217,7 @@ dgobak
 redial
 	lda #$80
 	sta $a2
-rddel1          ;2 second delay
+rddel1	;2 second delay
 	lda $a2        ;before restart
 	bne rddel1
 rgobak
@@ -1226,20 +1226,20 @@ rgobak
 	jmp dalfin     ;back to phbook
 outmod
 	jsr outstr
-outmo1  lda #$e0
+outmo1	lda #$e0
 	sta $a2
-outmo2  lda $a2
+outmo2	lda $a2
 	bne outmo2
 	rts
 ;
-nicktime .byte $00
-atdtxt .byte 'ATDT',0
-atdtxt2 .byte 'ATD',34,0;adds a " before dialing the bbs cause zimmers firmware needs this
-athtxt .byte 'ATH',13,0
-atplus .byte '+++',0
-pr3txt .byte 'ATV1',13,0
-bustxt .byte "bUSY",0
-nantxt .byte "nO cARRIER",0
-conntx .byte "cONNECT!",0
-tdelay .byte 00
+nicktime	.byte $00
+atdtxt	.byte 'ATDT',0
+atdtxt2	.byte 'ATD',34,0;adds a " before dialing the bbs cause zimmers firmware needs this
+athtxt	.byte 'ATH',13,0
+atplus	.byte '+++',0
+pr3txt	.byte 'ATV1',13,0
+bustxt	.byte "bUSY",0
+nantxt	.byte "nO cARRIER",0
+conntx	.byte "cONNECT!",0
+tdelay	.byte 00
 

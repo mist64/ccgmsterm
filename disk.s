@@ -28,7 +28,7 @@ chstat
 	pha
 	lda status
 	and #$40
-jne dskext
+jne	dskext
 	jsr clrchn
 	jsr curoff
 	pla
@@ -73,7 +73,7 @@ dxmmgt2
 	bcc dxmogt1
 chkkey
 	jsr keyprs
-jeq dskout
+jeq	dskout
 	cmp #3;run stop
 	beq dskex2
 	jsr enablexfer
@@ -106,7 +106,7 @@ outstr
 	sty $23
 	sta $22
 	ldy #0
-outst1 lda ($22),y
+outst1	lda ($22),y
 	beq outste
 	cmp #2
 	beq hilite
@@ -137,11 +137,11 @@ outst2
 	and #$7f
 outst3
 	jsr chrout
-outst4 iny
+outst4	iny
 	bne outst1
 	inc $23
 	bne outst1
-outste rts
+outste	rts
 hilite
 	lda textcl
 	pha
@@ -159,7 +159,7 @@ hilite
 	plp
 	beq hilit2
 	ora #$80
-hilit2  jsr chrout
+hilit2	jsr chrout
 	lda #182
 	jsr chrout
 	pla
@@ -178,6 +178,6 @@ outcap
 	beq outcp2
 	pla
 	bne outcp3
-outcp2  pla
+outcp2	pla
 	and #$7f
-outcp3  jmp chrout
+outcp3	jmp chrout

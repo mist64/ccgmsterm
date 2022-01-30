@@ -18,7 +18,7 @@ writeconfigef
 	jsr $df8c
 	ldx #$00
 
-f1080 lda $5100,x   ; this is where the config is positioned.
+f1080	lda $5100,x   ; this is where the config is positioned.
 	jsr $df95     ; write byte to ef, $0305 to $8000, $0306 to $8001, etc.
 	inx
 	bne f1080
@@ -33,14 +33,14 @@ f1080 lda $5100,x   ; this is where the config is positioned.
 	sta $de02
 	rts
 
-f10b0   ldy #$00
+f10b0	ldy #$00
 	ldx #$00
-eapi3  inx
+eapi3	inx
 	bne eapi3
 	dey
 	bne eapi3
 	rts
-eapi2 jsr f10b0    ; delay 0,5 seconds
+eapi2	jsr f10b0    ; delay 0,5 seconds
 	jsr f10b0    ; delay 0,5 seconds
 	jsr f10b0    ; delay 0,5 seconds
 	rts
@@ -63,8 +63,8 @@ readconfigef
 	jsr $df8c
 	ldx #$00
 
-f1080r jsr $df92; read byte to ef, $0305 to $8000, $0306 to $8001, etc.
-f1080rs sta $5100,x   ; this is where the config is positioned.
+f1080r	jsr $df92; read byte to ef, $0305 to $8000, $0306 to $8001, etc.
+f1080rs	sta $5100,x   ; this is where the config is positioned.
 	inx
 	bne f1080r
 	inc f1080rs+2
@@ -85,7 +85,7 @@ eapiinit
 	lda #$00      ; select bank 0.
 	sta $de00
 	ldx #$00      ; copy eapi driver from bank 0 to ram at $1800. (eapi is always at $b800 in bank 0).
-eapi1   lda $b800,x
+eapi1	lda $b800,x
 	sta $cb00,x
 	lda $b900,x
 	sta $cc00,x

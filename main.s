@@ -3,8 +3,8 @@
 
 ;pal/ntsc detect
 prestart
-l1 lda $d012
-l2 cmp $d012
+l1	lda $d012
+l2	cmp $d012
 	beq l2
 	bmi l1
 	cmp #$20
@@ -63,7 +63,7 @@ erasl1
 initdrive
 	lda $ba        ;current dev#
 	jmp stodv2
-stodev inc diskdv
+stodev	inc diskdv
 	lda diskdv
 	cmp #16;originally #16, try #30 here for top drive #?
 	beq stodv5
@@ -74,7 +74,7 @@ stodv5
 	lda #$08
 	sta diskdv
 	jmp stodv3
-stodv2 sta diskdv
+stodv2	sta diskdv
 	jsr drvchk
 	bmi stodev
 	lda #$01
@@ -95,7 +95,7 @@ stodv4
 	jsr rsopen
 	jsr ercopn
 	jmp init
-rsopen          ;open rs232 file
+rsopen	;open rs232 file
 	jsr disabl
 	jsr disableup
 	jsr enablemodem
@@ -125,7 +125,7 @@ ercopn
 	tay
 	jsr setlfs
 	jsr open;$ffc0
-ercexit rts
+ercexit	rts
 init
 	lda #1
 	sta cursfl     ;non-destructive
@@ -249,7 +249,7 @@ chekrs
 	cmp #131    ;shift-r/s
 	bne checkf  ;to hang-up
 	jmp hangup
-checkf       ;f-keys
+checkf	;f-keys
 	cmp #133
 	bcc notfky
 	cmp #141
@@ -289,7 +289,7 @@ notfky
 ;cmp #$5b  ;'z'+1
 ;bcs upplow
 ;ora #$80
-upplow ;ascii/gfx check
+upplow	;ascii/gfx check
 	sta $03
 	ldx grasfl
 	beq mainop
@@ -387,7 +387,7 @@ bufok3
 	inc bufptr
 	bne buffot
 	inc bufptr+1
-buffot rts
+buffot	rts
 contn
 	jsr ctrlck
 	bcc contn2
@@ -445,12 +445,12 @@ ctrlev
 	cpx #2     ;ctrl-b
 	bne ctrlex
 	ldx #15
-ctrlb1  cmp clcode,x
+ctrlb1	cmp clcode,x
 	beq ctrlb2
 	dex
 	bpl ctrlb1
 	bmi ctrlex
-ctrlb2 stx $d020
+ctrlb2	stx $d020
 	stx $d021
 	lda #16    ;ctrl-p..non printable
 ctrlex
@@ -478,8 +478,8 @@ bell
 	ldx #$11
 	stx 54290
 	rts
-gongm1 .byte 24,6,13,20,4,11,18,15,8,1,5,19,12,14,7,0,4,11,18,24
-gongm2 .byte 47,0,0,0,0,0,0,4,8,16,13,13,11,28,48,68,21,21,21,15
+gongm1	.byte 24,6,13,20,4,11,18,15,8,1,5,19,12,14,7,0,4,11,18,24
+gongm2	.byte 47,0,0,0,0,0,0,4,8,16,13,13,11,28,48,68,21,21,21,15
 gong
 	pha
 	ldx #0
@@ -493,7 +493,7 @@ gong1
 	bcc gong1
 	pla
 	rts
-scrtog   ;toggle screen #1-4
+scrtog	;toggle screen #1-4
 	txa        ;(swap screen memory with
 	pha        ; behind kernal rom)
 	jsr curoff
@@ -566,13 +566,13 @@ scrnl1
 	cpx #05
 	beq scrnls
 	ldy #0
-scrnlc  lda ($02),y
+scrnlc	lda ($02),y
 	sta (locat),y
 	dey
 	bne scrnlc
 	beq scrnl3
-scrnls  ldy #$00
-scrnl2  ;swap screen page
+scrnls	ldy #$00
+scrnl2	;swap screen page
 	lda ($02),y
 	tax
 	lda (locat),y
@@ -581,7 +581,7 @@ scrnl2  ;swap screen page
 	sta (locat),y
 	iny
 	bne scrnl2
-scrnl3  lda #<ramnmi
+scrnl3	lda #<ramnmi
 	sta $fffa
 	lda #>ramnmi
 	sta $fffb
@@ -602,7 +602,7 @@ bufclr
 	lda buffst+1
 	sta bufptr+1
 	rts
-finpos ;calculate screenpos
+finpos	;calculate screenpos
 	ldy line
 	lda $ecf0,y
 	sta locat
@@ -623,7 +623,7 @@ finp2
 	ldy #$00
 	lda (locat),y
 	rts
-fincol   ;calculate color ptr
+fincol	;calculate color ptr
 	jsr finpos
 	lda #$d4
 	clc
@@ -631,7 +631,7 @@ fincol   ;calculate color ptr
 	sta locat+1
 	lda (locat),y
 	rts
-qimoff   ;turn quote/insert off
+qimoff	;turn quote/insert off
 	lda #$00
 	sta qmode
 	sta imode
@@ -707,7 +707,7 @@ msgtxt
 	.byte 5,32
 	.byte "    tERMINAL 2021   "
 	.byte 00
-author  .byte "BY cRAIG sMITH       mODS BY aLWYZ   "
+author	.byte "BY cRAIG sMITH       mODS BY aLWYZ   "
 	.byte 146,151,00
 ;
 instxt
@@ -725,11 +725,11 @@ instx2
 	.byte 31,'c',28,'=',5,18,'f5',146,32,154,'sEND DIR.     '
 	.byte 31,'c',28,'=',5,18,'f7',146,32,154,'sCREEN TO bUFF.',13,13,0
 ;
-mlswrn .byte 13,5,'bUFFER TOO BIG - sAVE OR cLEAR fIRST!',13,0
+mlswrn	.byte 13,5,'bUFFER TOO BIG - sAVE OR cLEAR fIRST!',13,0
 ;
-dirmdm .byte 0
+dirmdm	.byte 0
 ;directory routine
-dirfn   .byte '$'
+dirfn	.byte '$'
 dir
 	jsr disablexfer
 	lda #$0d
@@ -850,7 +850,7 @@ drcon6
 	jsr chrout
 	ldx #5
 	jsr chkin
-drcon3  jsr getin
+drcon3	jsr getin
 	lda $029b
 	cmp $029c
 	bne drcon3
@@ -869,12 +869,12 @@ drvchk
 	bmi drc2
 	jsr $f654
 	lda #$00
-drc2  rts
+drc2	rts
 dirget;this timeout failsafe makes sure the byte is received back from modem
 	;before accessing disk for another byte otherwise we can have
 	   ;all sorts of nmi related issues.... this solves everything.
 	   ;uses the 'fake' rtc / jiffy counter function / same as xmmget...
-dget2 lda #10;timeout failsafe
+dget2	lda #10;timeout failsafe
 	sta xmodel
 	lda #0
 	sta rtca1
@@ -889,18 +889,18 @@ ddxmmgt2
 	lda rtca1
 	cmp xmodel
 	bcc ddxmogt1
-dirgetout rts
+dirgetout	rts
 ;ANSI STUFF HERE
-ansi .byte 00
-ansitemp .byte 00
-ansicolor .byte 00
-ansi0colors .byte 146,28,30,149,31,156,159,152,0,0,0
-ansi1colors .byte 151,150,153,158,154,156,159,05,0,0,0
+ansi	.byte 00
+ansitemp	.byte 00
+ansicolor	.byte 00
+ansi0colors	.byte 146,28,30,149,31,156,159,152,0,0,0
+ansi1colors	.byte 151,150,153,158,154,156,159,05,0,0,0
 ;convert standard ascii to c= ascii
 satoca
 	pha
 	lda ansi
-jeq satoca2;no ansi, but check for ansi
+jeq	satoca2;no ansi, but check for ansi
 ansion
 	cmp #$02;is ansi color code on?
 	beq coloron2
@@ -918,7 +918,7 @@ ansion
 	cmp #'1'
 	beq turn1on
 	cmp #$3b;semicolon
-jeq semion
+jeq	semion
 	cmp #'['
 	beq leftbracketansi;[ after escape code
 	cmp #'M'
@@ -1048,7 +1048,7 @@ clab4
 	cmp #20
 	beq cexit
 	bne cerrc
-cexit cmp #$00
+cexit	cmp #$00
 	rts
 ansi0keys
 cerrc
@@ -1060,25 +1060,25 @@ catosa
 	bne alab0
 	lda #08    ;delete
 	bne aexit
-alab0 cmp #164 ;underline
+alab0	cmp #164 ;underline
 	bne alab1
 	lda #$a4;underline key
-alab1  cmp #65
+alab1	cmp #65
 	bcc cexit  ;if<then no conv
 	cmp #91
 	bcs alab2
 	adc #32    ;lower a...z..._
 	bne aexit
-alab2  cmp #160
+alab2	cmp #160
 	bne alab3
 	lda #32    ;shift to space
 	bne aexit
-alab3  and #127
+alab3	and #127
 	cmp #65
 	bcc cerrc
 	cmp #96    ;upper a...z
 	bcs cerrc
-aexit   cmp #$00
+aexit	cmp #$00
 	rts
 savech
 	jsr finpos
@@ -1090,7 +1090,7 @@ savech
 	lda textcl
 	sta (locat),y
 	rts
-restch  ;restore char und non-crsr
+restch	;restore char und non-crsr
 	jsr finpos
 	lda tempch
 	sta (locat),y
@@ -1098,7 +1098,7 @@ restch  ;restore char und non-crsr
 	lda tempcl
 	sta (locat),y
 	rts
-spleft  ;output space, crsrleft
+spleft	;output space, crsrleft
 	lda #$20
 	jsr chrout
 	lda #left
@@ -1177,7 +1177,7 @@ inpcud
 	beq inphom
 	jsr inpcu1
 	jmp inpmov
-inpcu1 ldy max
+inpcu1	ldy max
 inpcu2
 	dey
 	bmi inpcu3
@@ -1198,7 +1198,7 @@ inpcls
 	bne inphom
 	ldy max
 	lda #$20
-inpcl2 sta (begpos),y
+inpcl2	sta (begpos),y
 	dey
 	bpl inpcl2
 inphom
@@ -1312,7 +1312,7 @@ coback
 	ldx $04
 	stx textcl
 	rts
-f6      ;directory
+f6	;directory
 	lda #$01
 	ldx #<dirfn
 	ldy #>dirfn
@@ -1321,7 +1321,7 @@ dodir
 	jsr dir
 	jsr enablexfer
 	jmp main
-f8      ;term toggle
+f8	;term toggle
 	ldx 653
 	cpx #2
 	bne termtg
@@ -1332,13 +1332,13 @@ termtg
 	sta grasfl
 	jsr bell
 	jmp term
-crsrtg     ;ascii crsr toggle
+crsrtg	;ascii crsr toggle
 	jsr curoff
 	lda cursfl
 	eor #$01
 	sta cursfl
 	jmp main
-hangup     ;hang up phone
+hangup	;hang up phone
 	ldx 653
 	cpx #2
 	bne hangup6;not C= Stop
@@ -1351,9 +1351,9 @@ hangup     ;hang up phone
 	cmp #$01
 	beq dropup
 	jmp dropswift
-hangup6 jmp main
+hangup6	jmp main
 
-droprs lda #%00000100
+droprs	lda #%00000100
 	sta $dd03
 	lda #0
 	sta $dd01
@@ -1365,13 +1365,13 @@ droprs lda #%00000100
 	sta $dd01
 	jmp main
 
-dropup  lda #$04
+dropup	lda #$04
 	sta $dd03    ;cia2: data direction register b
 	lda #$02
 	sta $dd01    ;cia2: data port register b
 	ldx #$e2
 		stx $a2
-a7ef3    bit $a2
+a7ef3	bit $a2
 	bmi a7ef3
 	lda #$02
 	sta $dd03    ;cia2: data direction register b
@@ -1380,12 +1380,12 @@ a7ef3    bit $a2
 dropswift
 	jsr dropdtr
 	jmp main
-dsktxt .byte 5,13
+dsktxt	.byte 5,13
 	.byte "#"
-dsktx2 .byte "**>      "
+dsktx2	.byte "**>      "
 	.byte 157,157,157,157,157,157,00
-dskdtx .byte '8 9 101112131415161718192021222324252627282930'
-f5      ;disk command
+dskdtx	.byte '8 9 101112131415161718192021222324252627282930'
+f5	;disk command
 	jsr disablexfer
 	jsr ercopn
 	jsr cosave
@@ -1468,7 +1468,7 @@ chgdv8
 	cmp #$07
 	bpl chgdv9;assume its 8 or 9, which is the only options when it starts with 8 or 9
 	jmp drvext;nope there was nothing in the 00-29 range
-chgdv2   iny;get the second character
+chgdv2	iny;get the second character
 	sta drivetemp
 	lda inpbuf,y
 	sec
@@ -1540,17 +1540,17 @@ xferp3
 	rts
 
 ;MACROS
-macmdm .byte 0
-macxrg .byte 0
-prmacx ;find index for macro
+macmdm	.byte 0
+macxrg	.byte 0
+prmacx	;find index for macro
 	cpx #3     ;from 197 f-key value
 	bne prmax2
 	ldx #7
-prmax2 txa
+prmax2	txa
 	sec
 	sbc #4     ;now a=0..3 for f1,3,5,7
 	ldx #5
-prmax3 asl a
+prmax3	asl a
 	dex
 	bpl prmax3  ;a=0,64,128,192
 	sta macxrg
@@ -1579,11 +1579,11 @@ prtmc1
 	jsr clrchn
 	lda #$fd
 	sta $a2
-prtmcd lda $a2
+prtmcd	lda $a2
 	bne prtmcd
 	lda #$fd
 	sta $a2
-prtmcd2 lda $a2
+prtmcd2	lda $a2
 	bne prtmcd2
 	ldx #5
 	jsr chkin
@@ -1598,12 +1598,12 @@ prtmcd2 lda $a2
 	jsr catosa
 	bne prtmck
 	beq prtmc3
-prtmca  pla
+prtmca	pla
 	bne prtmc3
-prtmci  tax
+prtmci	tax
 	pla
 	txa
-prtmck  ldx grasfl
+prtmck	ldx grasfl
 	beq prtmcj
 	jsr satoca
 prtmcj
@@ -1620,23 +1620,23 @@ prtmcs
 	jsr chrout
 	jsr qimoff
 	jsr curprt
-prtmc3  inc macxrg
+prtmc3	inc macxrg
 	cmp #255
 	bne prtmc0
-prtmc4 jmp curoff
+prtmc4	jmp curoff
 ;
-stbrvs .byte 0
-stbcol .byte 0
-stbxps .byte 0
-stbyps .byte 0
-stbmax .byte 0
-stbmay .byte 0
-cf7  ;screen to buffer
+stbrvs	.byte 0
+stbcol	.byte 0
+stbxps	.byte 0
+stbyps	.byte 0
+stbmax	.byte 0
+stbmay	.byte 0
+cf7	;screen to buffer
 	lda #0
 	sta 198
 	lda #$f1
 	sta $a2
-scnbf0  lda $a2
+scnbf0	lda $a2
 	bne scnbf0
 	jsr getin
 	cmp #140
@@ -1653,9 +1653,9 @@ scnbfs
 	sta stbcol
 	ldy #24
 	sty stbyps
-scnbf1  ldx #39
+scnbf1	ldx #39
 	stx stbxps
-scnbf2  jsr finscp
+scnbf2	jsr finscp
 	cmp #$20
 	bne scnbf3
 	dec stbxps
@@ -1769,7 +1769,7 @@ scnbr2
 	cmp stbmay
 	beq scnbr3
 	bcs scnbre
-scnbr3  jmp scnbnl
+scnbr3	jmp scnbnl
 scnbre
 	ldx 646
 	lda clcode,x
@@ -1843,14 +1843,14 @@ svcon2
 	ldx #15
 	jsr chkout
 	ldx #0
-svcon3 lda scracf,x
+svcon3	lda scracf,x
 	beq svcon4
 	jsr chrout
 	inx
 	bne svcon3
 svcon4
 	ldx #0
-svcon5  lda inpbuf,x
+svcon5	lda inpbuf,x
 	jsr chrout
 	inx
 	cpx max
@@ -1867,7 +1867,7 @@ svcon5  lda inpbuf,x
 	ldy #>endsav
 	jsr $ffd8
 	jsr losver
-losvab rts
+losvab	rts
 savecfef
 	jmp writeconfigef
 loconf
@@ -1895,7 +1895,7 @@ losver
 	jsr disablemodem
 	ldx #15
 	jsr chkin
-losve2  jsr getin
+losve2	jsr getin
 	cmp #$0d
 	bne losve2
 	jmp clrchn

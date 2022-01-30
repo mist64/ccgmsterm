@@ -1,5 +1,5 @@
 ;
-f7    ;terminal params/dial
+f7	;terminal params/dial
 	jsr disablemodem
 	lda #0
 	sta $d020
@@ -79,7 +79,7 @@ move96tp
 	cmp #$04
 	bmi brinc
 	jmp brrst
-brinc inc baudrt
+brinc	inc baudrt
 	lda baudrt
 	cmp #$07
 	bne mobaud
@@ -184,7 +184,7 @@ f7chs9
 f7chsa
 	cmp #$0d
 	beq f7chsb
-f7gbkk jmp f7chos
+f7gbkk	jmp f7chos
 f7chsb
 	lda nicktemp
 	beq moveonterm
@@ -192,29 +192,29 @@ moveonterm
 	jsr enablemodem
 	jmp term
 
-prmopt .byte <op1txt,>op1txt,<op2txt,>op2txt,<op6txt,>op6txt,<op3txt,>op3txt,<op4txt,>op4txt,<op5txt,>op5txt
-prmlen .byte 4,18,8,10,20,19
-op1txt .byte "fULLhALF"
-op2txt .byte 'uSER pORT 300-2400'
+prmopt	.byte <op1txt,>op1txt,<op2txt,>op2txt,<op6txt,>op6txt,<op3txt,>op3txt,<op4txt,>op4txt,<op5txt,>op5txt
+prmlen	.byte 4,18,8,10,20,19
+op1txt	.byte "fULLhALF"
+op2txt	.byte 'uSER pORT 300-2400'
 	.byte 'up9600 / ez232    '
 	.byte 'sWIFT / tURBO de  '
 	.byte 'sWIFT / tURBO df  '
 	.byte 'sWIFT / tURBO d7  '
-op6txt .byte "sTANDARDzIMODEM "
-op3txt .byte "pUNTER    ","xMODEM    ","xMODEM-crc"
+op6txt	.byte "sTANDARDzIMODEM "
+op3txt	.byte "pUNTER    ","xMODEM    ","xMODEM-crc"
 	;themes
 	;0-classic
 	;1-Iman of XPB v7.1
 			 ;2-v8.1 Predator/FCC
 			 ;3-9.4 Ice THEME
 			 ;4-17.2 Defcon/Unicess
-op4txt .byte "cLASSIC ccgms V5.5  "
+op4txt	.byte "cLASSIC ccgms V5.5  "
 	.byte "iMAN / xpb V7.1     "
 	   .byte "pREDATOR / fcc V8.1 "
 	   .byte "iCE THEME V9.4      "
 	   .byte "dEFCON/uNICESS V17.2"
 	   .byte "aLWYZ / ccgms 2021  "
-op5txt .byte 29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,"ef  ",29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,"dISK"
+op5txt	.byte 29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,"ef  ",29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,"dISK"
 prmtab
 	lda #$0d
 	jsr chrout
@@ -302,16 +302,16 @@ prmlop
 	jsr prmclc
 	ldx diskoref
 	jmp prmprt
-skipeflisting rts
-scracf .byte "S0:",0
-svctxt .byte $93,13,5,"fILENAME: ",0
-conffn .byte "CCGMS-PHONE",0
-f7thob .byte 2
-f7mtxt .byte $93,16,14,5
+skipeflisting	rts
+scracf	.byte "S0:",0
+svctxt	.byte $93,13,5,"fILENAME: ",0
+conffn	.byte "CCGMS-PHONE",0
+f7thob	.byte 2
+f7mtxt	.byte $93,16,14,5
 	.byte "   dIALER/pARAMETERS",13
 	.byte 31,"   ",163,163,163,163,163,163,163,163,163,163,163,163,163,163
 	.byte 163,163,163,13,5
-f7mtx1 .byte 16
+f7mtx1	.byte 16
 	.byte 05,32,2,"AUTO-dIALER/pHONEBOOK",13,13
 	.byte 32,2,"BAUD rATE   -",13,13
 	.byte 32,2,"DUPLEX      -",13,13
@@ -328,10 +328,10 @@ f7mtxcont
 	.byte 32,2,"LOAD/",2,"SAVE pHONE bOOK AND cONFIG.",13,13
 	.byte 32,2,"VIEW aUTHOR'S mESSAGE",13,13,0
 f7mtx2
-prret .byte 3,22,0,5,cp,"RESS <",158,18,"r",e,t,u,cr,n,146,5,"> TO ABORT.",13,0
-prret2 .byte 3,22,7,159,"return",13,0
+prret	.byte 3,22,0,5,cp,"RESS <",158,18,"r",e,t,u,cr,n,146,5,"> TO ABORT.",13,0
+prret2	.byte 3,22,7,159,"return",13,0
 
-bpsspd .byte 44,1,176,4,96,9,192,18,128,37,0,75,0,150;new rates
+bpsspd	.byte 44,1,176,4,96,9,192,18,128,37,0,75,0,150;new rates
 	;  300  1200  2400 4800   9600   19200  38400
 	;  00   01    02    03   04     05     06
 	;  256  256   1024  2304 4608   9472   19200

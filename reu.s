@@ -1,6 +1,6 @@
 ;REU ROUTINES - 17XX REU. Only uses first bank regardless. 64k is more than enough memory
 
-bufreu .byte $00;0-ram 1-reu
+bufreu	.byte $00;0-ram 1-reu
 
 ; detect REU
 
@@ -8,14 +8,14 @@ detectreu
 		 ;jmp noreu;temp byte to default to no reu, for troubleshooting if needed
 
 	ldx #2
-loop1    txa
+loop1	txa
 	sta $df00,x
 	inx
 	cpx #6
 	bne loop1
 
 	ldx #2
-loop2    txa
+loop2	txa
 	cmp $df00,x
 	bne noreu
 	inx
@@ -36,7 +36,7 @@ loop2    txa
 		 sta bufend+1
 	rts
 
-noreu    lda #0
+noreu	lda #0
 	sta bufreu
 		 lda #<endprg   ;set buffer start
 	sta buffst
@@ -48,11 +48,11 @@ noreu    lda #0
 		 sta bufend+1
 	rts
 
-bufend .byte $00,$00
+bufend	.byte $00,$00
 
 ;read/write to from reu
 
-length   = 0001;one byte at a time
+length	= 0001;one byte at a time
 
 reuwrite
 	sta bufptrreu
@@ -96,7 +96,7 @@ reuread
 	sta $df08
 	lda #0
 	sta $df0a
-reutoc64 lda #$b1
+reutoc64	lda #$b1
 	sta $df01
 		 lda buffstreu
 		 rts

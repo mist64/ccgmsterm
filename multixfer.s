@@ -1,6 +1,6 @@
 ;
-xmpoly .byte 13,5,'mULTI-TRANSFER - pUNTER ONLY.',13,0
-cf1  ;multi-send
+xmpoly	.byte 13,5,'mULTI-TRANSFER - pUNTER ONLY.',13,0
+cf1	;multi-send
 	jsr cosave
 	lda protoc
 	beq mulsav
@@ -23,7 +23,7 @@ mulsav
 ;ldy #>mlswrn
 ;jsr outstr
 ;jmp abortx
-mulsok  lda #<msntxt
+mulsok	lda #<msntxt
 	ldy #>msntxt
 	jsr outstr
 	lda #<moptxt
@@ -32,7 +32,7 @@ mulsok  lda #<msntxt
 	jsr mltdir;grab files from directory listing
 	lda mulcnt;some files to send?
 	bne mlss1;yes
-mlss0  jmp mlssab;nope, we are done
+mlss0	jmp mlssab;nope, we are done
 mlss1
 	lda mulfln
 	sta mulcnt;how many files to send. decrement until none left
@@ -61,17 +61,17 @@ mlsinc
 	jmp mulab2
 mlssen
 	ldy #17
-mlss2  lda ($fd),y
+mlss2	lda ($fd),y
 	cmp #160
 	bne mlss3
 	dey
 	cpy #01
 	bne mlss2
 	jmp mulab2
-mlss3  dey
+mlss3	dey
 	sty max
 	iny
-mlss4  lda ($fd),y
+mlss4	lda ($fd),y
 	sta inpbuf-2,y
 	dey
 	cpy #01
@@ -92,7 +92,7 @@ mlsg
 mlsgo
 	jsr mlshdr
 	ldy #0
-mlsgo1  lda inpbuf,y
+mlsgo1	lda inpbuf,y
 	jsr chrout
 	iny
 	cpy max
@@ -116,7 +116,7 @@ mlsgo1  lda inpbuf,y
 	beq mlss5
 	ldx #00
 	stx $a2
-mlstim  lda $a2
+mlstim	lda $a2
 	cmp #110
 	bcc mlstim
 	jmp mlsinc
@@ -124,12 +124,12 @@ mlss5
 	jsr mlshdr
 	ldx #16
 	lda #04   ;ctrl-d
-mlss6  jsr chrout
+mlss6	jsr chrout
 	dex
 	bne mlss6
 	lda #$0d
 	jsr chrout
-mlssab jsr clrchn
+mlssab	jsr clrchn
 	jsr coback
 	jsr gong
 	jmp term
@@ -140,7 +140,7 @@ mlshdr
 	jsr chkout
 	ldx #16
 	lda #09   ;ctrl-i
-mlscri  jsr chrout
+mlscri	jsr chrout
 	dex
 	bne mlscri
 	rts
@@ -159,7 +159,7 @@ mulab3
 	jsr enablexfer
 	jmp term
 ;
-cf3  ;multi-receive
+cf3	;multi-receive
 	jsr disablexfer
 	jsr cosave
 	lda protoc
@@ -231,7 +231,7 @@ mlrfl2
 	lda inpbuf
 	cmp #04   ;ctrl-d
 	bne mlffl2
-mlfext  jmp mulabt
+mlfext	jmp mulabt
 mlffl2
 	jsr dowmen
 	lda inpbuf
@@ -244,13 +244,13 @@ goobad
 	beq goober
 	cmp #'*'
 	bne goob2
-goober  rts
-goob2 cmp #':'
+goober	rts
+goob2	cmp #':'
 	beq goob3
 	ldx #3
 	bne goob4
-goob3  ldx #25
-goob4  inc 1837,x
+goob3	ldx #25
+goob4	inc 1837,x
 	lda 1837,x
 	cmp #':'
 	bcc goober
@@ -260,11 +260,11 @@ goob4  inc 1837,x
 	bpl goob4
 	rts
 ;
-msntxt .byte 13,14,5,18,32,'mULTI-sEND ',146,32,45,32
+msntxt	.byte 13,14,5,18,32,'mULTI-sEND ',146,32,45,32
 	.byte 'sELECT FILES:',13,13,0
-moptxt .byte 154,32,'yES/nO/qUIT/sKIP8/dONE/'
+moptxt	.byte 154,32,'yES/nO/qUIT/sKIP8/dONE/'
 	.byte 'aLL',13,0
-mrctxt .byte 13,14,5,18,32,'mULTI-rECEIVE ',13,13
+mrctxt	.byte 13,14,5,18,32,'mULTI-rECEIVE ',13,13
 	.byte 159,'wAITING FOR HEADER...c= ABORTS.',13,0
 ;multi - choose files
 mltdir
@@ -301,7 +301,7 @@ mdrlp0
 	dey
 	bpl mdrlp0
 	ldy #$01
-mdrlp1  jsr mgetch
+mdrlp1	jsr mgetch
 	dey
 	bpl mdrlp1
 	ldy #0
@@ -314,7 +314,7 @@ mdrlp1  jsr mgetch
 	sta $07e8,y
 	lda #0
 	sta $06
-mdrlp2  jsr mgetch
+mdrlp2	jsr mgetch
 	inc $06
 	cmp #'"'
 	bne mdrlp2
@@ -370,7 +370,7 @@ drlptp
 	lda $05
 	ora #$40
 	sta $05
-drlpte  lda $05
+drlpte	lda $05
 	ldy #18
 	sta ($fd),y
 	sta $07e8,y
@@ -385,7 +385,7 @@ dirgrb
 	bne mulpmt
 	jsr mdrret
 	bne mulnen
-mulpmt dec mulskp
+mulpmt	dec mulskp
 	jsr drpol7
 mulnen
 	lda diskdv
@@ -394,14 +394,14 @@ mulnen
 	jsr tksa
 	ldy #01
 	jmp mdrlp1
-mgetch  jsr acptr
+mgetch	jsr acptr
 	ldx status
 	bne mdrlp3
 	cmp #00
 	rts
-mdrlp3  pla
+mdrlp3	pla
 	pla
-mdrext  lda diskdv
+mdrext	lda diskdv
 	jsr listen
 	lda #$e0
 	jsr second
@@ -454,8 +454,8 @@ drpol2
 	bne drprf1
 	lda #' '
 	bne drprf2
-drprf1  lda #'*'
-drprf2  jsr chrout
+drprf1	lda #'*'
+drprf2	jsr chrout
 	lda drtype,x
 	jsr chrout
 	lda drtyp2,x
@@ -467,8 +467,8 @@ drprf2  jsr chrout
 	bne drprf3
 	lda #' '
 	bne drprf4
-drprf3  lda #'<'
-drprf4  jsr chrout
+drprf3	lda #'<'
+drprf4	jsr chrout
 	bne drpol4
 drpol3
 	jsr chrout
@@ -490,7 +490,7 @@ mlsf0
 	lda #$9d
 	jsr chrout
 	jsr curprt
-mlswlp  jsr getin
+mlswlp	jsr getin
 	beq mlswlp
 	and #127
 	cmp #'A'
@@ -507,12 +507,12 @@ mlswlp  jsr getin
 	pla
 	cmp #'Y'
 	bne mlsf1
-mlsyes  ldy #19
+mlsyes	ldy #19
 	inc mulfln
 	lda #$80
 	sta ($fd),y
 	bne mlsnpr2
-mlsf1  cmp #'N'
+mlsf1	cmp #'N'
 	beq mlsnpr
 	cmp #'A'
 	bne mlsf2
@@ -540,7 +540,7 @@ mlsf4
 	bne mlsf0
 	lda #07
 	sta mulskp
-mlsnpr  lda #$0d
+mlsnpr	lda #$0d
 	jsr chrout
 drpol7
 	lda $fd
@@ -551,7 +551,7 @@ drpol7
 	adc #0
 	sta $fe
 	rts
-mlsnpr2  lda #$0d
+mlsnpr2	lda #$0d
 	jsr chrout
 drpol72
 	lda $fd

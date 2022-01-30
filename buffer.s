@@ -1,8 +1,8 @@
 ;
-buftxt .byte 5
+buftxt	.byte 5
 	.byte "bUFFER "
 	.byte 00
-buftx2 .byte " BYTES FREE.  "
+buftx2	.byte " BYTES FREE.  "
 	.byte 13,2
 	.byte "OPEN  "
 	.byte 2
@@ -20,23 +20,23 @@ buftx2 .byte " BYTES FREE.  "
 	.byte 2
 	.byte "VIEW: "
 	.byte 0
-opntxt .byte "oPEN"
+opntxt	.byte "oPEN"
 	.byte 00
-clotxt .byte "cLOSED"
+clotxt	.byte "cLOSED"
 	.byte 00
-erstxt .byte  "eRASE bUFFER! - "
+erstxt	.byte  "eRASE bUFFER! - "
 	.byte 2
 	.byte "YES OR "
 	.byte 2
 	.byte "NO?       "
 	.byte 157,157,157,15,157,157,157,0
-snbtxt .byte 13,13
+snbtxt	.byte 13,13
 	.byte "sENDING BUFFER..."
 	.byte 13,13,00
-dontxt .byte 13,13,5
+dontxt	.byte 13,13,5
 	.byte "dONE."
 	.byte 13,0
-bufreuenabledtxt .byte 5
+bufreuenabledtxt	.byte 5
 	.byte "reu ",0
 bufmsg
 	lda bufreu
@@ -84,7 +84,7 @@ f4
 	cpx #02
 	bne buffrc
 	jmp cf3
-buffrc  ;buffer cmds
+buffrc	;buffer cmds
 	jsr cosave
 bufask
 	lda #$0d
@@ -183,7 +183,7 @@ bufvew
 	sta buffl2
 	jsr prtbuf
 	jmp main
-prtbuf ;buf.to screen
+prtbuf	;buf.to screen
 	lda buffst
 	pha
 	lda buffst+1
@@ -207,7 +207,7 @@ memget
 	ldx buffst+1
 	cpx bufptr+1
 	bcc memok
-memgab ldx #$40
+memgab	ldx #$40
 	stx status
 	rts
 memok
@@ -242,7 +242,7 @@ skpbf2
 ;
 bufcm5
 	cmp #'S'
-jne bufcm6
+jne	bufcm6
 	jsr solfil
 	jmp savbuf
 solfil
@@ -254,7 +254,7 @@ solfil
 	jsr entfil
 	bne solfok
 	jmp abortx
-solfok  rts
+solfok	rts
 savbuf
 	jsr disablexfer;to be save 5-13 fix?? worked without it, but this should be here
 	lda #0
@@ -292,7 +292,7 @@ savbuf
 	sta buffst
 	sta buffst+1
 	jmp amoveon
-afuckit jsr $f624
+afuckit	jsr $f624
 amoveon
 	php
 	lda #$37
@@ -307,28 +307,28 @@ amoveon
 	sta buffst+1
 	jmp abortx
 ;reu needs a special save routine cause craig decided to be all fancy with this one :)
-af624   jsr $fcd1;check the tape read/write pointer
-af627   bcs af63f;
-af629   ;lda ($ac),y
+af624	jsr $fcd1;check the tape read/write pointer
+af627	bcs af63f;
+af629	;lda ($ac),y
 	jsr reuread
-af62b   jsr $eddd;send a byte to an i/o device over the serial bus
-af62e   jsr $ffe1;stop. query stop key indicator, at memory address $0091; if pressed, call clrchn and clear keyboard buffer.
-af631   bne af63a
-af633   jsr $f642
-af636   lda #$00
-af638   sec
-af639   rts
+af62b	jsr $eddd;send a byte to an i/o device over the serial bus
+af62e	jsr $ffe1;stop. query stop key indicator, at memory address $0091; if pressed, call clrchn and clear keyboard buffer.
+af631	bne af63a
+af633	jsr $f642
+af636	lda #$00
+af638	sec
+af639	rts
 af63a
 	inc buffst
 	lda buffst
 	beq anext
 	jsr $fcdb
 	bne af624
-anext inc buffst+1
+anext	inc buffst+1
 	jsr $fcdb;advance tape pointer
-af63d   bne af624
-af63f   jsr $edfe;UNLSTN.
-afnext        jmp $f642
+af63d	bne af624
+af63f	jsr $edfe;UNLSTN.
+afnext	jmp $f642
 ;done
 bsaved
 	jsr enablexfer
@@ -423,7 +423,7 @@ chgbp1
 	lda bufptr
 	bne chgbp2
 	dec bufptr+1
-chgbp2  dec bufptr
+chgbp2	dec bufptr
 	jmp chgben
 chgbp3
 	lda bufptr+1
@@ -442,9 +442,9 @@ chgben
 	pla
 	rts
 ;
-bufpdt .byte 13,13,"dEVICE",0
-bufpda .byte 13,cs,'ec.',ca,'.: ',0
-bufpdp .byte $93,13,cp,'rinting...',13,0
+bufpdt	.byte 13,13,"dEVICE",0
+bufpda	.byte 13,cs,'ec.',ca,'.: ',0
+bufpdp	.byte $93,13,cp,'rinting...',13,0
 bufpro
 	lda #<bufpdt
 	ldy #>bufpdt
@@ -454,10 +454,10 @@ bufpro
 	jsr chrout
 	jsr inputl
 	bne bufpr2
-bufpra lda #$0d
+bufpra	lda #$0d
 	jsr chrout
 	jmp abortx
-bufpr2 lda inpbuf
+bufpr2	lda inpbuf
 	cmp #'3'
 	bcc bufpra
 	cmp #'6'
@@ -533,7 +533,7 @@ memprp
 	ldx status
 	bne mempr3
 	jmp mempr2
-mempab pla
+mempab	pla
 	jmp mempr2
 mempr3
 	jmp clrchn

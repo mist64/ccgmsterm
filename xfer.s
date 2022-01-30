@@ -1,6 +1,6 @@
 ;xmodem-crc fix here til xferpt
-xmdtxt .byte 13,13,5,cx,m,'ODEM ',0
-xmctxt .byte 13,13,5,cx,m,'ODEM-crc ',0
+xmdtxt	.byte 13,13,5,cx,m,'ODEM ',0
+xmctxt	.byte 13,13,5,cx,m,'ODEM-crc ',0
 xferfn
 	pha
 	lda protoc
@@ -63,7 +63,7 @@ abortx
 	jsr close
 	jsr enablexfer
 	jmp main
-xfermd  pha
+xfermd	pha
 	jmp xferm0
 xfrmsg
 	pha
@@ -74,7 +74,7 @@ xfrmsg
 	jsr chrout
 	lda #bcolor
 	sta backgr
-xferm0  lda #13
+xferm0	lda #13
 	sta 214
 	lda #$0d
 	jsr chrout
@@ -82,7 +82,7 @@ xferm0  lda #13
 	sta textcl
 	ldx #40
 	lda #192
-xferm1  jsr chrout
+xferm1	jsr chrout
 	dex
 	bne xferm1
 	lda #<xfrmed
@@ -103,7 +103,7 @@ xferm3
 	ldy #>xfrtxt
 	jsr outstr
 	ldy #0
-xferm4  lda inpbuf,y
+xferm4	lda inpbuf,y
 	jsr chrout
 	iny
 	cpy max
@@ -121,8 +121,8 @@ margin
 	lda #<mrgtxt
 	ldy #>mrgtxt
 	jmp outstr
-upltyp .byte 0,'P','S','U'
-f1    ;upload
+upltyp	.byte 0,'P','S','U'
+f1	;upload
 	jsr turnoffscpu
 	jsr disablexfer
 	jsr cosave
@@ -159,12 +159,12 @@ uplmen
 uplfil
 	ldy max
 	ldx #03
-fltpsr  lda upltyp,x
+fltpsr	lda upltyp,x
 	cmp inpbuf+1,y
 	beq fltpfo
 	dex
 	bne fltpsr
-fltpfo  stx pbuf+27
+fltpfo	stx pbuf+27
 	jmp uplok
 filtes
 	ldy max
@@ -178,7 +178,7 @@ filtes
 	ldx diskdv
 	ldy #00
 	jsr setlfs
-filopn  jsr open
+filopn	jsr open
 	ldx #15
 	jsr chkin
 	jsr getin
@@ -190,7 +190,7 @@ filopn  jsr open
 	jsr close
 	pla
 	plp
-filtso  rts
+filtso	rts
 uplok
 	lda #0
 	jsr xfrmsg
@@ -236,7 +236,7 @@ xfrdun
 	jsr pnt109;clear and reenable
 	jsr gong
 	jmp main
-f3    ;download
+f3	;download
 	jsr disablexfer
 	lda #0
 	sta mulcnt
@@ -357,8 +357,8 @@ dowop3
 	jsr clear232
 	jmp xfrend;close file
 ;
-sndtxt  .byte 13,13,5,2,'READ OR',2,'SEND FILE? ',00
-sndtxttwo .byte 'sPACE TO PAUSE - r/s TO ABORT',13,13,00
+sndtxt	.byte 13,13,5,2,'READ OR',2,'SEND FILE? ',00
+sndtxttwo	.byte 'sPACE TO PAUSE - r/s TO ABORT',13,13,00
 f2
 	ldx 653
 	cpx #02
@@ -428,7 +428,7 @@ sndfil
 	jsr chrout
 	jmp main
 
-nickdelaybyte .byte $00
+nickdelaybyte	.byte $00
 
 tmsetl
 	ldx #0
@@ -439,6 +439,6 @@ tmloop
 	bcc tmloop
 tmlop3
 	ldx #255
-tmlop2 dex
+tmlop2	dex
 	bne tmlop2
 	rts
