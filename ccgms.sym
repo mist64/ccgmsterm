@@ -371,8 +371,8 @@ al 00462D .svctxt
 al 003ECB .losvco
 al 003EB9 .newget2
 al 003ECA .waittemp
-al 003E4B .haynoanswerand
-al 003DFD .haynocarrand
+al 003E48 .haynoanswerand
+al 003E00 .haynocarrand
 al 003E75 .haynoanswer
 al 003DD3 .haybusand
 al 003D88 .haynocarr

@@ -67,30 +67,30 @@ bne haynocarrand;move to check for no carrier
 jsr puthayes
 jsr newgethayes
 cmp #$55 ;u
-.byte 0,0 ; bne haybus3 ; MIST
+jne haybus3
 jsr puthayes
 jsr newgethayes
 cmp #$53 ;s
-.byte 0,0 ; bne haybus3 ; MIST
+.byte 2,2 ; bne haybus3 ; MIST
 jsr puthayes
 jsr newgethayes
 cmp #$59 ;y
-.byte 0,0 ; bne haybus3 ; MIST
+.byte 3,3 ; bne haybus3 ; MIST
 ldy #$00
 sty bustemp
 jmp haybak ; busy!
 ;
 haynocarrand
 cmp #$4e ;n
-jne haybus3;move to next char
+.byte 0,0 ; bne haybus3 ; MIST
 jsr puthayes
 jsr newgethayes
 cmp #$4f ;o
-.byte 0,0 ; bne haybus3 ; MIST
+.byte 4,4 ; bne haybus3 ; MIST
 jsr puthayes
 jsr newgethayes
 cmp #$20 ;' '
-.byte 0,0 ; bne haybus3 ; MIST
+.byte 5,5 ; bne haybus3 ; MIST
 jsr puthayes
 jsr newgethayes
 cmp #$43 ;c
@@ -98,34 +98,34 @@ bne haynoanswerand
 jsr puthayes
 jsr newgethayes
 cmp #$41 ;a
-.byte 0,0 ; bne haybus3 ; MIST
+.byte 6,6 ; bne haybus3 ; MIST
+jsr puthayes
+jsr newgethayes
+cmp #$52 ;r
+.byte 7,7 ; bne haybus3 ; MIST
 jsr puthayes
 jsr newgethayes
 cmp #$52 ;r
 .byte 0,0 ; bne haybus3 ; MIST
-jsr puthayes
-jsr newgethayes
-cmp #$52 ;r
-jne haybus3 ; MIST
 ldy #$00
 sty bustemp
 jmp haynan ; no carrier!
 
 haynoanswerand
 cmp #$41 ;a
-.byte 0,0 ; bne haybus3 ; MIST
+.byte 8,8 ; bne haybus3 ; MIST
 jsr puthayes
 jsr newgethayes
 cmp #$4e ;n
-.byte 0,0 ; bne haybus3 ; MIST
+.byte 9,9 ; bne haybus3 ; MIST
 jsr puthayes
 jsr newgethayes
 cmp #$53 ;s
-.byte 0,0 ; bne haybus3 ; MIST
+.byte 10,10 ; bne haybus3 ; MIST
 jsr puthayes
 jsr newgethayes
 cmp #$57 ;w
-.byte 0,0 ; bne haybus3 ; MIST
+jne haybus3
 ldy #$00
 sty bustemp
 jmp haynan ; no carrier!
