@@ -6,6 +6,7 @@
 * based on 5.5 source by Craig Smith 01/1988.
 * 2017/2018/2019/2020/2021 mods by alwyz, http://1200baud.wordpress.com (as of 1/1/2021 I am no longer maintaining ccgms. thanks! - alwyz)
 * cleaned up and converted to ca65 by Michael Steil, 2022
+	* this currently (cfcdbe2) builds the same PRG as https://csdb.dk/release/?id=198392
 
 ## Build
 
