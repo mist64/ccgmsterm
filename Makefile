@@ -6,7 +6,8 @@ all:
 	cat /tmp/0801.bin ccgms.prg > /tmp/2.bin
 	hexdump -C /tmp/1.bin > /tmp/1
 	hexdump -C /tmp/2.bin > /tmp/2
-	ksdiff /tmp/[12]
+	diff -u /tmp/[12]
+	#ksdiff /tmp/[12]
 
 usb: all
 	cp ccgms.prg /Volumes/C64; diskutil eject /Volumes/C64
