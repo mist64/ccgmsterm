@@ -1,7 +1,6 @@
 
 ;-----------CONFIG
 
-	.segment "S5100"
 config
 baudrt	.byte $02 ;2400 baud def
 mopo1	.byte $00 ;used to be pick up byte - unused and will now be atdt/atd byte - 00-atdt - 01-atd

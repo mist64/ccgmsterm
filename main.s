@@ -1,4 +1,3 @@
-	.segment "S1000"
 ;start of terminal program
 
 ;pal/ntsc detect

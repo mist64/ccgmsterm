@@ -144,15 +144,23 @@ cx	= 216
 cy	= 217
 z	= 219
 
-	.segment "S07FF"
+.segment "S07FF"
+
 	.word $0801
-	.segment "S0801"
+
+.segment "S0801"
+
 	.byte $0d,$08,$0a,00,$9e,$34,$30
 	.byte $39,$36,00,00,00
 	jmp prestart
 
+.segment "S0812"  ;pxxxxx
+
 	.include "punter.s"
 	;about 40 bytes still free here to play with before $1000
+
+.segment "S1000"
+
 	.include "main.s"
 	.include "macro.s"
 	.include "params.s"
@@ -160,7 +168,13 @@ z	= 219
 	.include "reu.s"
 	.include "theme.s"
 	.include "easyflash.s"
+
+.segment "S5100"
+
 	.include "config.s"
+
+.segment "S5C00"
+
 	.include "credits.s"
 
 endprg	.byte 0

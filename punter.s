@@ -1,4 +1,3 @@
-	.segment "S0812"  ;pxxxxx
 ;
 ;PUNTER
 ;
