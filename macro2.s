@@ -1,3 +1,27 @@
+;xfer id and pw to macros F5 and F7
+xferidpw
+	ldy #59
+xferid
+	lda (nlocat),y
+	sta macmem+69,y
+	iny
+	lda (nlocat),y
+	beq xferpw
+	jmp xferid
+xferpw
+	sta macmem+69,y
+	ldy #71
+xferpw2
+	lda (nlocat),y
+	sta macmem+121,y
+	iny
+	lda (nlocat),y
+	beq xferp3
+	jmp xferpw2
+xferp3
+	sta macmem+121,y
+	rts
+
 ;MACROS
 macmdm	.byte 0
 macxrg	.byte 0
