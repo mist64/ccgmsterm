@@ -1,5 +1,5 @@
-.feature labels_without_colons, loose_char_term, loose_string_term
-.macpack longbranch
+        .feature labels_without_colons, loose_char_term, loose_string_term
+        .macpack longbranch
 
 ; ccgms term 2021 source based on 5.5 source
 ; by craig smith 01/1988. 2017/2018/2019/2020/2021 mods by alwyz
@@ -226,25 +226,25 @@ cx = 216
 cy = 217
 z  = 219
 
-.segment "S07FF"
-.word $0801
-.segment "S0801"
-.byte $0d,$08,$0a,00,$9e,$34,$30
-.byte $39,$36,00,00,00
- jmp prestart
+        .segment "S07FF"
+        .word $0801
+        .segment "S0801"
+        .byte $0d,$08,$0a,00,$9e,$34,$30
+        .byte $39,$36,00,00,00
+        jmp prestart
 
-.include "punter.s"
+        .include "punter.s"
 	;about 40 bytes still free here to play with before $1000
-.include "main.s"
-.include "macro.s"
-.include "params.s"
-.include "rs232.s"
-.include "reu.s"
-.include "theme.s"
-.include "easyflash.s"
-.include "config.s"
-.include "credits.s"
+        .include "main.s"
+        .include "macro.s"
+        .include "params.s"
+        .include "rs232.s"
+        .include "reu.s"
+        .include "theme.s"
+        .include "easyflash.s"
+        .include "config.s"
+        .include "credits.s"
 
 endprg .byte 0
 endall
-.end
+        .end
