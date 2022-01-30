@@ -922,9 +922,9 @@ ansion
  cmp #'['
  beq leftbracketansi;[ after escape code
  cmp #'M'
- .byte 0,0 ; jeq ansimend ; MIST
- cmp #'m'
  jeq ansimend
+ cmp #'m'
+ .byte 0,0 ; jeq ansimend ; MIST
  cmp #'J'
  beq ansimend
  cmp #'j'
