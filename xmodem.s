@@ -112,7 +112,8 @@ calccrc		lda	#$00		; yes, calculate the crc for the 128 bytes
 		sta	crcz		;
 		sta	crcz+1		;
 		ldy	#3		;
-calccrc1	lda	(xmobuf),y		;
+calccrc1
+	lda	(xmobuf),y		;
 		eor 	crcz+1 		; quick crc computation with lookup tables
 			tax		 	; updates the two bytes at crc & crc+1
 			lda 	crcz		; with the byte send in the "a" register
@@ -325,7 +326,8 @@ oldxmodemout
 newcrcout
 	sta crcrcvfix1+1
 	stx crcrcvfix2+1
-crcrcvfix1	lda #nak
+crcrcvfix1
+	lda #nak
 	jsr chrout
 	jsr clrchn
 xmorcl
@@ -358,7 +360,8 @@ xmorc3
 xmorc4
 	sta (xmobuf),y
 	iny
-crcrcvfix2	cpy #132
+crcrcvfix2
+	cpy #132
 	bcc xmorc3
 ;doing the old checksum check
 	ldy #1

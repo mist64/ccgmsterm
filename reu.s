@@ -96,7 +96,8 @@ reuread
 	sta $df08
 	lda #0
 	sta $df0a
-reutoc64	lda #$b1
+reutoc64
+	lda #$b1
 	sta $df01
 		 lda buffstreu
 		 rts

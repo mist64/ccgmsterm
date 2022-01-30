@@ -37,7 +37,8 @@ pal232	.word 3283,820,409    ; transmit times for PAL
 	.word 3285,814,406    ; full bit times for PAL
 
 isbyte	.byte 0
-lastring	.byte 0
+lastring
+	.byte 0
 
 rsget		lda $99
 	cmp #2                ; see if default input is modem
@@ -229,7 +230,8 @@ inable	stx $9e         ; enable rs232 input
 	lda #$90
 	jmp change
 
-setbaud232	lda baudrt
+setbaud232
+	lda baudrt
 setbd0	asl
 	clc
 	adc ntsc
@@ -558,7 +560,8 @@ upsetup
 
 	;; enable serial interface (IRQ+NMI)
 
-enableup	sei
+enableup
+	sei
 
 	ldx  #<new_irq          ; install new IRQ-handler
 	ldy  #>new_irq
@@ -707,7 +710,8 @@ jbgetup	jsr upgetxfer
 	lda #0
 	rts
 
-upgetxfer	; refer to this routine only if you wanna use it for protocols (xmodem.punter etc)
+upgetxfer
+	; refer to this routine only if you wanna use it for protocols (xmodem.punter etc)
 		ldx rhead
 	cpx rtail
 	beq @1                ; skip (empty buffer, return with carry set)
@@ -729,7 +733,8 @@ upgetxfer	; refer to this routine only if you wanna use it for protocols (xmodem
 
 	;; put byte to serial interface
 
-newoutup	pha                        ;dupliciaton of original kernal routines
+newoutup
+	pha                        ;dupliciaton of original kernal routines
 	lda  $9a                  ;test dfault output device for
 	cmp  #$02                   ;screen, and...
 	beq  :+
@@ -917,7 +922,9 @@ modget
 
 	jmp swgetxfer
 
-modgetup	jmp upgetxfer
+modgetup
+	jmp upgetxfer
 
-modgetrs	jmp rsgetxfer
+modgetrs
+	jmp rsgetxfer
 

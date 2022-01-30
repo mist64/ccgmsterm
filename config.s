@@ -125,6 +125,7 @@ theme	.byte 0;0-classic
 			 ;2-v8.1 Predator/FCC
 			 ;3-9.4 Ice THEME
 			 ;4-17.2 Defcon/Unicess
-diskoref	.byte $00;00 = ef - 01=disk
+diskoref
+	.byte $00;00 = ef - 01=disk
 endsav	.byte 0
 

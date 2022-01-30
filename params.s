@@ -205,15 +205,15 @@ op3txt	.byte "pUNTER    ","xMODEM    ","xMODEM-crc"
 	;themes
 	;0-classic
 	;1-Iman of XPB v7.1
-			 ;2-v8.1 Predator/FCC
-			 ;3-9.4 Ice THEME
-			 ;4-17.2 Defcon/Unicess
+	;2-v8.1 Predator/FCC
+	;3-9.4 Ice THEME
+	;4-17.2 Defcon/Unicess
 op4txt	.byte "cLASSIC ccgms V5.5  "
 	.byte "iMAN / xpb V7.1     "
-	   .byte "pREDATOR / fcc V8.1 "
-	   .byte "iCE THEME V9.4      "
-	   .byte "dEFCON/uNICESS V17.2"
-	   .byte "aLWYZ / ccgms 2021  "
+	.byte "pREDATOR / fcc V8.1 "
+	.byte "iCE THEME V9.4      "
+	.byte "dEFCON/uNICESS V17.2"
+	.byte "aLWYZ / ccgms 2021  "
 op5txt	.byte 29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,"ef  ",29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,"dISK"
 prmtab
 	lda #$0d
@@ -302,7 +302,9 @@ prmlop
 	jsr prmclc
 	ldx diskoref
 	jmp prmprt
-skipeflisting	rts
+skipeflisting
+	rts
+
 scracf	.byte "S0:",0
 svctxt	.byte $93,13,5,"fILENAME: ",0
 conffn	.byte "CCGMS-PHONE",0

@@ -693,20 +693,26 @@ bdouth	.byte $0d
 protoe	.byte $02 ;length of proto
 dreset	.byte "I0"
 diskdv	.byte $08
-drivepresent	.byte $01
+drivepresent
+	.byte $01
 alrlod	.byte 0
 lastch	.byte 0
 newbuf	.byte <endprg,>endprg
 ntsc	.byte $00   ;pal=1 - ntsc =0
-supercpubyte	.byte $00
-supertext	.byte "sUPERcpu eNABLED!",13,13,0
-nicktemp	.byte $00
-drivetemp	.byte $00
+supercpubyte
+	.byte $00
+supertext
+	.byte "sUPERcpu eNABLED!",13,13,0
+nicktemp
+	.byte $00
+drivetemp
+	.byte $00
 ;MAKECRCTABLE
 crctable
 		ldx 	#$00
 		txa
-zeroloop	sta 	crclo,x
+zeroloop
+	sta 	crclo,x
 		sta 	crchi,x
 		inx
 		bne	zeroloop

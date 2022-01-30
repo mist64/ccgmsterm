@@ -586,7 +586,8 @@ newen7id
 	lda #17
 	sta 211
 	ldy #59;start of password
-shocr6id	lda (nlocat),y
+shocr6id
+	lda (nlocat),y
 	beq newen7b
 	jsr chrout
 	iny
@@ -640,7 +641,8 @@ newen7c
 	lda #5
 	jsr chrout
 ;display current pw
-shocr66a	lda #17
+shocr66a
+	lda #17
 	sta 211
 	ldy #71;start of password
 shocr6a	lda (nlocat),y
@@ -983,7 +985,8 @@ prtunl
 	.byte 145,13,32,159
 	.byte "dIAL: "
 	.byte 05,0
-unlisted	.byte $00
+unlisted
+	.byte $00
 unltemp	.byte $00
 dalunl
 	lda #1
@@ -1232,7 +1235,8 @@ outmo2	lda $a2
 	bne outmo2
 	rts
 ;
-nicktime	.byte $00
+nicktime
+	.byte $00
 atdtxt	.byte 'ATDT',0
 atdtxt2	.byte 'ATD',34,0;adds a " before dialing the bbs cause zimmers firmware needs this
 athtxt	.byte 'ATH',13,0

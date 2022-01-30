@@ -36,7 +36,8 @@ snbtxt	.byte 13,13
 dontxt	.byte 13,13,5
 	.byte "dONE."
 	.byte 13,0
-bufreuenabledtxt	.byte 5
+bufreuenabledtxt
+	.byte 5
 	.byte "reu ",0
 bufmsg
 	lda bufreu

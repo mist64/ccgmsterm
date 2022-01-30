@@ -889,13 +889,18 @@ ddxmmgt2
 	lda rtca1
 	cmp xmodel
 	bcc ddxmogt1
-dirgetout	rts
+dirgetout
+	rts
 ;ANSI STUFF HERE
 ansi	.byte 00
-ansitemp	.byte 00
-ansicolor	.byte 00
-ansi0colors	.byte 146,28,30,149,31,156,159,152,0,0,0
-ansi1colors	.byte 151,150,153,158,154,156,159,05,0,0,0
+ansitemp
+	.byte 00
+ansicolor
+	.byte 00
+ansi0colors
+	.byte 146,28,30,149,31,156,159,152,0,0,0
+ansi1colors
+	.byte 151,150,153,158,154,156,159,05,0,0,0
 ;convert standard ascii to c= ascii
 satoca
 	pha

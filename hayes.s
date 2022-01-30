@@ -182,4 +182,5 @@ puthayes
 	sta tempbuf,y
 	rts
 
-waittemp	.byte $00
+waittemp
+	.byte $00

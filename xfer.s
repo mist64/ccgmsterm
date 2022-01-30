@@ -358,7 +358,8 @@ dowop3
 	jmp xfrend;close file
 ;
 sndtxt	.byte 13,13,5,2,'READ OR',2,'SEND FILE? ',00
-sndtxttwo	.byte 'sPACE TO PAUSE - r/s TO ABORT',13,13,00
+sndtxttwo
+	.byte 'sPACE TO PAUSE - r/s TO ABORT',13,13,00
 f2
 	ldx 653
 	cpx #02
@@ -428,7 +429,8 @@ sndfil
 	jsr chrout
 	jmp main
 
-nickdelaybyte	.byte $00
+nickdelaybyte
+	.byte $00
 
 tmsetl
 	ldx #0
