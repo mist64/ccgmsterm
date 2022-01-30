@@ -165,6 +165,7 @@ z	= 219
 
 .segment "S1000"
 
+	.include "init.s"
 	.include "main.s"
 	.include "macro.s"
 	.include "params.s"
