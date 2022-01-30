@@ -165,6 +165,8 @@ z	= 219
 
 .segment "S1000"
 
+;start of terminal program
+
 	.include "init.s"
 	.include "main.s"
 	.include "macro.s"
