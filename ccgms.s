@@ -150,8 +150,12 @@ z	= 219
 
 .segment "S0801"
 
-	.byte $0d,$08,$0a,00,$9e,$34,$30
-	.byte $39,$36,00,00,00
+	.word $080d
+	.word 10
+	.byte $9e,'4096'
+	.word 0
+	.byte 0
+
 	jmp prestart
 
 .segment "S0812"  ;pxxxxx
