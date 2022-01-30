@@ -6,19 +6,24 @@
 * based on 5.5 source by Craig Smith 01/1988.
 * 2017/2018/2019/2020/2021 mods by alwyz, http://1200baud.wordpress.com (as of 1/1/2021 I am no longer maintaining ccgms. thanks! - alwyz)
 * cleaned up and converted to ca65 by Michael Steil, 2022
-	* this currently (cfcdbe2) builds the same PRG as https://csdb.dk/release/?id=198392
+	* this currently (revision cfcdbe2) builds the same PRG (regular & EasyFlash) as https://csdb.dk/release/?id=198392
+* further improvements welcome!
 
 ## Build
 
-Build with make & ca65
+Build with make & ca65.
+
+Regular build:
 
 	make
 
-## EasyFlash
+EasyFlash build:
 
-The EasyFlash version gives you the option of loading/saving phonebook to cart and removes Swiftlink options
+	EASYFLASH=1 make
 
-EasyFlash is turned on by changing value of `efbyte` to $01.
+The EasyFlash version gives you the option of loading/saving the phonebook to cart and removes Swiftlink.
+
+In either case, the resulting file will be `build/ccgmsterm.prg`.
 
 ## Changelog
 

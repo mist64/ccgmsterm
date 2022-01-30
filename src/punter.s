@@ -781,4 +781,5 @@ pd4
 	pla
 	rts
 
-efbyte	.byte $00 ; 0 = no easyflash 1=easyflash mode
+efbyte ; 0 = no easyflash 1=easyflash mode
+	.byte EASYFLASH
