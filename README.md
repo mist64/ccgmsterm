@@ -9,6 +9,29 @@
 	* this currently (revision cfcdbe2) builds the same PRG (regular & EasyFlash) as https://csdb.dk/release/?id=198392
 * further improvements welcome!
 
+## Features
+
+* Pretty much anything you could want in a modern C64 Terminal program
+* 40 column Color Graphics Petscii / Ascii / Ansi terminal modes
+* Punter / Multi-Punter / Xmodem / Xmodem-CRC File Transfers
+* Support for User Port / UP9600 / Swiftlink serial devices
+* Baud Rates from 300-38.4k
+* 17XX REU Buffer 64k Support
+* Easyflash Cartridge Phonebook / Configuration load/save
+* Autodialer phonebook to store all of your BBS addresses, user names, and passwords
+* DOS Wedge with support for drives #8-30
+* Macros, Screenshots, Themes, and lots of little extras
+* NTSC and PAL compatible for proper user port timing.
+
+## Missing Features
+
+* RR-Net Support.
+* IDE64 Compatibility.
+* 80 Column Emulation.
+* Protocols for XModem-1k / YModem / ZModem / HModem
+* Support for devices other than a 17XX REU, Easyflash, and Swiftlink which use the cartridge port (Lt. Kernal I’m looking at you)
+* 100% support for hardware acceleration devices (SuperCPU etc). Certain conditions may affect file transfer handshake timing.
+
 ## Build
 
 Build with make & [ca65](https://github.com/cc65/cc65).
@@ -85,6 +108,5 @@ by Craig Smith
 bo zimmermans firmware (and maybe others) take issue with atdt, and prefer using atd instead for bbsing (uploads/downloads issue). hopefully this  is the only issue with firmware compatibility. willing to solve this issue on the software side, though i'd prefer firmware uses a better standard. but fuck it, it's 2020 and who gives a shit anymore about standards on an 8 bit computer from the 1980s? so i added an atd/atdt menu option
 
 ### 12-08-2020 v2021 final
-well it's been fun. it was my dream at 10 years old to mod this program. now i make the one everyone uses. it's been an honor and a privilege. there might still be bugs but they're minor if anything.
-
-good luck to the next modder! maybe someone will add xmodem-1k and 80 columns.
+* Punter stack and Unlisted dialer bugs have been eliminated
+* Support in autodialer for Zimodem and related WiFi device firmware that prefer an ATD prefix to ATDT.
