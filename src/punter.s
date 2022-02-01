@@ -706,36 +706,37 @@ nicktemp
 	.byte $00
 drivetemp
 	.byte $00
+
 ;MAKECRCTABLE
 crctable
-		ldx 	#$00
-		txa
+	ldx 	#$00
+	txa
 zeroloop
 	sta 	crclo,x
-		sta 	crchi,x
-		inx
-		bne	zeroloop
-		ldx	#$00
-fetch		txa
-		eor	crchi,x
-		sta	crchi,x
-		ldy	#$08
-fetch1		asl	crclo,x
-		rol	crchi,x
-		bcc	fetch2
-		lda	crchi,x
-		eor	#$10
-		sta	crchi,x
-		lda	crclo,x
-		eor	#$21
-		sta	crclo,x
-fetch2		dey
-		bne	fetch1
-		inx
-		bne	fetch
-		rts
-;SuperCPU ROUTINES
+	sta 	crchi,x
+	inx
+	bne	zeroloop
+	ldx	#$00
+fetch	txa
+	eor	crchi,x
+	sta	crchi,x
+	ldy	#$08
+fetch1	asl	crclo,x
+	rol	crchi,x
+	bcc	fetch2
+	lda	crchi,x
+	eor	#$10
+	sta	crchi,x
+	lda	crclo,x
+	eor	#$21
+	sta	crclo,x
+fetch2	dey
+	bne	fetch1
+	inx
+	bne	fetch
+	rts
 
+;SuperCPU ROUTINES
 turnonscpu
 	lda supercpubyte
 	beq scpuout
@@ -780,6 +781,3 @@ pd4
 	tax
 	pla
 	rts
-
-efbyte ; 0 = no easyflash 1=easyflash mode
-	.byte EASYFLASH

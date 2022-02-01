@@ -20,6 +20,10 @@
 .segment "S0812"  ;pxxxxx
 
 	.include "punter.s"
+
+efbyte ; 0 = no easyflash 1=easyflash mode
+	.byte EASYFLASH
+
 	;about 40 bytes still free here to play with before $1000
 
 .segment "S1000"
