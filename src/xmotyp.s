@@ -17,5 +17,5 @@ xmotyp
 	bne @2
 	beq @1
 
-@3:	stx pbuf+27
+@3:	stx filetype
 	rts

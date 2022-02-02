@@ -20,6 +20,7 @@
 .segment "S0812"  ;pxxxxx
 
 	.include "punter.s"
+	.include "misc2.s"
 
 efbyte ; 0 = no easyflash 1=easyflash mode
 	.byte EASYFLASH

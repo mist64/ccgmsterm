@@ -261,7 +261,7 @@ savbuf
 	lda #0
 	sta mulcnt
 	lda #$02
-	sta pbuf+27
+	sta filetype
 	jsr dowsfn
 	lda #$36
 	sta $01

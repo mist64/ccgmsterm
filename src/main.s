@@ -284,7 +284,7 @@ ctrlev
 ; lda #20
 ; bne ctrlex
 ;ctrle4
-	ldx lastch
+	ldx xlastch
 	cpx #2     ;ctrl-b
 	bne ctrlex
 	ldx #15
@@ -297,7 +297,7 @@ ctrlb2	stx $d020
 	stx $d021
 	lda #16    ;ctrl-p..non printable
 ctrlex
-	sta lastch
+	sta xlastch
 	clc
 	rts
 contn2

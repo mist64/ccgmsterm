@@ -83,7 +83,7 @@ by Craig Smith
 * added jsr call to rsopen to baudrate changer. see if that fixes some weirdness
 
 ### 5-17-2020 v2020 beta 4
-* found a bug on the original punter sourcecode that incorrectly references pbuf+11 bytes as delay 1 on 0 off, but in truth it is 1 off 0 on, so ive set both to delay on now update... ahh fuck it, no matter what, add delays every chance we can.... i disabled every opportunity to bypass delay around pnt106.
+* found a bug on the original punter sourcecode that incorrectly references var "delay" as delay 1 on 0 off, but in truth it is 1 off 0 on, so ive set both to delay on now update... ahh fuck it, no matter what, add delays every chance we can.... i disabled every opportunity to bypass delay around pnt106.
 
 ### 5-18-2020 v2020 beta 5
 * fixing some possible issues with multi-upload. crashes between files. enablexfer not getting turned back on at the right time?

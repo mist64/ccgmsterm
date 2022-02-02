@@ -164,7 +164,7 @@ fltpsr	lda upltyp,x
 	beq fltpfo
 	dex
 	bne fltpsr
-fltpfo	stx pbuf+27
+fltpfo	stx filetype
 	jmp uplok
 filtes
 	ldy max
@@ -204,7 +204,7 @@ uplok
 	jmp xmoupl
 uplok2
 	jsr clear232
-	jsr p49173
+	jsr punter_reset
 	jsr p49164
 	lda inpbuf
 	cmp #01
@@ -213,9 +213,9 @@ uplok2
 	jmp abortx
 uplcon
 	jsr margin
-	jsr p49173
+	jsr punter_reset
 	lda #$ff
-	sta pbuf+24
+	sta maxsize
 	jsr p49158
 xfrend
 	jsr disablexfer
@@ -233,7 +233,7 @@ xfrnrm
 	bne xfrdun
 	jmp abortx
 xfrdun
-	jsr pnt109;clear and reenable
+	jsr reset;clear and reenable
 	jsr gong
 	jmp main
 f3	;download
@@ -265,7 +265,7 @@ dowmen
 	pha
 	jsr clrchn
 dowmen2
-	jsr p49173;enable rs232 to receive;pnt109
+	jsr punter_reset;enable rs232 to receive;reset
 	jsr p49161;zero out punter buffers for new download and get file info from sender
 	ldx inpbuf
 	pla
@@ -279,7 +279,7 @@ dowabt
 	jmp abortx
 dowcon
 	ldx #$ff
-	stx pbuf+24
+	stx maxsize
 	jsr disablexfer
 	jsr ercopn
 	ldx #$0f
@@ -324,7 +324,7 @@ dowsfn
 	sta inpbuf+2,x
 	lda mulcnt
 	bne dowksp
-	ldy pbuf+27
+	ldy filetype
 	lda upltyp,y
 	sta inpbuf,x
 dowksp
@@ -352,7 +352,7 @@ dowop2
 	jsr crctable;create crc tables;crc fix
 	jmp xmodow;pick punter or xmodem here to really start downloading
 dowop3
-	jsr p49173;pnt109
+	jsr punter_reset;reset
 	jsr p49155;get data;pnt87
 	jsr clear232
 	jmp xfrend;close file

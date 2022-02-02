@@ -41,7 +41,7 @@ LFN_MODEM	= 5 ; only used for sending to the modem; receiving is done by calling
 
 ; memory
 xmobuf	= $fd	; zero page pointer to access the buffer
-xmoscn	= pbuf2	; 3 send and receiver buffers
+xmoscn	= buffer; 3 send and receiver buffers
 crcz	= $cb00	; used for temprarily storing the two CRC bytes
 
 ; uses the following KERNAL calls:
@@ -74,11 +74,11 @@ crcz	= $cb00	; used for temprarily storing the two CRC bytes
 ;  crchi	pre-computed crc table
 ;  enablexfer	enable serial driver
 ;  disablexfer	disable serial driver
-;  pnt109	same as "enablexfer" (no punter dep)
+;  reset	same as "enablexfer" (no punter dep)
 ;  protoc	protocol flag: 0: XMODEM, 1: XMODEM/CRC
-;  pbuf2	contains 3 XMODEM buffers
+;  buffer	contains 3 XMODEM buffers
 
-_enablexfer = pnt109
+_enablexfer = reset
 
 xmstat	.byte 0		; final error code
 xmoblk	.byte 0		; current block index
@@ -410,7 +410,7 @@ xmsync	lda #STAT_SYNC_LOST
 xmcmab	lda #STAT_USER_ABORTED
 	sta xmstat
 
-; clear garbage off stack [XXX why not assign S?]
+; clear garbage off stack [XXX just assign S; this is copied from punter]
 :	tsx
 	cpx xmostk
 	beq :+
@@ -618,6 +618,7 @@ retry2:	jsr clear232
 @badcrc	jmp retry1
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+; does not belong to XMODEM source
 .include "xmotyp.s"
 
 ;----------------------------------------------------------------------

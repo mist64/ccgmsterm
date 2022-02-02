@@ -207,7 +207,7 @@ edtde6
 	lda macbkg
 	cmp #2
 	bne edtclh
-	sta lastch
+	sta xlastch
 	cpx wchmac
 	beq edtclb
 	lda maccol
@@ -221,7 +221,7 @@ edtclb
 	jmp edtdla
 edtclh
 	lda #0
-	sta lastch
+	sta xlastch
 	lda maccol
 	jmp edtdln
 edtde7
