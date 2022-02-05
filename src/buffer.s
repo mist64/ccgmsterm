@@ -81,8 +81,8 @@ bufprm
 	ldy #>buftx2
 	jmp outstr
 f4
-	ldx 653
-	cpx #02
+	ldx SHFLAG
+	cpx #SHFLAG_CBM
 	bne buffrc
 	jmp cf3
 buffrc	;buffer cmds
@@ -252,9 +252,9 @@ solfil
 	lda #$0d
 	jsr chrout
 	jsr chrout
-	jsr entfil
+	jsr ui_get_filename
 	bne solfok
-	jmp abortx
+	jmp ui_abort
 solfok	rts
 savbuf
 	jsr disablexfer;to be save 5-13 fix?? worked without it, but this should be here
@@ -306,7 +306,7 @@ amoveon
 	lda #$00
 	sta buffst
 	sta buffst+1
-	jmp abortx
+	jmp ui_abort
 ;reu needs a special save routine cause craig decided to be all fancy with this one :)
 af624	jsr $fcd1;check the tape read/write pointer
 af627	bcs af63f;
@@ -457,7 +457,7 @@ bufpro
 	bne bufpr2
 bufpra	lda #$0d
 	jsr chrout
-	jmp abortx
+	jmp ui_abort
 bufpr2	lda inpbuf
 	cmp #'3'
 	bcc bufpra

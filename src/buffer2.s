@@ -9,8 +9,8 @@ cf7	;screen to buffer
 	lda #0
 	sta 198
 	lda #$f1
-	sta $a2
-scnbf0	lda $a2
+	sta JIFFIES
+scnbf0	lda JIFFIES
 	bne scnbf0
 	jsr getin
 	cmp #140

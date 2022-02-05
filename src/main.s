@@ -54,8 +54,8 @@ mainab
 specck
 	cmp #6
 	bne specc1
-	ldx 653
-	cpx #6
+	ldx SHFLAG
+	cpx #SHFLAG_CBM | SHFLAG_CTRL
 	bne specc1
 	ldx #16
 	stx datdir
@@ -65,9 +65,9 @@ specck
 specc1
 ;cmp #$a4;underline key
 ;bne chkscr
-;ldx 653     ;shift _ toggles
+;ldx SHFLAG     ;shift _ toggles
 ;beq checkf  ;n/d cursor
-;cpx #1
+;cpx #SHFLAG_SHIFT
 ;beq spetog
 ;lda allcap
 ;eor #$01
@@ -76,8 +76,8 @@ specc1
 spetog
 ;jmp crsrtg
 chkscr
-	ldx 653
-	cpx #$05    ;shift-ctrl and 1-4
+	ldx SHFLAG
+	cpx #SHFLAG_SHIFT | SHFLAG_CTRL	; shift-ctrl and 1-4
 	bcc chekrs  ;toggle screen
 	ldx #$03
 chksc1
@@ -167,8 +167,8 @@ mainb
 	jmp bufchk  ;skip modem input
 main3
 	jsr clrchn
-	ldx 653
-	cpx #4     ;ctrl pressed
+	ldx SHFLAG
+	cpx #SHFLAG_CTRL	; ctrl pressed
 	bne specc2
 	ldx 197    ;fn key
 	cpx #3
@@ -340,7 +340,7 @@ scrtog	;toggle screen #1-4
 	txa        ;(swap screen memory with
 	pha        ; behind kernal rom)
 	jsr curoff
-	lda 653
+	lda SHFLAG
 	sta $04
 	pla
 	asl a
@@ -446,7 +446,7 @@ bufclr
 	sta bufptr+1
 	rts
 finpos	;calculate screenpos
-	ldy line
+	ldy LINE
 	lda $ecf0,y
 	sta locat
 	lda $d9,y
@@ -513,26 +513,26 @@ trmtyp
 	bne asctrm
 	lda theme
 	bne trmtyp2
-	lda #<gfxtxt
-	ldy #>gfxtxt
+	lda #<txt_graphics
+	ldy #>txt_graphics
 	bne termtp
 trmtyp2
-	lda #<gfxtxt2
-	ldy #>gfxtxt2
+	lda #<txt_graphics2
+	ldy #>txt_graphics2
 	bne termtp
 asctrm
-	lda #<asctxt
-	ldy #>asctxt
+	lda #<txt_ascii
+	ldy #>txt_ascii
 termtp
 	jsr outstr
 	lda theme
 	bne ready2
-	lda #<rdytxt
-	ldy #>rdytxt
+	lda #<txt_terminal_ready
+	ldy #>txt_terminal_ready
 	jmp outstr
 ready2
-	lda #<rdytxt2
-	ldy #>rdytxt2
+	lda #<txt_term_activated
+	ldy #>txt_term_activated
 	jmp outstr
 msgtxt
 	.byte 13,$93,8,5,14,18,32,28,32

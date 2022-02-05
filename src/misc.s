@@ -19,8 +19,8 @@ dodir
 	jsr enablexfer
 	jmp main
 f8	;term toggle
-	ldx 653
-	cpx #2
+	ldx SHFLAG
+	cpx #SHFLAG_CBM
 	bne termtg
 	jmp cf7
 termtg
@@ -37,12 +37,12 @@ crsrtg	;ascii crsr toggle
 	jmp main
 
 hangup	;hang up phone
-	ldx 653
-	cpx #2
+	ldx SHFLAG
+	cpx #SHFLAG_CBM
 	bne hangup6;not C= Stop
 	jsr curoff
-	lda #<dsctxt
-	ldy #>dsctxt
+	lda #<txt_disconnecting
+	ldy #>txt_disconnecting
 	jsr outstr
 	lda motype
 	beq droprs
@@ -56,9 +56,9 @@ droprs	lda #%00000100
 	lda #0
 	sta $dd01
 	ldx #226
-		stx $a2
-:	bit $a2
-		bmi :-
+	stx JIFFIES
+:	bit JIFFIES
+	bmi :-
 	lda #4
 	sta $dd01
 	jmp main
@@ -68,12 +68,13 @@ dropup	lda #$04
 	lda #$02
 	sta $dd01    ;cia2: data port register b
 	ldx #$e2
-		stx $a2
-a7ef3	bit $a2
+	stx JIFFIES
+a7ef3	bit JIFFIES
 	bmi a7ef3
 	lda #$02
 	sta $dd03    ;cia2: data direction register b
 	jmp main
+
 dropswift
-	jsr dropdtr
+	jsr sw_dropdtr
 	jmp main

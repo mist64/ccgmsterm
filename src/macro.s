@@ -105,7 +105,7 @@ jcs	edtmen
 	bne edtkey
 	jmp edtmen
 edtky2
-	ldx 214
+	ldx LINE
 	cpx #23
 	bcs edtkey
 	cpx #3

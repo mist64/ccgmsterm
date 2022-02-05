@@ -1,50 +1,50 @@
-;xmodem-crc fix here til xferpt
-xmdtxt	.byte 13,13,5,cx,m,'ODEM ',0
-xmctxt	.byte 13,13,5,cx,m,'ODEM-crc ',0
-xferfn
+;----------------------------------------------------------------------
+txt_xmodem:
+	.byte 13,13,5,cx,m,'ODEM ',0
+txt_xmodem_crc:
+	.byte 13,13,5,cx,m,'ODEM-crc ',0
+
+;----------------------------------------------------------------------
+; display "[protocol], enter name" and input string
+ui_prompt_filename:
 	pha
 	lda protoc
-	beq xferpt
+	beq @2
 	cmp #$02
-	beq crctxt
-	lda #<xmdtxt
-	ldy #>xmdtxt
+	beq @1
+	lda #<txt_xmodem
+	ldy #>txt_xmodem
 	jsr outstr
-	jmp xferwc
-crctxt
-	lda #<xmctxt
-	ldy #>xmctxt
+	jmp @3
+@1:	lda #<txt_xmodem_crc
+	ldy #>txt_xmodem_crc
 	jsr outstr
-	jmp xferwc
-xferpt
-	lda #<ptrtxt
-	ldy #>ptrtxt
+	jmp @3
+@2:	lda #<txt_newpunter
+	ldy #>txt_newpunter
 	jsr outstr
-xferwc
-	pla
-	bne xferdw
-	lda #<upltxt
-	ldy #>upltxt
+@3:	pla
+	bne @4
+	lda #<txt_up
+	ldy #>txt_up
 	clc
-	bcc entfnt
-xferdw
-	lda #<dowtxt
-	ldy #>dowtxt
-entfnt
+	bcc @5
+@4:	lda #<txt_down
+	ldy #>txt_down
+@5:	jsr outstr
+	lda #<txt_load
+	ldy #>txt_load
 	jsr outstr
-	lda #<lodtxt
-	ldy #>lodtxt
-	jsr outstr
-entfil
+;----------------------------------------------------------------------
+ui_get_filename:
 	ldx #0
-entfil2
-	lda #0
+:	lda #0
 	sta inpbuf,x
 	inx
 	cpx #20
-	bne entfil2
-	lda #<flntxt
-	ldy #>flntxt
+	bne :-
+	lda #<txt_enter_filename
+	ldy #>txt_enter_filename
 	ldx #16
 	jsr input
 	php
@@ -52,10 +52,12 @@ entfil2
 	jsr chrout
 	plp
 	rts
-abortx
+
+;----------------------------------------------------------------------
+ui_abort:
 	jsr clrchn
-	lda #<abrtxt
-	ldy #>abrtxt
+	lda #<txt_aborted
+	ldy #>txt_aborted
 	jsr outstr
 	jsr coback
 	jsr disablexfer
@@ -63,75 +65,80 @@ abortx
 	jsr close
 	jsr enablexfer
 	jmp main
+
+;----------------------------------------------------------------------
 xfermd	pha
 	jmp xferm0
-xfrmsg
+;----------------------------------------------------------------------
+ui_setup_xfer_screen:
 	pha
 	lda #15
-	sta textcl
-	sta backgr
+	sta textcl	; LT GRAY
+	sta backgr	; make sure CLS fills will LT GRAY
 	lda #$93
 	jsr chrout
 	lda #bcolor
-	sta backgr
+	sta backgr	; restore screen background color
 xferm0	lda #13
-	sta 214
+	sta LINE
 	lda #$0d
 	jsr chrout
-	lda #06
+	lda #6
 	sta textcl
 	ldx #40
-	lda #192
-xferm1	jsr chrout
+	lda #192	; "─"
+:	jsr chrout
 	dex
-	bne xferm1
-	lda #<xfrmed
-	ldy #>xfrmed
+	bne :-
+	lda #<txt_yellow
+	ldy #>txt_yellow
 	jsr outstr
 	pla
-	bne xferm2
-	lda #<upltxt
-	ldy #>upltxt
+	bne @1
+	lda #<txt_up
+	ldy #>txt_up
 	clc
-	bcc xferm3
-xferm2
-	lda #<dowtxt
-	ldy #>dowtxt
-xferm3
-	jsr outstr
-	lda #<xfrtxt
-	ldy #>xfrtxt
+	bcc @2
+@1:	lda #<txt_down
+	ldy #>txt_down
+@2:	jsr outstr
+	lda #<txt_loading
+	ldy #>txt_loading
 	jsr outstr
 	ldy #0
-xferm4	lda inpbuf,y
+:	lda inpbuf,y
 	jsr chrout
 	iny
 	cpy max
-	bne xferm4
+	bne :-
 	lda inpbuf,y
 	jsr chrout
 	lda inpbuf+1,y
 	jsr chrout
 	lda #$0d
 	jsr chrout
-	lda #<xf2txt
-	ldy #>xf2txt
+	lda #<txt_press_c_to_abort
+	ldy #>txt_press_c_to_abort
 	jmp outstr
-margin
-	lda #<mrgtxt
-	ldy #>mrgtxt
+margin:
+	lda #<txt_good_bad_blocks
+	ldy #>txt_good_bad_blocks
 	jmp outstr
-upltyp	.byte 0,'P','S','U'
-f1	;upload
+
+;----------------------------------------------------------------------
+upltyp:
+	.byte 0,'P','S','U'
+
+;----------------------------------------------------------------------
+;upload
+f1:
 	jsr turnoffscpu
 	jsr disablexfer
 	jsr cosave
 	lda #0
 	sta mulcnt
-	jsr xferfn
-	bne uplfff
-	jmp abortx
-uplfff
+	jsr ui_prompt_filename
+	jeq ui_abort
 	jsr ercopn
 	ldy max
 	lda #','
@@ -148,7 +155,7 @@ uplfff
 	ldy max
 	lda #$55;'U'
 	sta inpbuf+1,y
-uplmen
+uplmen:
 	jsr filtes
 	beq uplfil
 	pha
@@ -156,17 +163,18 @@ uplmen
 	jsr chkin
 	pla
 	jmp drver3
-uplfil
-	ldy max
+uplfil:	ldy max
 	ldx #03
-fltpsr	lda upltyp,x
+:	lda upltyp,x
 	cmp inpbuf+1,y
-	beq fltpfo
+	beq :+
 	dex
-	bne fltpsr
-fltpfo	stx filetype
+	bne :-
+:	stx filetype
 	jmp uplok
-filtes
+
+;----------------------------------------------------------------------
+filtes:
 	ldy max
 	iny
 	iny
@@ -174,50 +182,53 @@ filtes
 	ldx #<inpbuf
 	ldy #>inpbuf
 	jsr setnam
-	lda #02
+	lda #2
 	ldx diskdv
-	ldy #00
+	ldy #0
 	jsr setlfs
-filopn	jsr open
+filopn:
+	jsr open
 	ldx #15
 	jsr chkin
 	jsr getin
 	cmp #'0'
-	beq filtso
+	beq :+
 	php
 	pha
 	lda #$02
 	jsr close
 	pla
 	plp
-filtso	rts
-uplok
+:	rts
+
+;----------------------------------------------------------------------
+uplok:
 	lda #0
-	jsr xfrmsg
+	jsr ui_setup_xfer_screen
 	jsr clrchn
 	lda protoc
-	beq uplok2;punter
-;crc fix - create tables
+	beq :+
+	; XMODEM
 	jsr crctable
-;end crc fix
 	jsr margin
-	jmp xmoupl
-uplok2
+	jmp xmodem_upload
+
+:	; PUNTER
 	jsr clear232
 	jsr punter_reset
 	jsr p49164
 	lda inpbuf
-	cmp #01
-	bne uplcon
+	cmp #1
+	bne :+
 	jsr bell
-	jmp abortx
-uplcon
-	jsr margin
+	jmp ui_abort
+
+:	jsr margin
 	jsr punter_reset
 	lda #$ff
 	sta maxsize
 	jsr p49158
-xfrend
+xfrend:
 	jsr disablexfer
 	lda #02
 	jsr close
@@ -225,60 +236,57 @@ xfrend
 	lda #$0d
 	jsr chrout
 	lda mulcnt
-	beq xfrnrm
+	beq :+
 	rts
-xfrnrm
-	lda inpbuf
+:	lda inpbuf
 	cmp #$01
 	bne xfrdun
-	jmp abortx
-xfrdun
+	jmp ui_abort
+xfrdun:
 	jsr reset;clear and reenable
 	jsr gong
 	jmp main
-f3	;download
+
+;----------------------------------------------------------------------
+; download
+f3:
 	jsr disablexfer
 	lda #0
 	sta mulcnt
 	jsr cosave
 	jsr turnoffscpu
-	lda #$01
-	jsr xferfn;display "punter protocol, enter name" and input string
-	bne dowfok
-	jmp abortx
-dowfok
+	lda #1
+	jsr ui_prompt_filename
+	jeq ui_abort
 	lda protoc
-	beq dowfo2
+	beq :+
 	jsr xmotyp
 	jmp dowmen
-dowfo2
-	ldy max
+:	ldy max
 	lda #160
 	sta inpbuf,y
 	sta inpbuf+1,y
-dowmen
+dowmen:
 	lda #01
-	jsr xfrmsg;set up screen
+	jsr ui_setup_xfer_screen
 	ldx protoc
-	bne dowcon
+	bne @1
 	lda inpbuf
 	pha
 	jsr clrchn
-dowmen2
-	jsr punter_reset;enable rs232 to receive;reset
-	jsr p49161;zero out punter buffers for new download and get file info from sender
+	jsr punter_reset	; enable rs232 to receive;reset
+	jsr p49161		; zero out punter buffers for new download and get file info from sender
 	ldx inpbuf
 	pla
 	sta inpbuf
 	lda mulcnt
-	bne dowcon
-	cpx #01
-	bne dowcon
-dowabt
+	bne @1
+	cpx #1
+	bne @1
 	jsr bell
-	jmp abortx
-dowcon
-	ldx #$ff
+	jmp ui_abort
+
+@1:	ldx #$ff
 	stx maxsize
 	jsr disablexfer
 	jsr ercopn
@@ -300,12 +308,11 @@ dowcon
 	lda #':'
 	jsr chrout
 	ldx #0
-scrlop
-	lda inpbuf,x
+:	lda inpbuf,x
 	jsr chrout
 	inx
 	cpx max
-	bne scrlop
+	bne :-
 	lda #$0d
 	jsr chrout
 	jsr dowsfn
@@ -313,7 +320,9 @@ scrlop
 	jsr xfermd
 	jsr margin
 	jmp dowopn
-dowsfn
+
+;----------------------------------------------------------------------
+dowsfn:
 	jsr clrchn
 	ldx max
 	lda #','
@@ -323,12 +332,11 @@ dowsfn
 	lda #'W'
 	sta inpbuf+2,x
 	lda mulcnt
-	bne dowksp
+	bne :+
 	ldy filetype
 	lda upltyp,y
 	sta inpbuf,x
-dowksp
-	lda max
+:	lda max
 	clc
 	adc #$04
 	ldx #<inpbuf
@@ -338,89 +346,94 @@ dowksp
 	ldx diskdv
 	tay
 	jmp setlfs
-dowopn
+
+;----------------------------------------------------------------------
+dowopn:
 	jsr filopn
-	beq dowop2
+	beq :+
 	pha
 	ldx #$0f
 	jsr chkin
 	pla
 	jmp drver3
-dowop2
-	lda protoc
-	beq dowop3
+
+:	lda protoc
+	beq :+
 	jsr crctable;create crc tables;crc fix
-	jmp xmodow;pick punter or xmodem here to really start downloading
-dowop3
-	jsr punter_reset;reset
+	jmp xmodem_download;pick punter or xmodem here to really start downloading
+
+:	jsr punter_reset;reset
 	jsr p49155;get data;pnt87
 	jsr clear232
 	jmp xfrend;close file
-;
-sndtxt	.byte 13,13,5,2,'READ OR',2,'SEND FILE? ',00
-sndtxttwo
+
+;----------------------------------------------------------------------
+txt_read_or_send:
+	.byte 13,13,5,2,'READ OR',2,'SEND FILE? ',00
+txt_read_or_send2:
 	.byte 'sPACE TO PAUSE - r/s TO ABORT',13,13,00
-f2
-	ldx 653
-	cpx #02
+
+;----------------------------------------------------------------------
+f2:
+	ldx SHFLAG
+	cpx #SHFLAG_CBM
 	bne send
 	jmp cf1
-;send textfile
+
+;----------------------------------------------------------------------
+; send text file
 send
 	jsr disablexfer
 	jsr cosave
-	lda #<sndtxt
-	ldy #>sndtxt
+	lda #<txt_read_or_send
+	ldy #>txt_read_or_send
 	jsr outstr
 	jsr savech
 sndlop
 	jsr getin
 	cmp #'S'
-	bne sndc1
+	bne @1
 	ldx #$40
-	bne sndfil
-sndc1
-	cmp #'R'
-	bne sndc2
+	bne @3
+@1:	cmp #'R'
+	bne @2
 	ldx #0
-	beq sndfil
-sndc2
-	cmp #$0d
+	beq @3
+@2:	cmp #$0d
 	bne sndlop
 	jsr restch
 	lda #$0d
 	jsr chrout
-sndabt
-	jmp abortx
-sndfil
-	ora #$80
+@abt:	jmp ui_abort
+
+@3:	ora #$80
 	jsr outcap
 	lda #$0d
 	jsr chrout
 	stx bufflg
 	stx buffl2
-	jsr entfil
-	beq sndabt
+	jsr ui_get_filename
+	beq @abt
 	lda #$0d
 	jsr chrout
 	lda max
 	ldx #<inpbuf
 	ldy #>inpbuf
 	jsr setnam
-	lda #<sndtxttwo
-	ldy #>sndtxttwo
+	lda #<txt_read_or_send2
+	ldy #>txt_read_or_send2
 	jsr outstr
-	lda #02
+	lda #2
 	ldx diskdv
 	tay
 	jsr setlfs
 	jsr open
 	ldx #$05
 	jsr chkout
-;lda #15
-;jsr chrout
+	;lda #15
+	;jsr chrout
 	jsr dskout
-	lda #02
+	lda #2
 	jsr close
 	lda #0
 	jsr enablexfer
@@ -429,18 +442,18 @@ sndfil
 	jsr chrout
 	jmp main
 
+;----------------------------------------------------------------------
 nickdelaybyte
-	.byte $00
+	.byte 0	; [XXX unused]
 
+;----------------------------------------------------------------------
 tmsetl
 	ldx #0
-	stx $a2
-tmloop
-	ldx $a2
+	stx JIFFIES
+:	ldx JIFFIES
 	cpx #$03  ;***time del
-	bcc tmloop
-tmlop3
+	bcc :-
 	ldx #255
-tmlop2	dex
-	bne tmlop2
+:	dex
+	bne :-
 	rts

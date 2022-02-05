@@ -54,7 +54,7 @@ border	= $d020
 textcl	= 646
 clcode	= $e8da
 scrtop	= 648
-line	= 214
+LINE	= 214
 column	= 211
 llen	= 213
 qmode	= 212
@@ -89,8 +89,6 @@ mulfln	= 2046
 mlsall	= 2045
 mulskp	= 2044
 max	= $02
-outstat	= $a9
-jiffies	= $a2
 begpos	= $07
 endpos	= $ac
 bufflg	= $0b
@@ -101,7 +99,6 @@ rtail	= $029b
 rhead	= $029c
 rfree	= $029d ; used for swiftlink only
 rflow	= $029e ; not used
-enabl	= $02a1
 ca	= 193  ;cap letters!
 b	= 194
 c	= 195
@@ -126,3 +123,17 @@ w	= 215
 cx	= 216
 cy	= 217
 z	= 219
+
+; register saving, used by rs_user, swiftlink, up9600
+rsotm	= $97
+rsotx	= $9e
+rsoty	= $9f
+
+; KERNAL symbols
+DFLTN	= $99
+DFLTO	= $9a
+JIFFIES	= $a2 ; TIME+2
+SHFLAG	= $028d ; bitfield: modifier keys currently pressed
+ SHFLAG_SHIFT	= 1
+ SHFLAG_CBM		= 2
+ SHFLAG_CTRL	= 4

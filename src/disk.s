@@ -114,7 +114,7 @@ outst1	lda ($22),y
 	bne outst2
 	iny
 	lda ($22),y
-	sta 214
+	sta LINE
 	lda #$0d
 	jsr chrout
 	lda #145

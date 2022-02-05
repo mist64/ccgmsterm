@@ -7,8 +7,6 @@ BLOCK_SIZE_XMODEM_CRC	= PAYLOAD_SIZE+5
 
 ; KERNAL
 STATUS	= $90	; channel I/O error/EOF indicator
-SHFLAG	= $028d ; bitfield: modifier keys currently pressed
- SHFLAG_CBM	= 2	; mask: CBM currently pressed
 RIDBE = $029b
 RIDBS = $029c
 RODBS = $029d
@@ -53,17 +51,17 @@ crcz	= $cb00	; used for temprarily storing the two CRC bytes
 ;  getin
 
 ; calls from outside code:
-;  xmodow	download, will jump back to main
-;  xmoupl	upload, will jump back to main
-;  xmmrtc	increment counter, generic code
+;  xmodem_download	download, will jump back to main
+;  xmodem_upload	upload, will jump back to main
+;  xmmrtc		increment counter, generic code
 ; symbols used from outside code
-;  xmodel	receive timeout, reused var
-;  rtca0	counter, see xmmrtc
-;  rtca2	 "
-;  rtca1	 "
+;  xmodel		receive timeout, reused var
+;  rtca0		counter, see xmmrtc
+;  rtca2		 "
+;  rtca1		 "
 
 ; uses the following CCGMSTERM symbols:
-;  abortx	jumped to after a transfer has failed or was user-aborted
+;  ui_abort	jumped to after a transfer has failed or was user-aborted
 ;  gong		play sound when printing error
 ;  xfrdun	jumped to after a transfer has succeeded
 ;  outstr	print error message
@@ -636,13 +634,13 @@ msg_sync_lost:
 
 ;----------------------------------------------------------------------
 ; *** upload: send, handle status
-xmoupl
+xmodem_upload
 	jsr xmodem_send	; send
 	jmp xmodon
 
 ;----------------------------------------------------------------------
 ; *** download: receive, handle status
-xmodow
+xmodem_download:
 	jsr xmodem_receive	; receive
 xmodon
 	lda #$0d	; CR
@@ -678,4 +676,4 @@ xmodnp
 	lda #$0d	; CR
 	jsr chrout
 xmodna
-	jmp abortx
+	jmp ui_abort

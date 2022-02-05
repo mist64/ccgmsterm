@@ -1,14 +1,17 @@
-;
-xmpoly	.byte 13,5,'mULTI-TRANSFER - pUNTER ONLY.',13,0
+;----------------------------------------------------------------------
+txt_multixfer:
+	.byte 13,5,'mULTI-TRANSFER - pUNTER ONLY.',13,0
+
+;----------------------------------------------------------------------
 cf1	;multi-send
 	jsr cosave
 	lda protoc
 	beq mulsav
 mulnop
-	lda #<xmpoly
-	ldy #>xmpoly
+	lda #<txt_multixfer
+	ldy #>txt_multixfer
 	jsr outstr
-	jmp abortx
+	jmp ui_abort
 mulsav
 	jsr turnoffscpu
 	lda #$93
@@ -22,7 +25,7 @@ mulsav
 ;lda #<mlswrn
 ;ldy #>mlswrn
 ;jsr outstr
-;jmp abortx
+;jmp ui_abort
 mulsok	lda #<msntxt
 	ldy #>msntxt
 	jsr outstr
@@ -105,8 +108,8 @@ mlsgo1	lda inpbuf,y
 	jsr chrout
 	jsr clrchn
 	jsr uplmen;disk setup
-	ldx 653
-	cpx #02
+	ldx SHFLAG
+	cpx #SHFLAG_CBM
 	beq mulab2
 	lda inpbuf
 	bne mulab2
@@ -115,8 +118,8 @@ mlsgo1	lda inpbuf,y
 	cmp mulcnt
 	beq mlss5
 	ldx #00
-	stx $a2
-mlstim	lda $a2
+	stx JIFFIES
+mlstim	lda JIFFIES
 	cmp #110
 	bcc mlstim
 	jmp mlsinc
@@ -175,15 +178,15 @@ mulrav
 	ldy #>mrctxt
 	jsr outstr
 mrllgc
-	ldx 653
+	ldx SHFLAG
 	bne mrllgc
 mlrnew
 	jsr enablexfer
 	ldy #0
 	sty max
 mlrwat
-	ldx 653
-	cpx #02
+	ldx SHFLAG
+	cpx #SHFLAG_CBM
 	beq mulab2
 	ldx #05
 	jsr chkin
@@ -191,8 +194,8 @@ mlrwat
 	cmp #09
 	bne mlrwat
 mlrwt2
-	ldx 653
-	cpx #02
+	ldx SHFLAG
+	cpx #SHFLAG_CBM
 	beq mulab2
 	jsr getin
 	cmp #0
@@ -201,8 +204,8 @@ mlrwt2
 	beq mlrwt2
 	bne mlrfl1
 mlrflp
-	ldx 653
-	cpx #02
+	ldx SHFLAG
+	cpx #SHFLAG_CBM
 	beq mulab2
 	ldx #5
 	jsr chkin
@@ -259,13 +262,16 @@ goob4	inc 1837,x
 	dex
 	bpl goob4
 	rts
-;
+
+;----------------------------------------------------------------------
 msntxt	.byte 13,14,5,18,32,'mULTI-sEND ',146,32,45,32
 	.byte 'sELECT FILES:',13,13,0
 moptxt	.byte 154,32,'yES/nO/qUIT/sKIP8/dONE/'
 	.byte 'aLL',13,0
 mrctxt	.byte 13,14,5,18,32,'mULTI-rECEIVE ',13,13
 	.byte 159,'wAITING FOR HEADER...c= ABORTS.',13,0
+
+;----------------------------------------------------------------------
 ;multi - choose files
 mltdir
 	jsr disablexfer

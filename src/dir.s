@@ -18,8 +18,8 @@ dirst
 	jsr open
 	lda #0
 	sta dirmdm
-	lda 653
-	cmp #2     ;c= f6
+	lda SHFLAG
+	cmp #SHFLAG_CBM	; c= f6
 	bne dirlp0
 	lda #1
 	sta dirmdm

@@ -61,12 +61,12 @@ prtmc1
 	jsr chrout
 	jsr clrchn
 	lda #$fd
-	sta $a2
-prtmcd	lda $a2
+	sta JIFFIES
+prtmcd	lda JIFFIES
 	bne prtmcd
 	lda #$fd
-	sta $a2
-prtmcd2	lda $a2
+	sta JIFFIES
+prtmcd2	lda JIFFIES
 	bne prtmcd2
 	ldx #5
 	jsr chkin

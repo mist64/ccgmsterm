@@ -93,8 +93,8 @@ stodv4
 	jsr ercopn
 	jmp init
 rsopen	;open rs232 file
-	jsr disabl
-	jsr disableup
+	jsr rsuser_disable
+	jsr up9600_disable
 	jsr enablemodem
 	jsr clall
 	lda #lognum

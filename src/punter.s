@@ -10,7 +10,6 @@
 
 lastch	= inpbuf
 pnt11	= $028d
-pnt14	= $02a1
 
 startloc	= $c000
 c64	= 1

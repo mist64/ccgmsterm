@@ -294,7 +294,7 @@ hilcu7
 posnam
 	ldx curbtx+1
 	dex
-	stx 214
+	stx LINE
 	lda #$0d
 	jsr chrout
 	lda #7    ;start at col 7
@@ -336,7 +336,7 @@ shocr3
 ;bne shotty
 shobau;start display of bottom line
 	lda #23
-	sta 214
+	sta LINE
 	lda #$0d
 	jsr chrout
 	lda #7
@@ -896,8 +896,8 @@ dalfin
 dalnv
 	jsr prtstt
 	lda #$e0
-	sta $a2
-dalfcl	lda $a2
+	sta JIFFIES
+dalfcl	lda JIFFIES
 	bne dalfcl
 	lda #$0f
 	sta $d418
@@ -1103,20 +1103,20 @@ await0
 	jmp dlabrt
 await01
 	lda #$96      ;1.75 sec delay
-	sta $a2
+	sta JIFFIES
 await1
 	jsr getin    ;check r/s
 	cmp #$03
 	bne awaitl
 	jmp dlabrt
 awaitl
-	lda $a2
+	lda JIFFIES
 	bne await1
 adbegn
 	lda #$88       ;2 sec delay
-	sta $a2        ;for dial tone
+	sta JIFFIES        ;for dial tone
 await2
-	lda $a2
+	lda JIFFIES
 	bne await2
 	inc trycnt+1
 	lda trycnt+1
@@ -1184,8 +1184,8 @@ haybak
 	jsr prtstt
 haybk2
 	lda #$c8
-	sta $a2
-haybk3	lda $a2
+	sta JIFFIES
+haybk3	lda JIFFIES
 	bne haybk3
 	jsr haydel
 	jmp redial
@@ -1196,22 +1196,22 @@ haycon
 	jmp dalfin
 haydel
 	lda #$e8
-	sta $a2
+	sta JIFFIES
 	ldx #$05
 	jsr chkin
 haydll	jsr getin
 	cmp #$0d
 	beq haydlo
-	lda $a2
+	lda JIFFIES
 	bne haydll
 haydlo
 	jsr clrchn
 	rts
 dlabrt
 	lda #$d0
-	sta $a2        ;short delay
+	sta JIFFIES        ;short delay
 dlablp
-	lda $a2
+	lda JIFFIES
 	bne dlablp     ;back to phbook
 dgobak
 	lda #2
@@ -1219,9 +1219,9 @@ dgobak
 	jmp dalfin
 redial
 	lda #$80
-	sta $a2
+	sta JIFFIES
 rddel1	;2 second delay
-	lda $a2        ;before restart
+	lda JIFFIES        ;before restart
 	bne rddel1
 rgobak
 	lda #0
@@ -1230,8 +1230,8 @@ rgobak
 outmod
 	jsr outstr
 outmo1	lda #$e0
-	sta $a2
-outmo2	lda $a2
+	sta JIFFIES
+outmo2	lda JIFFIES
 	bne outmo2
 	rts
 ;

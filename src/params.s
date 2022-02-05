@@ -30,10 +30,10 @@ f7opts
 	sta $c6
 	jsr f7parm
 f7chos
-	lda $a2
+	lda JIFFIES
 	and #$0f
 	bne f7chgk
-	lda $a2
+	lda JIFFIES
 	and #$10
 	beq f7oprt
 	lda #<prret
