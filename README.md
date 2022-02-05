@@ -6,8 +6,8 @@
 * based on 5.5 source by [Craig Smith](https://github.com/spathiwa) 01/1988.
 * 2017/2018/2019/2020/2021 mods by [alwyz](http://1200baud.wordpress.com) (as of 1/1/2021 I am no longer maintaining ccgms. thanks! - alwyz)
 * cleaned up and converted to ca65 by [Michael Steil](https://www.pagetable.com/), 2022
-	* this currently (revision 4fc5e02) builds the same PRG (regular & EasyFlash) as https://csdb.dk/release/?id=198392
-	* XMODEM source has been cleaned up and commented
+	* this currently (revision 21659a8) builds the same PRG (regular & EasyFlash) as https://csdb.dk/release/?id=198392
+	* serial driver and XMODEM sources have been cleaned up and commented
 	* PUNTER source has been replaced with original source, with patches applied
 * further improvements welcome!
 
@@ -33,6 +33,10 @@
 * Protocols for XModem-1k / YModem / ZModem / HModem
 * Support for devices other than a 17XX REU, Easyflash, and Swiftlink which use the cartridge port (Lt. Kernal I’m looking at you)
 * 100% support for hardware acceleration devices (SuperCPU etc). Certain conditions may affect file transfer handshake timing.
+
+## Known Bugs
+
+* Regular (non-UP9600) user port timings are broken for PAL, see ".if 0" in rs232_userport.s.
 
 ## Build
 
