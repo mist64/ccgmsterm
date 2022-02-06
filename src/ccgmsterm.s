@@ -41,6 +41,7 @@ efbyte ; 0 = no easyflash 1=easyflash mode
 	.include "xmodem.s"
 	.include "xfer.s"
 	.include "disk.s"
+	.include "outstr.s"
 	.include "multixfer.s"
 	.include "buffer.s"
 	.include "phonebook.s"
