@@ -17,10 +17,10 @@ scnbf0	lda JIFFIES
 	bne scnbfs
 	jsr bufclr
 scnbfs
-	lda buffoc
+	lda buffer_open
 	pha
 	lda #1
-	sta buffoc
+	sta buffer_open
 	lda #0
 	sta stbrvs
 	lda #255
@@ -39,29 +39,29 @@ scnbf2	jsr finscp
 	jmp scnbr4
 scnbf3
 	lda #$0d
-	jsr putbuf
+	jsr buffer_put
 	lda #$93
-	jsr putbuf
-	lda 53272
+	jsr buffer_put
+	lda $d018
 	and #2
 	lsr a
 	lsr a
 	ror a
 	eor #$8e
-	jsr putbuf
+	jsr buffer_put
 	lda $d021
 	and #15
 	beq scnbnc
 	tax
-	lda clcode,x
+	lda COLTAB,x
 	pha
 	lda #2
-	jsr putbuf
+	jsr buffer_put
 	pla
-	jsr putbuf
+	jsr buffer_put
 scnbnc
 	lda #10
-	jsr putbuf
+	jsr buffer_put
 	lda stbyps
 	sta stbmay
 	lda #0
@@ -84,10 +84,10 @@ scnbf5
 	sta stbxps
 scnbf6
 	jsr finscp
-	sta $02
+	sta tmp02
 	jsr finscc
-	sta $03
-	lda $02
+	sta tmp03
+	lda tmp02
 	and #$80
 	cmp stbrvs
 	beq scnbf7
@@ -96,19 +96,19 @@ scnbf6
 	sta stbrvs
 	ora #18
 	eor #$80
-	jsr putbuf
+	jsr buffer_put
 scnbf7
-	lda $02
+	lda tmp02
 	cmp #$20
 	beq scnbf8
-	lda $03
+	lda tmp03
 	cmp stbcol
 	beq scnbf8
 	tax
-	lda clcode,x
-	jsr putbuf
+	lda COLTAB,x
+	jsr buffer_put
 scnbf8
-	lda $02
+	lda tmp02
 	and #$7f
 	cmp #$7f
 	beq scnbf9
@@ -123,7 +123,7 @@ scnb10
 	bcc scnb11
 	ora #$80
 scnb11
-	jsr putbuf
+	jsr buffer_put
 	inc stbxps
 	lda stbxps
 	cmp stbmax
@@ -134,7 +134,7 @@ scnbrt
 	cmp #40
 	bcs scnbr2
 	lda #$0d
-	jsr putbuf
+	jsr buffer_put
 	lda #0
 	sta stbrvs
 scnbr2
@@ -146,11 +146,11 @@ scnbr2
 scnbr3	jmp scnbnl
 scnbre
 	ldx 646
-	lda clcode,x
-	jsr putbuf
+	lda COLTAB,x
+	jsr buffer_put
 scnbr4
 	pla
-	sta buffoc
+	sta buffer_open
 	jmp main
 ;
 finscp

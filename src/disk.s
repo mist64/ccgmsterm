@@ -2,7 +2,7 @@
 ;disk output routine
 dskout
 	jsr clrchn
-	jsr curprt
+	jsr cursor_show
 	lda bufflg  ;bufflg 00=disk
 	bpl dskmo   ;$40=disk w. delay
 	jsr memget  ;$80=memory get
@@ -30,12 +30,12 @@ chstat
 	and #$40
 jne	dskext
 	jsr clrchn
-	jsr curoff
+	jsr cursor_off
 	pla
 	pha
-	jsr ctrlck
+	jsr check_control_codes
 	jsr chrout
-	jsr qimoff
+	jsr quote_insert_off
 	ldx buffl2 ;non zero=to modem
 	bne dskmo1
 	pla
@@ -47,11 +47,10 @@ dskmo1
 	ldx #05
 	jsr chkout
 	pla
-	ldx grasfl
-	beq dskmo2
-	jsr catosa
-dskmo2
-	jsr chrout
+	ldx ascii_mode
+	beq :+
+	jsr petscii_to_ascii
+:	jsr chrout
 dxmmget;this timeout failsafe makes sure the byte is received back from modem
 	;before accessing disk for another byte otherwise we can have
 	   ;all sorts of nmi related issues.... this solves everything.
@@ -96,7 +95,7 @@ dskext
 	pla
 dskex2
 	jsr clrchn
-	jmp curoff
+	jmp cursor_off
 keyprs
 	jsr clrchn
 	jsr getin

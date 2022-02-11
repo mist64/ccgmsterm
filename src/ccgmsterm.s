@@ -31,6 +31,9 @@ efbyte ; 0 = no easyflash 1=easyflash mode
 
 	.include "init.s"
 	.include "main.s"
+	.include "sound.s"
+	.include "screens.s"
+	.include "banner.s"
 	.include "dir.s"
 	.include "ansi.s"
 	.include "input.s"

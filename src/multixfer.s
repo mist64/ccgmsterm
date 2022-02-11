@@ -13,13 +13,13 @@ mulnop
 	jsr outstr
 	jmp ui_abort
 mulsav
-	jsr turnoffscpu
+	jsr supercpu_off
 	lda #$93
 	jsr chrout
-;lda bufptr+1;old references comparing buffer area and making sure theres enough
+;lda buffer_ptr+1;old references comparing buffer area and making sure theres enough
 ;cmp #>mulfil;room for punter files to be stored, but since we're now
 ;bcc mulsok;reserving #$ff space for punter, its not neccessary
-;lda bufptr
+;lda buffer_ptr
 ;cmp #<mulfil
 ;bcc mulsok
 ;lda #<mlswrn
@@ -169,7 +169,7 @@ cf3	;multi-receive
 	beq mulrav
 	jmp mulnop
 mulrav
-	jsr turnoffscpu
+	jsr supercpu_off
 	lda #$01
 	sta mulcnt
 	lda #$93
@@ -419,7 +419,7 @@ mdrext	lda diskdv
 mdrret
 	ldy #0
 drpol0
-	sty $02
+	sty tmp02
 	lda drform,y
 	cmp #02   ;ctrl-b
 	bne drpol1
@@ -479,7 +479,7 @@ drprf4	jsr chrout
 drpol3
 	jsr chrout
 drpol4
-	ldy $02
+	ldy tmp02
 	iny
 	cpy #14
 	beq drpol5
@@ -495,7 +495,7 @@ mlsf0
 	jsr chrout
 	lda #$9d
 	jsr chrout
-	jsr curprt
+	jsr cursor_show
 mlswlp	jsr getin
 	beq mlswlp
 	and #127
@@ -504,7 +504,7 @@ mlswlp	jsr getin
 	cmp #'['
 	bcs mlswlp
 	pha
-	jsr curoff
+	jsr cursor_off
 	pla
 	pha
 	jsr chrout

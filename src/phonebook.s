@@ -67,8 +67,8 @@ nontxt	.byte 5
 clrlnt	.byte 3,22,7
 	.byte "                  "
 	.byte 3,22,7,5,0
-empbbs	.byte 151,164,164,164,164,164,164,164,164,164,164,164,164
-	.byte 164,164,164,164,164,164
+empbbs	.byte 151
+	.res 18, PETSCII_UNDERLINE
 curbbs	.byte 146
 colbbs	.byte 153
 nambbs	.byte "                "
@@ -89,7 +89,7 @@ prtstt
 	pla
 	jsr outstr
 	lda #$20
-prtst2	ldx 211
+prtst2	ldx COLUMN
 	cpx #39
 	bcs prtst3
 	jsr chrout
@@ -205,7 +205,7 @@ phini2
 	ldy #>toetxt
 	jsr outstr
 phini3	lda #21  ;col 21
-	sta 211
+	sta COLUMN
 	jsr phnptr
 	jsr prtent
 	inc curpik
@@ -298,7 +298,7 @@ posnam
 	lda #$0d
 	jsr chrout
 	lda #7    ;start at col 7
-	sta 211
+	sta COLUMN
 	rts
 ;
 shocol	.byte 1,1
@@ -317,7 +317,7 @@ shocur
 	jmp shocr0
 shocrp	jsr prtcur;print current on top list
 shocr0	lda #7
-	sta 211
+	sta COLUMN
 	ldy #20
 shocr1	lda (nlocat),y
 	beq shocr2
@@ -326,7 +326,7 @@ shocr1	lda (nlocat),y
 	cpy #52;length of ip address
 	bcc shocr1
 shocr2	lda #$20
-	ldx 211
+	ldx COLUMN
 	cpx #39;clear line for next one
 	bcs shocr3
 	jsr chrout
@@ -340,7 +340,7 @@ shobau;start display of bottom line
 	lda #$0d
 	jsr chrout
 	lda #7
-	sta 211
+	sta COLUMN
 	lda shocol
 	sta 646
 	lda unlisted
@@ -353,13 +353,13 @@ shocr4	lda (nlocat),y
 	cpy #58;end of port
 	bcc shocr4
 shocr5	lda #$20
-	ldx 211
+	ldx COLUMN
 	cpx #12;clear line for next one
 	bcs shocr66
 	jsr chrout
 	bne shocr5
 shocr66	lda #17
-	sta 211
+	sta COLUMN
 	lda unlisted
 	bne shocr7
 	ldy #59;start of user id
@@ -370,7 +370,7 @@ shocr6	lda (nlocat),y
 	cpy #70;end of user id
 	bcc shocr6
 shocr7	lda #$20
-	ldx 211
+	ldx COLUMN
 	cpx #29;clear line for next one
 	bcs shocr8
 	jsr chrout
@@ -378,7 +378,7 @@ shocr7	lda #$20
 shocr8
 shotty
 	lda #34
-	sta 211
+	sta COLUMN
 	lda #7
 	sta 646
 	lda #<trycnt
@@ -455,8 +455,8 @@ newenl	lda nambbs,y
 newen3	iny
 	tya
 	clc
-	adc 211
-	sta 211
+	adc COLUMN
+	sta COLUMN
 newen4
 	lda #1
 	sta 646
@@ -492,7 +492,7 @@ newen7;start of ip address
 	lda #$0d
 	jsr chrout
 	lda #7
-	sta 211
+	sta COLUMN
 	ldy #0
 	ldx #32;max length of entry
 	jsr inpset
@@ -506,8 +506,8 @@ newen9	tya
 	sec
 	sbc #20;start of entry
 	clc
-	adc 211
-	sta 211
+	adc COLUMN
+	sta COLUMN
 	jsr inputl
 	lda #0
 	sta inpbuf,x
@@ -536,7 +536,7 @@ newen7a
 	lda #$0d
 	jsr chrout
 	lda #7;start spot
-	sta 211
+	sta COLUMN
 	ldy #0
 	ldx #5;max length of entry
 	jsr inpset
@@ -550,8 +550,8 @@ newen9a	tya
 	sec
 	sbc #53;top marker of entry
 	clc
-	adc 211
-	sta 211
+	adc COLUMN
+	sta COLUMN
 	jsr inputl
 	lda #0
 	sta inpbuf,x
@@ -576,7 +576,7 @@ newenba
 ;display ID:
 newen7id
 	lda #12
-	sta 211
+	sta COLUMN
 	lda #<curbt4
 	ldy #>curbt4
 	jsr outstr
@@ -584,7 +584,7 @@ newen7id
 	jsr chrout
 ;display current id
 	lda #17
-	sta 211
+	sta COLUMN
 	ldy #59;start of password
 shocr6id
 	lda (nlocat),y
@@ -596,7 +596,7 @@ shocr6id
 ;enter id
 newen7b
 	lda #17;start spot
-	sta 211
+	sta COLUMN
 	ldy #0
 	ldx #11;max length of entry
 	jsr inpset
@@ -610,8 +610,8 @@ newen9b	tya
 	sec
 	sbc #59;top marker of entry
 	clc
-	adc 211
-	sta 211
+	adc COLUMN
+	sta COLUMN
 	jsr inputl
 	lda #0
 	sta inpbuf,x
@@ -634,7 +634,7 @@ newenbb
 ;enter password
 newen7c
 	lda #12
-	sta 211
+	sta COLUMN
 	lda #<curbt2
 	ldy #>curbt2
 	jsr outstr
@@ -643,7 +643,7 @@ newen7c
 ;display current pw
 shocr66a
 	lda #17
-	sta 211
+	sta COLUMN
 	ldy #71;start of password
 shocr6a	lda (nlocat),y
 	beq shocr7a
@@ -653,7 +653,7 @@ shocr6a	lda (nlocat),y
 	bcc shocr6a
 shocr7a
 	lda #17;start spot
-	sta 211
+	sta COLUMN
 	ldy #0
 	ldx #11;max length of entry
 	jsr inpset
@@ -667,8 +667,8 @@ newen9c	tya
 	sec
 	sbc #71;top marker of entry
 	clc
-	adc 211
-	sta 211
+	adc COLUMN
+	sta COLUMN
 	jsr inputl
 	lda #0
 	sta inpbuf,x
@@ -798,7 +798,7 @@ phb7
 	and #$7f
 	cmp #$58;x
 	bne phb8
-	jmp f7
+	jmp handle_f7_config
 phb8
 	cmp #$20
 	beq phnsel
@@ -997,7 +997,7 @@ dalunl
 	lda #<dulstx
 	ldy #>dulstx
 	jsr prtstt
-	lda grasfl
+	lda ascii_mode
 	beq dalun1
 	lda #$80
 dalun1
@@ -1014,7 +1014,7 @@ dalun2	sta 1951,y;$079f
 	dey
 	bpl dalun2
 	lda #7
-	sta 211
+	sta COLUMN
 	ldy #0
 	ldx #32
 	jsr input
@@ -1042,7 +1042,7 @@ dalun9	sta 1951,y;$079f
 	ldy #>curunl
 	jsr outstr
 	lda #7
-	sta 211
+	sta COLUMN
 	ldy #0
 	ldx #5
 	jsr input

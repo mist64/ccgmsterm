@@ -276,11 +276,11 @@ rsuser_enable:
 rsuser_setbaud:
 	lda baudrt
 	asl
-.if 1	; [XXX This is incorrect! Instead, OFFSET has to be added if ntsc != 0]
+.if 1	; [XXX This is incorrect! Instead, OFFSET has to be added if is_pal_system != 0]
 	clc
-	adc ntsc
+	adc is_pal_system
 .else	; --- this is the corrected version ---
-	ldy ntsc
+	ldy is_pal_system
 	beq :+
 	clc
 	adc #OFFSET

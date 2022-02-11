@@ -5,25 +5,23 @@ l2	cmp $d012
 	beq l2
 	bmi l1
 	cmp #$20
-	bcc start;ntsc selected
-	ldx #$01
-	stx ntsc
+	bcc start	; ntsc selected
+	ldx #1
+	stx is_pal_system
 
 start
 
-;SuperCPU Detect; it should just tell you to turn that shit off. who needs 30MHz for 9600 baud, anyway?
-
-supercpudetect
+supercpudetect:
+; "it should just tell you to turn that shit off.
+; who needs 20MHz for 9600 baud, anyway?"
 	lda $d0bc
 	asl a
-	bcs pgminit
-
-	lda #$01
-	sta supercpubyte
+	bcs :+
+	lda #1
+	sta supercpu
+:
 
 ;SETUP INIT
-
-pgminit
 	jsr $e3bf;refresh basic reset - mostly an easyflash fix
 	sei
 	cld
@@ -84,10 +82,10 @@ stodv3
 stodv6
 	jsr detectreu
 stodv7
-	lda newbuf     ;init. buffer
-	sta bufptr     ;& open rs232
+	lda newbuf	; init. buffer
+	sta buffer_ptr	; & open rs232
 	lda newbuf+1
-	sta bufptr+1
+	sta buffer_ptr+1
 stodv4
 	jsr rsopen
 	jsr ercopn
@@ -97,9 +95,9 @@ rsopen	;open rs232 file
 	jsr up9600_disable
 	jsr enablemodem
 	jsr clall
-	lda #lognum
-	ldx #modem
-	ldy #secadr
+	lda #LFN_MODEM
+	ldx #DEV_MODEM
+	ldy #SA_MODEM
 	jsr setlfs
 	lda protoe
 	ldx #<proto
@@ -125,18 +123,18 @@ ercopn
 ercexit	rts
 init
 	lda #1
-	sta cursfl     ;non-destructive
+	sta cursor_flag	; non-destructive
 	lda #0
-	sta $9d    ;prg mode
-	sta grasfl     ;grafix mode
-;sta allcap     ;upper/lower
-	sta buffoc     ;buff closed
-	sta duplex     ;full duplex
-	jsr $e544  ;clr
-	lda alrlod ; already loaded config file?
+	sta $9d		; suppress all KERNAL messages
+	sta ascii_mode	; PETSCII mode
+	;sta allcap     ; upper/lower
+	sta buffer_open
+	sta half_duplex	; full duplex
+	jsr $e544	; clear screen
+	lda alrlod	; already loaded config file?
 	bne noload
 	lda drivepresent
-	beq noload;no drive exists
+	beq noload	; no drive exists
 ;-------------
 	jsr disablemodem
 	lda #1

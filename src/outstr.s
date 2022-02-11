@@ -1,79 +1,82 @@
-outstr
-	sty $23
-	sta $22
+;----------------------------------------------------------------------
+outstr:
+	sty zpoutstr+1
+	sta zpoutstr
 	ldy #0
-outst1	lda ($22),y
-	beq outste
+@loop:	lda (zpoutstr),y
+	beq @rts
 	cmp #2
-	beq hilite
-	cmp #03
-	bne outst2
+	beq @hilite
+	cmp #3
+	bne @skip
 	iny
-	lda ($22),y
+	lda (zpoutstr),y
 	sta LINE
 	lda #$0d
 	jsr chrout
-	lda #145
+	lda #$91	; CSR UP
 	jsr chrout
 	iny
-	lda ($22),y
-	sta 211
-	bne outst4
-outst2
-	cmp #$c1
-	bcc outst3
-	cmp #$db
-	bcs outst3
-	lda 53272
-	and #$02
+	lda (zpoutstr),y
+	sta COLUMN
+	bne @outst4
+
+@skip:	cmp #'A'+$80
+	bcc @outst3
+	cmp #'Z'+1+$80
+	bcs @outst3
+	lda $d018
+	and #2
 	php
-	lda ($22),y
+	lda (zpoutstr),y
 	plp
-	bne outst3
+	bne @outst3
 	and #$7f
-outst3
+@outst3:
 	jsr chrout
-outst4	iny
-	bne outst1
-	inc $23
-	bne outst1
-outste	rts
-hilite
+@outst4:
+	iny
+	bne @loop
+	inc zpoutstr+1
+	bne @loop
+@rts:	rts
+
+@hilite:
 	lda textcl
 	pha
 	lda #1
 	sta textcl
-	lda #18   ;rvs-on
+	lda #$12	; RVS ON
 	jsr chrout
-	lda #161
+	lda #$a1	; '▌' LEFT HALF BLOCK
 	jsr chrout
-	lda 53272
+	lda $d018
 	and #2
 	php
 	iny
-	lda ($22),y
+	lda (zpoutstr),y
 	plp
-	beq hilit2
+	beq :+
 	ora #$80
-hilit2	jsr chrout
+:	jsr chrout
 	lda #182
 	jsr chrout
 	pla
 	sta textcl
 	lda #146
-	bne outst3
-;
-outcap
-	cmp #$c1    ;cap 'a'
-	bcc outcp3
-	cmp #$db    ;cap 'z'
-	bcs outcp3
+	bne @outst3
+;----------------------------------------------------------------------
+outcap:
+	cmp #'A'+$80
+	bcc @2
+	cmp #'Z'+1+$80
+	bcs @2
 	pha
-	lda 53272
+	lda $d018
 	and #2
-	beq outcp2
+	beq @1
 	pla
-	bne outcp3
-outcp2	pla
+	bne @2
+@1:	pla
 	and #$7f
-outcp3	jmp chrout
+@2:	jmp chrout

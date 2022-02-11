@@ -3,7 +3,10 @@ dsktxt	.byte 5,13
 dsktx2	.byte "**>      "
 	.byte 157,157,157,157,157,157,00
 dskdtx	.byte '8 9 101112131415161718192021222324252627282930'
-f5	;disk command
+
+;----------------------------------------------------------------------
+handle_f5_diskcommand:
+	;disk command
 	jsr disablexfer
 	jsr ercopn
 	jsr cosave

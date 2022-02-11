@@ -1,572 +1,361 @@
-noload
-begin
+noload:
+begin:
 	jsr enablemodem
 	jsr bell
 	jsr themeroutine
-term
-	jsr mssg       ;title screen/CCGMS!
-	jsr instr		;display commands f1 etc to terminal ready
-main
-	lda supercpubyte;supercpu
+
+term:
+	jsr print_banner; title screen/CCGMS!
+	jsr print_instr	; display commands f1 etc to terminal ready
+
+main:
+	lda supercpu
 	beq main5
-	cmp #$02;already acknowleged . no need to send text to screen
-	beq main5a
-	lda #<supertext
-	ldy #>supertext
+	cmp #2		; already printed once
+	beq :+
+	lda #<txt_supercpu_enabled
+	ldy #>txt_supercpu_enabled
 	jsr outstr
-	lda #$02
-	sta supercpubyte
-main5a;supercpu = turn on 20mhz mode - for after all file transfer situations. already on? turn on again. no biggie. save code.
-	jsr turnonscpu
-main5
+	lda #2
+	sta supercpu
+:	; supercpu = turn on 20mhz mode - for after all file transfer situations. already on? turn on again. no biggie. save code.
+	jsr supercpu_on
+
+main5:
+; print tempbuf, unless empty
 	lda bustemp
-	beq mainmoveon
+	beq @moveon
 	ldy #1
-mainprint
-	lda tempbuf,y
+:	lda tempbuf,y
 	jsr chrout
 	iny
 	cpy bustemp
-	bne mainprint
+	bne :-
 	ldy #0
 	sty bustemp
-mainmoveon
+@moveon:
+
 	ldx #$ff
 	txs
-	lda #$48		;keyboard matrix routine
-	sta 655
-	lda #$eb
-	sta 656
-	jsr clrchn;$ffcc
-	jsr curprt		;cursor placement
-main2
-	lda bufptr
-	sta newbuf
-	lda bufptr+1
-	sta newbuf+1
+
+	; set keyboard matrix routine
+	lda #<$eb48	; [XXX this is the KERNAL default; it is never changed]
+	sta KEYLOG
+	lda #>$eb48
+	sta KEYLOG+1
+
 	jsr clrchn
-	jsr getin		;kernal get input
-	cmp #$00
-	bne specck
-mainab
-	jmp main3
-;check special-keys here
-specck
-	cmp #6
-	bne specc1
+	jsr cursor_show
+
+@main2:
+	lda buffer_ptr
+	sta newbuf
+	lda buffer_ptr+1
+	sta newbuf+1
+
+	jsr clrchn
+	jsr getin	; get character from keyboard
+	cmp #0
+	jeq @main3
+
+; cbm-ctrl-f: reset/init user port RS-232
+	cmp #6		; ctrl-f
+	bne @no1
 	ldx SHFLAG
 	cpx #SHFLAG_CBM | SHFLAG_CTRL
-	bne specc1
+	bne @no1
+	; cia2ddrb and cia2pb need to be here
+	; for user port modem to function
 	ldx #16
-	stx datdir
+	stx cia2ddrb
 	ldx #0
-	stx modreg;datdir and modreg need to be here for user port modem to function
-	jmp main2
-specc1
-;cmp #$a4;underline key
-;bne chkscr
-;ldx SHFLAG     ;shift _ toggles
-;beq checkf  ;n/d cursor
-;cpx #SHFLAG_SHIFT
-;beq spetog
-;lda allcap
-;eor #$01
-;sta allcap
-;jmp main2
-spetog
-;jmp crsrtg
-chkscr
+	stx cia2pb
+	jmp @main2
+@no1
+;	cmp #PETSCII_UNDERLINE
+;	bne @no2
+;	ldx SHFLAG	; shift <- toggles
+;	beq @no4	; n/d cursor
+;	cpx #SHFLAG_SHIFT
+;	beq :+
+;	lda allcap
+;	eor #1
+;	sta allcap
+;	jmp @main2
+;:	jmp crsrtg
+;@no2:
+
+; shift-ctrl-[1..4]: swap screen
 	ldx SHFLAG
-	cpx #SHFLAG_SHIFT | SHFLAG_CTRL	; shift-ctrl and 1-4
-	bcc chekrs  ;toggle screen
-	ldx #$03
-chksc1
-	cmp clcode,x ;table of color codes
-	beq chksc2
+	cpx #SHFLAG_SHIFT | SHFLAG_CTRL
+	bcc @no3
+	ldx #3
+:	cmp COLTAB,x	; PETSCII codes for ctrl-[1..4]
+	beq :+
 	dex
-	bpl chksc1
-	jmp main3   ;(not in range)
-chksc2
-	jmp scrtog  ;x holds pos 0-3
-chekrs
-	cmp #131    ;shift-r/s
-	bne checkf  ;to hang-up
+	bpl :-
+	jmp @main3
+:	jmp swap_screen	; x holds pos 0-3
+@no3:
+
+; shift-stop: hang up
+	cmp #$83
+	bne @no4
 	jmp hangup
-checkf	;f-keys
-	cmp #133
-	bcc notfky
-	cmp #141
-	bcs notfky
+@no4:
+
+; f1..f8: functions
+	cmp #133	; <= F1
+	bcc @no5
+	cmp #140+1	; > F8
+	bcs @no5
 	ldx #0
 	stx $d020
 	stx $d021
 	pha
-	jsr curoff
+	jsr cursor_off
 	pla
 	sec
-	sbc #133
-	sta $03
-	asl $03
+	sbc #133	; F1
+	sta tmp03
+	asl tmp03
 	clc
-	adc $03
-	sta fbranc+1
+	adc tmp03
+	sta @bbcarg
 	clc
-fbranc
-	bcc fbranc+2
-	jmp f1
-	jmp f3
-	jmp f5
-	jmp f7
-	jmp f2
-	jmp f4
-	jmp f6
-	jmp f8
-notfky
-;ldx allcap
-;beq upplow
-;ldx 53272
-;cpx #23
-;bne upplow
-;cmp #$41
-;bcc upplow
-;cmp #$5b  ;'z'+1
-;bcs upplow
-;ora #$80
-upplow	;ascii/gfx check
-	sta $03
-	ldx grasfl
-	beq mainop
-	jsr catosa  ;convert to ascii
-	bne mainop
-mnback
-	jmp main2
-mainop	;main output?
+@bbcarg=*+1
+	bcc *+2
+	jmp handle_f1_upload
+	jmp handle_f3_download
+	jmp handle_f5_diskcommand
+	jmp handle_f7_config
+	jmp handle_f2_send_read
+	jmp handle_f4_buffer
+	jmp handle_f6_directory
+	jmp handle_f8_switch_term
+@no5:
+
+;	ldx allcap
+;	beq @upplow
+;	ldx $d018
+;	cpx #23
+;	bne @upplow
+;	cmp #$41
+;	bcc @upplow
+;	cmp #$5b  ;'z'+1
+;	bcs @upplow
+;	ora #$80
+;@upplow:
+
+; ASCII conversion
+	sta tmp03
+	ldx ascii_mode
+	beq :+
+	jsr petscii_to_ascii
+	bne :+
+@main2alt:
+	jmp @main2
+:
+
+; send to modem
 	pha
-	ldx #lognum
+	ldx #LFN_MODEM
 	jsr chkout
 	pla
 	jsr chrout
-	ldx grasfl
-	beq maing
-	jsr satoca
-	sta $03
-	bne maing
-	jmp main2
-maing
-	ldx duplex
-	beq main3
-	jsr clrchn  ;if half duplex
-	lda $03     ;bring back char
-	ldx grasfl
-	beq mainb
-	cmp #$a4;underline key
-	bne mainb
-	lda #164    ;echo underline for
-	sta $03     ;_ in ascii/half dup
-mainb
-	jmp bufchk  ;skip modem input
-main3
+
+; convert back to PETSCII
+	ldx ascii_mode
+	beq :+
+	jsr ascii_to_petscii
+	sta tmp03
+	jeq @main2
+:
+
+; half-duplex
+	ldx half_duplex
+	beq @main3
 	jsr clrchn
+	lda tmp03	; char
+	ldx ascii_mode
+	beq :+
+	cmp #PETSCII_UNDERLINE	; [XXX no-op]
+	bne :+			; [XXX no-op]
+	lda #PETSCII_UNDERLINE
+	sta tmp03	; _ in ascii/half dup
+:	jmp @bufchk	; skip modem input
+
+@main3:
+	jsr clrchn
+
+; macro printing
 	ldx SHFLAG
-	cpx #SHFLAG_CTRL	; ctrl pressed
-	bne specc2
-	ldx 197    ;fn key
-	cpx #3
-	bcc specc2
-	cpx #7
-	bcs specc2
+	cpx #SHFLAG_CTRL; ctrl pressed
+	bne :+
+	ldx LSTX	; last keyboard scancode
+	cpx #3		; 3-6 are F7/F1/F3/F5
+	bcc :+		; [XXX this branches into code that checks X
+	cpx #7		; [XXX thinking it's SHFLAG; it works by accident]
+	bcs :+
 	lda #0
 	sta macmdm
-	jsr prtmac
-	jmp main5;instead of main;supercpu doesnt need to be turned on and called every frame.
-specc2
-	cpx #3     ;shift,c=
-	bne specc3
-	ldx 657
-	bpl specc3
-	ldx #23
-	stx 53272
-specc3
-	ldx #lognum
-	jsr chkin  ;get the byte from the modem
+	jsr print_macro
+	jmp main5
+:
+
+; charset switching
+	cpx #SHFLAG_SHIFT | SHFLAG_CBM
+	bne :+
+	ldx MODE	; charset switching allowed?
+	bpl :+		; no
+	ldx #$17
+	stx $d018	; set lowercase charset
+:
+
+; modem input
+	ldx #LFN_MODEM
+	jsr chkin	; get the byte from the modem
 	jsr getin
-	cmp #$00
-	beq mnback
+	cmp #0
+	beq @main2alt	; = @main2
 	ldx status
-	bne mnback
+	bne @main2alt	; = @main2
 	pha
 	jsr clrchn
 	pla
-nopass
-	ldx grasfl
-	beq main4
-	jsr satoca   ;ascii to c=
-	beq main3
-main4
-	cmp #20      ;delete from modem
-	bne bufchk   ;becomes false del
-	lda #$14   ; delete key working :)
-bufchk
-	jsr putbuf
+
+; ASCII conversion
+	ldx ascii_mode
+	beq :+
+	jsr ascii_to_petscii
+	beq @main3
+:	cmp #$14	; PETSCII DEL from modem
+	bne @bufchk	; [XXX no-op]
+	lda #$14	; [XXX no-op; was: $5F in Craig Smith source]
+@bufchk:
+	jsr buffer_put
 	jmp contn
-putbuf
-	ldx buffoc
-	beq buffot
-	ldx bufptr
+
+; [XXX this code is at a very awkward location, could be integrated better]
+;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+buffer_put:
+	; skip if closed
+	ldx buffer_open
+	beq @4
+	; skip if full
+	ldx buffer_ptr
 	cpx bufend
-	bne bufok
-	ldx bufptr+1
+	bne @1
+	ldx buffer_ptr+1
 	cpx bufend+1
-	beq buffot
-bufok
-	ldy bufreu
-	beq bufok2
+	beq @4
+
+@1:	ldy reu_enabled
+	beq @2
 	jsr reuwrite
-	jmp bufok3
-bufok2
-	ldy #$00
-	sta (bufptr),y
-bufok3
-	inc bufptr
-	bne buffot
-	inc bufptr+1
-buffot	rts
-contn
-	jsr ctrlck
+	jmp @3
+
+@2:	ldy #0
+	sta (buffer_ptr),y
+@3:	inc buffer_ptr
+	bne @4
+	inc buffer_ptr+1
+@4:	rts
+;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+contn:
+	jsr check_control_codes
 	bcc contn2
 	jmp main
-ctrlck
-	cmp #$0a   ;ctrl-j
-	beq swcrsr
-	cmp #$0b   ;ctrl-k
-	bne nonchk
-swcrsr
-	ldx grasfl
-	bne nonchk
+
+; [XXX this code is at a very awkward location, could be integrated better]
+;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+check_control_codes:
+	cmp #$0a	; ctrl-j: cursor on
+	beq @1
+	cmp #$0b	; ctrl-k: cursor off
+	bne @2
+
+@1:
+	ldx ascii_mode
+	bne @2
 	pha
-	jsr curoff
+	jsr cursor_off
 	pla
-	and #$01   ;form to ch flag
-	eor #$01
-	sta cursfl
-swcext
+	and #1		; form to ch flag
+	eor #1
+	sta cursor_flag
 	sec
 	rts
-nonchk
-	cmp #14    ;ctrl-n
-	bne ctrlen
+
+@2:
+	cmp #$0e	; ctrl-n: reset background to black
+	bne @3
+
 	ldx #0
 	stx $d020
 	stx $d021
-ctrlen
-	cmp #$07   ;ctrl-g;bell sound from bbs side
-	bne ctrleo
+
+@3:
+	cmp #$07	; ctrl-g: bell sound from bbs side
+	bne @4
+
 	jsr bell
-ctrleo
-	cmp #22    ;ctrl-v;end of file transfer or boomy sound
-	bne ctrlev
+
+@4:
+	cmp #$16	; ctrl-v: end of file transfer or boomy sound
+	bne @5
+
 	jsr gong
-ctrlev
-; cmp #$15   ;ctrl-u;uppercase from bbs side
-; bne ctrle2
-; ldx #21
-; stx 53272
-; bne ctrlex
-;ctrle2
-; cmp #$0c   ;ctrl-l;lowercase from bbs side
-; bne ctrle3
-; ldx #23
-; stx 53272
-; bne ctrlex
-;ctrle3
-; cmp #$5f   ;false del
-; bne ctrle4 ;(buff and 1/2 duplx)
-; lda #20
-; bne ctrlex
-;ctrle4
-	ldx xlastch
-	cpx #2     ;ctrl-b
-	bne ctrlex
+
+@5:
+;	cmp #$15	; ctrl-u: uppercase from bbs side
+;	bne @6
+
+;	ldx #$15
+;	stx $d018
+;	bne ctrlex
+
+;@6:
+;	cmp #$0c	; ctrl-l: lowercase from bbs side
+;	bne @7
+
+;	ldx #$17
+;	stx $d018
+;	bne ctrlex
+
+;@7:
+;	cmp #$5f	; false del
+;	bne @8		; (buff and 1/2 duplx)
+
+;	lda #$14	; PETSCII DEL
+;	bne ctrlex
+
+;@8:
+	ldx prev_char
+	cpx #$02	; ctrl-b: set background color
+	bne @9
+
 	ldx #15
-ctrlb1	cmp clcode,x
-	beq ctrlb2
+:	cmp COLTAB,x	; check ctrl+[1-8], cbm+[1-8]
+	beq :+
 	dex
-	bpl ctrlb1
-	bmi ctrlex
-ctrlb2	stx $d020
+	bpl :-
+	bmi @9
+:	stx $d020
 	stx $d021
-	lda #16    ;ctrl-p..non printable
-ctrlex
-	sta xlastch
+	lda #$10	; ctrl-p: non printable
+@9:
+	sta prev_char
 	clc
 	rts
-contn2
+;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+contn2:
 	pha
-	jsr curoff  ;get rid of cursor
+	jsr cursor_off
 	pla
 	jsr chrout
-	jsr qimoff
+	jsr quote_insert_off
 	jmp main
-;end of term
-;subroutines follow:
-bell
-	ldx #$09
-	stx 54291
-	ldx #00
-	stx 54292
-	ldx #$40
-	stx 54287
-	ldx #00
-	stx 54290
-	ldx #$11
-	stx 54290
-	rts
-gongm1	.byte 24,6,13,20,4,11,18,15,8,1,5,19,12,14,7,0,4,11,18,24
-gongm2	.byte 47,0,0,0,0,0,0,4,8,16,13,13,11,28,48,68,21,21,21,15
-gong
-	pha
-	ldx #0
-gong1
-	lda gongm1,x
-	tay
-	lda gongm2,x
-	sta 54272,y
-	inx
-	cpx #20
-	bcc gong1
-	pla
-	rts
-scrtog	;toggle screen #1-4
-	txa        ;(swap screen memory with
-	pha        ; behind kernal rom)
-	jsr curoff
-	lda SHFLAG
-	sta $04
-	pla
-	asl a
-	asl a
-	asl a
-	clc
-	adc #$e0
-	sta locat+1
-	lda #$04
-	sta $03
-	lda #$00
-	sta locat
-	sta $02
-	sei
-	lda $d011
-	pha
-	lda #$0b
-	sta $d011
-	lda #<ramnmi
-	sta $fffa
-	lda #>ramnmi
-	sta $fffb
-	lda #$2f
-	sta $00
-	lda #$35
-	sta $01
-scrtg1
-	jsr scrnl1
-	cmp #$08
-	bcc scrtg1
-	lda #$d8
-	sta $03
-scrtg2
-	jsr scrnl1
-	cmp #$dc
-	bcc scrtg2
-	pla
-	sta $d011
-	lda #$37
-	sta $01
-	cli
-	jmp main
-ramnmi
-	sta tempch
-	lda #$37
-	sta $01
-	plp
-	php
-	sta tempcl
-	lda #>ramnm2
-	pha
-	lda #<ramnm2
-	pha
-	lda tempcl
-	pha
-	lda tempch
-	jmp $fe43
-ramnm2
-	pha
-	lda #$35
-	sta $01
-	pla
-	rti
-scrnl1
-	ldx $04
-	cpx #05
-	beq scrnls
-	ldy #0
-scrnlc	lda ($02),y
-	sta (locat),y
-	dey
-	bne scrnlc
-	beq scrnl3
-scrnls	ldy #$00
-scrnl2	;swap screen page
-	lda ($02),y
-	tax
-	lda (locat),y
-	sta ($02),y
-	txa
-	sta (locat),y
-	iny
-	bne scrnl2
-scrnl3	lda #<ramnmi
-	sta $fffa
-	lda #>ramnmi
-	sta $fffb
-	inc locat+1
-	inc $03
-	lda $03
-	rts
-outspc
-	lda #29    ;crsr right
-outsp1
-	jsr chrout
-	dex
-	bne outsp1
-	rts
-bufclr
-	lda buffst
-	sta bufptr
-	lda buffst+1
-	sta bufptr+1
-	rts
-finpos	;calculate screenpos
-	ldy LINE
-	lda $ecf0,y
-	sta locat
-	lda $d9,y
-	and #$7f
-	sta locat+1
-	lda column
-	cmp #40
-	bcc finp2
-	sbc #40
-	clc
-finp2
-	adc locat
-	sta locat
-	lda locat+1
-	adc #$00
-	sta locat+1
-	ldy #$00
-	lda (locat),y
-	rts
-fincol	;calculate color ptr
-	jsr finpos
-	lda #$d4
-	clc
-	adc locat+1
-	sta locat+1
-	lda (locat),y
-	rts
-qimoff	;turn quote/insert off
-	lda #$00
-	sta qmode
-	sta imode
-	rts
-mssg
-	lda #<msgtxt
-	ldy #>msgtxt
-	jsr outstr
-	lda #32
-	jsr chrout
-	ldx #02    ;2nd line start char
-;lda #163
-mslop1
-	jsr chrout
-	dex
-	bne mslop1
-	lda #<author
-	ldy #>author
-	jsr outstr
-	ldx #40
-mslop2
-	lda #183
-	jsr chrout
-	dex
-	bne mslop2
-	rts
-instr
-	lda #<instxt
-	ldy #>instxt
-	jsr outstr
-	lda #<instx2
-	ldy #>instx2
-	jsr outstr
-trmtyp
-	ldx grasfl
-	bne asctrm
-	lda theme
-	bne trmtyp2
-	lda #<txt_graphics
-	ldy #>txt_graphics
-	bne termtp
-trmtyp2
-	lda #<txt_graphics2
-	ldy #>txt_graphics2
-	bne termtp
-asctrm
-	lda #<txt_ascii
-	ldy #>txt_ascii
-termtp
-	jsr outstr
-	lda theme
-	bne ready2
-	lda #<txt_terminal_ready
-	ldy #>txt_terminal_ready
-	jmp outstr
-ready2
-	lda #<txt_term_activated
-	ldy #>txt_term_activated
-	jmp outstr
-msgtxt
-	.byte 13,$93,8,5,14,18,32,28,32
-	.byte "c"
-	.byte 32,129,32
-	.byte "c"
-	.byte 32,158,32
-	.byte "g"
-	.byte 32,30,32
-	.byte "m"
-	.byte 32,31,32
-	.byte "s"
-	.byte 32,156
-	.byte " ! "
-	.byte 5,32
-	.byte "    tERMINAL 2021   "
-	.byte 00
-author	.byte "BY cRAIG sMITH       mODS BY aLWYZ   "
-	.byte 146,151,00
-;
-instxt
-	.byte 5,'  ',18,'f1',146,32,150,'uPLOAD          '
-	.byte 5,18,'f2',146,32,150,'sEND/rEAD FILE',13
-	.byte 5,'  ',18,'f3',146,32,158,'dOWNLOAD        '
-	.byte 5,18,'f4',146,32,158,'bUFFER COMMANDS',13
-	.byte 5,'  ',18,'f5',146,32,153,'dISK COMMAND    '
-	.byte 5,18,'f6',146,32,153,'dIRECTORY',13
-	.byte 5,'  ',18,'f7',146,32,30,'dIALER/pARAMS   '
-	.byte 5,18,'f8',146,32,30,'sWITCH TERMS',13,0
-instx2
-	.byte 31,'c',28,'=',5,18,'f1',146,32,159,'mULTI-sEND    '
-	.byte 31,'c',28,'=',5,18,'f3',146,32,159,'mULTI-rECEIVE',13
-	.byte 31,'c',28,'=',5,18,'f5',146,32,154,'sEND DIR.     '
-	.byte 31,'c',28,'=',5,18,'f7',146,32,154,'sCREEN TO bUFF.',13,13,0
-;
-mlswrn	.byte 13,5,'bUFFER TOO BIG - sAVE OR cLEAR fIRST!',13,0
-;
+

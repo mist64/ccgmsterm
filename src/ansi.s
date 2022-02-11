@@ -8,8 +8,9 @@ ansi0colors
 	.byte 146,28,30,149,31,156,159,152,0,0,0
 ansi1colors
 	.byte 151,150,153,158,154,156,159,05,0,0,0
+;----------------------------------------------------------------------
 ;convert standard ascii to c= ascii
-satoca
+ascii_to_petscii:
 	pha
 	lda ansi
 jeq	satoca2;no ansi, but check for ansi
@@ -123,9 +124,9 @@ ansi1
 	lda #$00
 	jmp cexit
 satoca1
-	cmp #$a4;underline key
+	cmp #PETSCII_UNDERLINE
 	bne clab0
-	lda #164   ;underline
+	lda #PETSCII_UNDERLINE
 	bne cexit
 clab0
 	and #127
@@ -166,15 +167,17 @@ ansi0keys
 cerrc
 	lda #$00
 	beq cexit
+
+;----------------------------------------------------------------------
 ;convert c= ascii to standard ascii
-catosa
+petscii_to_ascii:
 	cmp #20
 	bne alab0
 	lda #08    ;delete
 	bne aexit
-alab0	cmp #164 ;underline
+alab0	cmp #PETSCII_UNDERLINE
 	bne alab1
-	lda #$a4;underline key
+	lda #PETSCII_UNDERLINE
 alab1	cmp #65
 	bcc cexit  ;if<then no conv
 	cmp #91
@@ -202,7 +205,10 @@ savech
 	lda textcl
 	sta (locat),y
 	rts
-restch	;restore char und non-crsr
+
+;----------------------------------------------------------------------
+; restore char und non-crsr
+restch:
 	jsr finpos
 	lda tempch
 	sta (locat),y
@@ -210,22 +216,27 @@ restch	;restore char und non-crsr
 	lda tempcl
 	sta (locat),y
 	rts
-spleft	;output space, crsrleft
-	lda #$20
+;----------------------------------------------------------------------
+;output space, crsrleft
+spleft:
+	lda #' '
 	jsr chrout
-	lda #left
+	lda #PETSCII_CSR_LEFT
 	jmp chrout
-curoff
-	ldx cursfl
+
+;----------------------------------------------------------------------
+cursor_off:
+	ldx cursor_flag
 	bne restch
-	jsr qimoff
+	jsr quote_insert_off
 	jmp spleft
-curprt
-	lda cursfl
-	bne nondst
-	lda #cursor
+
+;----------------------------------------------------------------------
+cursor_show:
+	lda cursor_flag
+	bne :+
+	lda #CURSOR
 	jsr chrout
-	lda #left
+	lda #PETSCII_CSR_LEFT
 	jmp chrout
-nondst
-	jmp savech
+:	jmp savech

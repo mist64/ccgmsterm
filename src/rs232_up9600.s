@@ -117,7 +117,7 @@ up9600_enable:
 	stx $0318
 	sty $0319
 
-	ldx ntsc	; PAL or NTSC version ?
+	ldx is_pal_system; PAL or NTSC version ?
 	lda ilotab,x	; (keyscan interrupt once every 1/64 second)
 	sta $dc06	; (sorry this will break code, that uses
 	lda ihitab,x	; the ti$ - variable)
@@ -189,7 +189,7 @@ ihitab:
 setbaudup:
 	lda baudrt
 b7e56	asl
-	ora ntsc
+	ora is_pal_system
 	tax
 	lda rcvtab_lo,x
 	sta rcvlo

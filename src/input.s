@@ -32,7 +32,7 @@ inputl
 inpwat
 	jsr getin
 	beq inpwat
-	sta $03
+	sta tmp03
 	and #127
 	cmp #17
 	beq inpcud
@@ -42,7 +42,7 @@ inpwat
 	bne inpwt1
 	jmp inpret
 inpwt1
-	lda $03
+	lda tmp03
 	cmp #20
 	beq inpdel
 	cmp #157
@@ -53,7 +53,7 @@ inpwt1
 	bne inpprc
 inpcud
 	jsr restch
-	lda $03
+	lda tmp03
 	cmp #145
 	beq inphom
 	jsr inpcu1
@@ -74,7 +74,7 @@ inpcu3
 	rts
 inpcls
 	jsr restch
-	lda $03
+	lda tmp03
 	cmp #$93
 	bne inphom
 	ldy max
@@ -108,7 +108,7 @@ inpprc
 	bne inpins
 	jmp inpwat
 inpins
-	lda $03
+	lda tmp03
 	cmp #148
 	bne inprst
 	dec endpos+1
@@ -122,14 +122,14 @@ inprst
 	ldx #$03
 	stx 651
 	jsr restch
-	lda $03
+	lda tmp03
 	jsr chrout
-	jsr qimoff
+	jsr quote_insert_off
 	jmp inputl
 inpret
 	jsr restch
 	jsr inpcu1
-	cmp 211
+	cmp COLUMN
 	bcc inpre2
 	ldx $9e
 	clc

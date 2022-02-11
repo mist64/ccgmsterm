@@ -1,11 +1,16 @@
-;REU ROUTINES - 17XX REU. Only uses first bank regardless. 64k is more than enough memory
+; REU ROUTINES
+;  17XX REU
+;  Only uses first bank regardless. 64k is more than enough memory
 
-bufreu	.byte $00;0-ram 1-reu
+; REU in use
+;  0: no (RAM buffers)
+;  1: yes (REU buffers)
+reu_enabled:
+	.byte 0
 
 ; detect REU
-
 detectreu
-		 ;jmp noreu;temp byte to default to no reu, for troubleshooting if needed
+	;jmp noreu;temp byte to default to no reu, for troubleshooting if needed
 
 	ldx #2
 loop1	txa
@@ -23,32 +28,32 @@ loop2	txa
 	bne loop2
 
 	lda #1
-		 sta bufreu
-		 lda #$00   ;set buffer start
+	sta reu_enabled
+	lda #0		; set buffer start
 	sta newbuf
-		 sta newbuf+1
-		 sta buffst
-		 sta buffst+1
-		 sta bufptr
-		 sta bufptr+1
-		 lda #$ff
-		 sta bufend
-		 sta bufend+1
+	sta newbuf+1
+	sta buffst
+	sta buffst+1
+	sta buffer_ptr
+	sta buffer_ptr+1
+	lda #$ff
+	sta bufend
+	sta bufend+1
 	rts
 
 noreu	lda #0
-	sta bufreu
-		 lda #<endprg   ;set buffer start
+	sta reu_enabled
+	lda #<endprg   ;set buffer start
 	sta buffst
 	lda #>endprg
 	sta buffst+1
-		 lda #<buftop
-		 sta bufend
-		 lda #>buftop
-		 sta bufend+1
+	lda #<buftop
+	sta bufend
+	lda #>buftop
+	sta bufend+1
 	rts
 
-bufend	.byte $00,$00
+bufend	.word 0
 
 ;read/write to from reu
 
@@ -61,9 +66,9 @@ reuwrite
 	sta $df02
 	lda #>bufptrreu
 	sta $df03
-	lda bufptr
+	lda buffer_ptr
 	sta $df04
-	lda bufptr+1
+	lda buffer_ptr+1
 	sta $df05
 	lda #0
 	sta $df06
@@ -76,8 +81,8 @@ reuwrite
 c64toreu
 	lda #$b0
 	sta $df01
-		 pla
-		 rts
+	pla
+	rts
 
 reuread
 	lda #<buffstreu
@@ -99,7 +104,5 @@ reuread
 reutoc64
 	lda #$b1
 	sta $df01
-		 lda buffstreu
-		 rts
-
-;END REU
+	lda buffstreu
+	rts

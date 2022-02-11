@@ -1,46 +1,54 @@
 cosave
 	ldx textcl
-	stx $04
+	stx tmp04
 cochng
 	ldx #tcolor
 	stx textcl
 	rts
 coback
-	ldx $04
+	ldx tmp04
 	stx textcl
 	rts
-f6	;directory
-	lda #$01
+
+;----------------------------------------------------------------------
+handle_f6_directory:
+	lda #1
 	ldx #<dirfn
 	ldy #>dirfn
-dodir
+dodir:
 	jsr setnam
 	jsr dir
 	jsr enablexfer
 	jmp main
-f8	;term toggle
+
+;----------------------------------------------------------------------
+handle_f8_switch_term:
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
-	bne termtg
-	jmp cf7
-termtg
-	lda grasfl
-	eor #$01
-	sta grasfl
+	jeq cf7
+
+	lda ascii_mode
+	eor #1
+	sta ascii_mode
 	jsr bell
 	jmp term
-crsrtg	;ascii crsr toggle
-	jsr curoff
-	lda cursfl
-	eor #$01
-	sta cursfl
+
+;----------------------------------------------------------------------
+; ascii crsr toggle
+crsrtg:
+	jsr cursor_off
+	lda cursor_flag
+	eor #1
+	sta cursor_flag
 	jmp main
 
-hangup	;hang up phone
+;----------------------------------------------------------------------
+; hang up phone
+hangup:
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	bne hangup6;not C= Stop
-	jsr curoff
+	jsr cursor_off
 	lda #<txt_disconnecting
 	ldy #>txt_disconnecting
 	jsr outstr
@@ -51,7 +59,9 @@ hangup	;hang up phone
 	jmp dropswift
 hangup6	jmp main
 
-droprs	lda #%00000100
+;----------------------------------------------------------------------
+droprs:
+	lda #%00000100
 	sta $dd03
 	lda #0
 	sta $dd01

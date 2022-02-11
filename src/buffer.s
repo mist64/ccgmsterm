@@ -1,7 +1,6 @@
 ;
-buftxt	.byte 5
-	.byte "bUFFER "
-	.byte 00
+txt_buffer:
+	.byte PETSCII_WHITE,"bUFFER ",0
 buftx2	.byte " BYTES FREE.  "
 	.byte 13,2
 	.byte "OPEN  "
@@ -20,10 +19,10 @@ buftx2	.byte " BYTES FREE.  "
 	.byte 2
 	.byte "VIEW: "
 	.byte 0
-opntxt	.byte "oPEN"
-	.byte 00
-clotxt	.byte "cLOSED"
-	.byte 00
+txt_open:
+	.byte "oPEN",0
+txt_closed:
+	.byte "cLOSED",0
 erstxt	.byte  "eRASE bUFFER! - "
 	.byte 2
 	.byte "YES OR "
@@ -33,37 +32,40 @@ erstxt	.byte  "eRASE bUFFER! - "
 snbtxt	.byte 13,13
 	.byte "sENDING BUFFER..."
 	.byte 13,13,00
-dontxt	.byte 13,13,5
+dontxt	.byte 13,13,PETSCII_WHITE
 	.byte "dONE."
 	.byte 13,0
-bufreuenabledtxt
-	.byte 5
-	.byte "reu ",0
-bufmsg
-	lda bufreu
-	beq bufmoveon
-	lda #<bufreuenabledtxt
-	ldy #>bufreuenabledtxt
+
+txt_reu:
+	.byte PETSCII_WHITE,"reu ",0
+
+;----------------------------------------------------------------------
+print_buffer_info:
+	lda reu_enabled
+	beq :+
+	lda #<txt_reu
+	ldy #>txt_reu
 	jsr outstr
-bufmoveon
-	lda #<buftxt
-	ldy #>buftxt
+:	lda #<txt_buffer
+	ldy #>txt_buffer
 	jsr outstr
-	lda buffoc
+	lda buffer_open
 	beq bufms1
-	lda #<opntxt
-	ldy #>opntxt
+	lda #<txt_open
+	ldy #>txt_open
 	clc
 	bcc bufms2
 bufms1
-	lda #<clotxt
-	ldy #>clotxt
+	lda #<txt_closed
+	ldy #>txt_closed
 bufms2
 	jmp outstr
+
+;----------------------------------------------------------------------
 bufprm
 	lda #$0d
 	jsr chrout
-	jsr bufmsg
+	jsr print_buffer_info
 	lda #' '
 	jsr chrout
 	lda #'-'
@@ -72,15 +74,17 @@ bufprm
 	jsr chrout
 	lda bufend
 	sec
-	sbc bufptr
+	sbc buffer_ptr
 	tax
 	lda bufend+1
-	sbc bufptr+1
+	sbc buffer_ptr+1
 	jsr outnum
 	lda #<buftx2
 	ldy #>buftx2
 	jmp outstr
-f4
+
+;----------------------------------------------------------------------
+handle_f4_buffer:
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	bne buffrc
@@ -115,13 +119,13 @@ bufcmd
 	cmp #'O'
 	bne bufcm2
 	ldx #$01
-	stx buffoc
+	stx buffer_open
 	bne bufex1
 bufcm2
 	cmp #'C'
 	bne bufcm3
 	ldx #0
-	stx buffoc
+	stx buffer_open
 bufex1
 	ora #$80
 bufexa
@@ -203,16 +207,16 @@ prtbuf	;buf.to screen
 	rts
 memget
 	ldx buffst
-	cpx bufptr
+	cpx buffer_ptr
 	bcc memok
 	ldx buffst+1
-	cpx bufptr+1
+	cpx buffer_ptr+1
 	bcc memok
 memgab	ldx #$40
 	stx status
 	rts
 memok
-	ldy bufreu
+	ldy reu_enabled
 	beq memok2
 	jsr reuread
 	jmp memok3
@@ -229,15 +233,15 @@ memext
 	rts
 skpbuf
 	lda buffst+1
-	cmp bufptr+1
+	cmp buffer_ptr+1
 	bcs memgab
 	inc buffst+1
 skpbf2
 	lda buffst+1
-	cmp bufptr+1
+	cmp buffer_ptr+1
 	bcc memext
 	lda buffst
-	cmp bufptr
+	cmp buffer_ptr
 	bcs memgab
 	bcc memext
 ;
@@ -269,11 +273,11 @@ savbuf
 	sta $c1;I/O Start Address ($c1 $c2)
 	lda buffst+1
 	sta $c2
-	lda bufptr;end of buffer
+	lda buffer_ptr;end of buffer
 	clc
 	adc #$01
 	sta $ae;Tape End Addresses/End of Program ($ae / $af)
-	lda bufptr+1
+	lda buffer_ptr+1
 	adc #0
 	sta $af
 	lda #$61
@@ -286,7 +290,7 @@ savbuf
 	jsr $edb9;LSTNSA. Send LISTEN secondary address to serial bus
 	ldy #0
 	jsr $fb8e;Move the Tape SAVE/LOAD Address into the Pointer at 172 ($ac)
-	lda bufreu
+	lda reu_enabled
 	beq afuckit
 	jsr af624
 	lda #$00
@@ -355,24 +359,24 @@ lodbfl
 	jsr getin
 	ldx status
 	bne lodbex
-	ldx bufptr
+	ldx buffer_ptr
 	cpx bufend
 	bne lodbok
-	ldx bufptr+1
+	ldx buffer_ptr+1
 	cpx bufend+1
 	beq lodbex
 lodbok
-	ldy bufreu
+	ldy reu_enabled
 	beq lodbokram
 	jsr reuwrite
 	jmp lodbokreu
 lodbokram
 	ldy #0
-	sta (bufptr),y
+	sta (buffer_ptr),y
 lodbokreu
-	inc bufptr
+	inc buffer_ptr
 	bne lodbfl
-	inc bufptr+1
+	inc buffer_ptr+1
 	bne lodbfl
 lodbex
 	jsr clrchn
@@ -414,29 +418,29 @@ chgbpr
 	pha
 	cmp #'>'
 	beq chgbp3
-	lda bufptr+1
+	lda buffer_ptr+1
 	cmp #>endprg
 	bne chgbp1
-	lda bufptr
+	lda buffer_ptr
 	cmp #<endprg
 	beq chgben
 chgbp1
-	lda bufptr
+	lda buffer_ptr
 	bne chgbp2
-	dec bufptr+1
-chgbp2	dec bufptr
+	dec buffer_ptr+1
+chgbp2	dec buffer_ptr
 	jmp chgben
 chgbp3
-	lda bufptr+1
+	lda buffer_ptr+1
 	cmp bufend
 	bne chgbp4
-	lda bufptr
+	lda buffer_ptr
 	cmp bufend+1
 	beq chgben
 chgbp4
-	inc bufptr
+	inc buffer_ptr
 	bne chgben
-	inc bufptr+1
+	inc buffer_ptr+1
 chgben
 	ldx #1
 	stx 651

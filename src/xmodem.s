@@ -33,10 +33,6 @@ STAT_USER_ABORTED	= 5 ; the user aborted the transfer
 PROTOCOL_XMODEM		= 1
 PROTOCOL_XMODEM_CRC	= 2
 
-; logical file numbers - the channels were opened by the caller
-LFN_FILE	= 2 ; read from the file on send and write to the file on receive
-LFN_MODEM	= 5 ; only used for sending to the modem; receiving is done by calling modget
-
 ; memory
 xmobuf	= $fd	; zero page pointer to access the buffer
 xmoscn	= buffer; 3 send and receiver buffers

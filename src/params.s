@@ -1,5 +1,6 @@
-;
-f7	;terminal params/dial
+;----------------------------------------------------------------------
+handle_f7_config:
+	;terminal params/dial
 	jsr disablemodem
 	lda #0
 	sta $d020
@@ -54,7 +55,7 @@ f7chs0
 	bne f7chs1
 	lda baudrt
 	sta bautmp
-	lda grasfl
+	lda ascii_mode
 	sta gratmp
 	jmp phbook
 f7chs1
@@ -93,9 +94,9 @@ f7chs2
 	cmp #$44 	;D-Duplex
 	bne f7chs5
 ;duplex change
-	lda duplex
-	eor #$01
-	sta duplex
+	lda half_duplex
+	eor #1
+	sta half_duplex
 	jmp f7opts
 f7chs5
 	cmp #$46;F-Firmware
@@ -165,22 +166,22 @@ f7chs6
 	cmp #$53;S-save
 	bne f7chs7
 	jsr svconf
-	jmp f7
+	jmp handle_f7_config
 f7chs7
 	cmp #$4c
 	bne f7chs8
 	jsr loconf
-	jmp f7
+	jmp handle_f7_config
 f7chs8
 	cmp #$45
 	bne f7chs9
 	jsr edtmac
-	jmp f7
+	jmp handle_f7_config
 f7chs9
 	cmp #$56
 	bne f7chsa
 	jsr viewmg
-	jmp f7
+	jmp handle_f7_config
 f7chsa
 	cmp #$0d
 	beq f7chsb
@@ -194,7 +195,8 @@ moveonterm
 
 prmopt	.byte <op1txt,>op1txt,<op2txt,>op2txt,<op6txt,>op6txt,<op3txt,>op3txt,<op4txt,>op4txt,<op5txt,>op5txt
 prmlen	.byte 4,18,8,10,20,19
-op1txt	.byte "fULLhALF"
+op1txt	.byte "fULL"
+	.byte "hALF"
 op2txt	.byte 'uSER pORT 300-2400'
 	.byte 'up9600 / ez232    '
 	.byte 'sWIFT / tURBO de  '
@@ -278,7 +280,7 @@ prmlop
 	jsr prmtab
 	ldy #0;duplex
 	jsr prmclc
-	ldx duplex
+	ldx half_duplex
 	jsr prmprt
 	iny
 	jsr prmclc

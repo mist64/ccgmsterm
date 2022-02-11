@@ -22,7 +22,7 @@ edtmac
 	ldy #>edtmtx
 	jsr outstr
 	jsr savech
-edtmlp	lda 197
+edtmlp	lda LSTX
 	cmp #1    ;return
 	bne edtmc2
 edtmab	rts
@@ -35,7 +35,7 @@ edtmc2	cmp #4
 	pla
 	tax
 edtmc3
-	lda 197
+	lda LSTX
 	cmp #7
 	bcc edtmc3
 	jsr prmacx
@@ -55,7 +55,7 @@ edtstr
 	jsr outstr
 	lda #1
 	sta macmdm
-	sta cursfl
+	sta cursor_flag
 	lda wchmac
 	sta macxrg
 	clc
@@ -67,7 +67,7 @@ edtstr
 	lda #157
 	jsr chrout
 	jsr prtmc0
-edtinp	jsr curprt
+edtinp	jsr cursor_show
 edtkey
 	jsr getin
 	beq edtkey
@@ -126,14 +126,14 @@ edtky3
 	jmp edtmen
 edtky4
 	inc macxrg
-	jsr curoff
+	jsr cursor_off
 	pla
-	jsr ctrlck
+	jsr check_control_codes
 	bcc edtky5
 	jmp edtinp
 edtky5
 	jsr chrout
-	jsr qimoff
+	jsr quote_insert_off
 	jmp edtinp
 edtbye	ldx macxrg
 	lda #0
@@ -156,7 +156,7 @@ edtdel
 	lda #0
 	sta macbkg
 	lda macmem-1,x
-	cmp #$a4;underline key
+	cmp #PETSCII_UNDERLINE
 	beq edtde2
 	and #$7f
 	cmp #$20
@@ -207,7 +207,7 @@ edtde6
 	lda macbkg
 	cmp #2
 	bne edtclh
-	sta xlastch
+	sta prev_char
 	cpx wchmac
 	beq edtclb
 	lda maccol
@@ -221,7 +221,7 @@ edtclb
 	jmp edtdla
 edtclh
 	lda #0
-	sta xlastch
+	sta prev_char
 	lda maccol
 	jmp edtdln
 edtde7
@@ -308,23 +308,23 @@ edtdla
 	clc
 	rts
 edprrv
-	sta $02
+	sta tmp02
 	lda 199
 	pha
 	lda #0
 	sta 199
-	jsr curoff
-	lda $02
-	jsr ctrlck
+	jsr cursor_off
+	lda tmp02
+	jsr check_control_codes
 	bcs edprr2
 	jsr chrout
-	jsr qimoff
+	jsr quote_insert_off
 edprr2	pla
 	sta 199
-	jmp curprt
+	jmp cursor_show
 edtcok
 	ldy #15
-edtco2	cmp clcode,y
+edtco2	cmp COLTAB,y
 	beq edtco3
 	dey
 	bpl edtco2

@@ -53,14 +53,25 @@ drivepresent
 	.byte $01
 alrlod	.byte 0
 
-xlastch	.byte 0
+prev_char:
+	.byte 0
 
 newbuf	.byte <endprg,>endprg
-ntsc	.byte $00   ;pal=1 - ntsc =0
-supercpubyte
-	.byte $00
 
-supertext
+; System Timing
+;  0: NTSC
+;  1: PAL
+is_pal_system:
+	.byte 0
+
+; SuperCPU detected
+;  0: no SuperCPU
+;  1: SuperCPU detected
+;  2: SuperCPU detected, message already printed (don't print again)
+supercpu:
+	.byte 0
+
+txt_supercpu_enabled:
 	.byte "sUPERcpu eNABLED!",13,13,0
 
 nicktemp
@@ -100,16 +111,15 @@ fetch2	dey
 
 ;----------------------------------------------------------------------
 ;SuperCPU ROUTINES
-turnonscpu
-	lda supercpubyte
+supercpu_on:
+	lda supercpu
 	beq scpuout
-	lda #$01
+	lda #1
 	sta $d07b
-
 scpuout	rts
 
-turnoffscpu
-	lda supercpubyte
+supercpu_off:
+	lda supercpu
 	beq scpuout
 	lda #$01
 	sta $d07a

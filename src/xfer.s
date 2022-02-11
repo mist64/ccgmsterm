@@ -130,9 +130,8 @@ upltyp:
 	.byte 0,'P','S','U'
 
 ;----------------------------------------------------------------------
-;upload
-f1:
-	jsr turnoffscpu
+handle_f1_upload:
+	jsr supercpu_off
 	jsr disablexfer
 	jsr cosave
 	lda #0
@@ -248,13 +247,12 @@ xfrdun:
 	jmp main
 
 ;----------------------------------------------------------------------
-; download
-f3:
+handle_f3_download:
 	jsr disablexfer
 	lda #0
 	sta mulcnt
 	jsr cosave
-	jsr turnoffscpu
+	jsr supercpu_off
 	lda #1
 	jsr ui_prompt_filename
 	jeq ui_abort
@@ -374,7 +372,7 @@ txt_read_or_send2:
 	.byte 'sPACE TO PAUSE - r/s TO ABORT',13,13,00
 
 ;----------------------------------------------------------------------
-f2:
+handle_f2_send_read:
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	bne send

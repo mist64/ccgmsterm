@@ -1,9 +1,9 @@
 ;CARRIER / BUSY / NO ANSWER DETECT
 
-bustemp	.byte $00
+bustemp	.byte 0
 
 haybus
-	ldy #$00
+	ldy #0
 	sty bustemp
 haybus2
 	jsr newgethayes
@@ -26,7 +26,7 @@ jeq	hayout;get out of routine. send data to terminal, and set connect!
 	jsr newgethayes
 	cmp #$79  ;y
 	bne haybus3
-	ldy #$00
+	ldy #0
 	sty bustemp
 	jmp haybak ; busy!
 ;
@@ -57,7 +57,7 @@ jne	haynoanswer
 	jsr newgethayes
 	cmp #$72  ;r
 	bne haybus3
-	ldy #$00
+	ldy #0
 	sty bustemp
 	jmp haynan ; no carrier!
 ;
@@ -79,7 +79,7 @@ haybus3b:
 	jsr newgethayes
 	cmp #$59  ;y
 	bne haybus3b
-	ldy #$00
+	ldy #0
 	sty bustemp
 	jmp haybak ; busy!
 ;
@@ -110,7 +110,7 @@ haynocarrand
 	jsr newgethayes
 	cmp #$52  ;r
 	bne haybus3b
-	ldy #$00
+	ldy #0
 	sty bustemp
 	jmp haynan ; no carrier!
 
@@ -132,7 +132,7 @@ haynoanswerand
 haybus3c
 	jmp haybus3
 :
-	ldy #$00
+	ldy #0
 	sty bustemp
 	jmp haynan ; no carrier!
 
@@ -151,7 +151,7 @@ haynoanswer
 	jsr newgethayes
 	cmp #$77  ;w
 	bne haybus3c
-	ldy #$00
+	ldy #0
 	sty bustemp
 	jmp haynan ; no carrier!
 
