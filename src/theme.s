@@ -1,33 +1,33 @@
 ;THEME ROUTINES
 
-tc1	.byte 05,31,05,05,31,151	; f1
-tc2	.byte 150,150,31,151,151,156	; Upload
-tc3	.byte 05,154,05,05,156,152	; f3
-tc4	.byte 158,158,154,31,152,154	; Download
-tc5	.byte 05,159,05,05,154,155	; f5
-tc6	.byte 153,153,31,156,155,159	; Disk
-tc7	.byte 05,153,05,05,159,155	; f7
-tc8	.byte 30,159,154,154,155,153	; Options
-tc9	.byte 05,31,05,05,31,151	; f2
-tc10	.byte 150,150,31,31,151,156	; send/rec
-tc11	.byte 05,154,05,05,156,152	; f4
-tc12	.byte 158,158,154,156,152,154	; Buffer menu
-tc13	.byte 05,159,05,05,154,155	; f6
-tc14	.byte 153,153,31,154,155,159
-tc15	.byte 05,153,05,05,159,155	; f8
-tc16	.byte 30,159,154,155,155,153	; f8 text
-tc17	.byte 31,31,159,151,151,31	; C
-tc18	.byte 05,158,05,05,155,152	; cf1
-tc19	.byte 159,154,31,155,152,158	; cf1 text
-tc20	.byte 05,158,05,05,155,152	; f3
-tc21	.byte 159,154,31,159,152,158	; f3 txt
-tc22	.byte 05,150,05,05,05,151	; f5
-tc23	.byte 154,31,154,159,151,150	; f5txt
-tc24	.byte 05,150,05,05,05,151	; f7
-tc25	.byte 154,31,154,158,151,150	; f7txt
-tc26	.byte 28,28,28,152,152,28	; = sign
-tc27	.byte 05,153,153,153,153,152	; f7 menu color
-tc28	.byte 159,150,150,150,150,154	; phonebook color
+tc1:	.byte WHITE,BLUE,WHITE,WHITE,BLUE,DKGRAY	; f1
+tc2:	.byte LTRED,LTRED,BLUE,DKGRAY,DKGRAY,PURPLE	; Upload
+tc3:	.byte WHITE,LTBLUE,WHITE,WHITE,PURPLE,GRAY	; f3
+tc4:	.byte YELLOW,YELLOW,LTBLUE,BLUE,GRAY,LTBLUE	; Download
+tc5:	.byte WHITE,CYAN,WHITE,WHITE,LTBLUE,LTGRAY	; f5
+tc6:	.byte LTGREEN,LTGREEN,BLUE,PURPLE,LTGRAY,CYAN	; Disk
+tc7:	.byte WHITE,LTGREEN,WHITE,WHITE,CYAN,LTGRAY	; f7
+tc8:	.byte GREEN,CYAN,LTBLUE,LTBLUE,LTGRAY,LTGREEN	; Options
+tc9:	.byte WHITE,BLUE,WHITE,WHITE,BLUE,DKGRAY	; f2
+tc10:	.byte LTRED,LTRED,BLUE,BLUE,DKGRAY,PURPLE	; send/rec
+tc11:	.byte WHITE,LTBLUE,WHITE,WHITE,PURPLE,GRAY	; f4
+tc12:	.byte YELLOW,YELLOW,LTBLUE,PURPLE,GRAY,LTBLUE	; Buffer menu
+tc13:	.byte WHITE,CYAN,WHITE,WHITE,LTBLUE,LTGRAY	; f6
+tc14:	.byte LTGREEN,LTGREEN,BLUE,LTBLUE,LTGRAY,CYAN
+tc15:	.byte WHITE,LTGREEN,WHITE,WHITE,CYAN,LTGRAY	; f8
+tc16:	.byte GREEN,CYAN,LTBLUE,LTGRAY,LTGRAY,LTGREEN	; f8 text
+tc17:	.byte BLUE,BLUE,CYAN,DKGRAY,DKGRAY,BLUE		; C
+tc18:	.byte WHITE,YELLOW,WHITE,WHITE,LTGRAY,GRAY	; cf1
+tc19:	.byte CYAN,LTBLUE,BLUE,LTGRAY,GRAY,YELLOW	; cf1 text
+tc20:	.byte WHITE,YELLOW,WHITE,WHITE,LTGRAY,GRAY	; f3
+tc21:	.byte CYAN,LTBLUE,BLUE,CYAN,GRAY,YELLOW		; f3 txt
+tc22:	.byte WHITE,LTRED,WHITE,WHITE,WHITE,DKGRAY	; f5
+tc23:	.byte LTBLUE,BLUE,LTBLUE,CYAN,DKGRAY,LTRED	; f5txt
+tc24:	.byte WHITE,LTRED,WHITE,WHITE,WHITE,DKGRAY	; f7
+tc25:	.byte LTBLUE,BLUE,LTBLUE,YELLOW,DKGRAY,LTRED	; f7txt
+tc26:	.byte RED,RED,RED,GRAY,GRAY,RED			; = sign
+tc27:	.byte WHITE,LTGREEN,LTGREEN,LTGREEN,LTGREEN,GRAY; f7 menu color
+tc28:	.byte CYAN,LTRED,LTRED,LTRED,LTRED,LTBLUE	; phonebook color
 
 themeroutine:
 	ldy theme
@@ -90,8 +90,8 @@ themeroutine:
 	lda tc25,y
 	sta txt_instructions2+85
 	lda tc27,y
-	sta f7mtx1+1
-	sta f7mtxpre+3
+	sta f7mtx1
+	sta f7mtxpre
 	lda tc28,y
 	sta curbtx+3
 	sta curbt3+3

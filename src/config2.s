@@ -1,92 +1,99 @@
-;
-losvco
+;----------------------------------------------------------------------
+losvco:
 	jsr disablexfer
 	jsr ercopn
-	lda #<svctxt
-	ldy #>svctxt
+	lda #<txt_filename
+	ldy #>txt_filename
 	ldx #16
 	jsr inpset
-	lda #<conffn
-	ldy #>conffn
+	lda #<filename_config
+	ldy #>filename_config
 	jsr outstr
 	jsr inputl
-	beq losvex
+	beq :+
 	txa
 	ldx #<inpbuf
 	ldy #>inpbuf
 	jsr setnam
 	lda #2
-	ldx diskdv
+	ldx device_disk
 	ldy #0
 	jsr setlfs
 	ldx $b7
-losvex
-	rts
-svconf
-	lda efbyte;are we in easyflash mode?
-	beq svcon44;no? then just go to disk mode
-	lda diskoref;is config in easyflash or disk mode?
-	beq savecfef
-svcon44
-	jsr losvco
-	bne svcon2
-svcon2
-	ldx #15
+:	rts
+
+;----------------------------------------------------------------------
+save_config:
+	lda easyflash_support
+	beq :+
+	lda diskoref
+	beq save_config_easyflash
+:	jsr losvco
+	bne *+2		; [XXX]
+	ldx #LFN_DISK_CMD
 	jsr chkout
 	ldx #0
-svcon3	lda scracf,x
-	beq svcon4
+:	lda txt_cmd_scratch,x
+	beq :+
 	jsr chrout
 	inx
-	bne svcon3
-svcon4
-	ldx #0
-svcon5	lda inpbuf,x
+	bne :-
+:	ldx #0
+:	lda inpbuf,x
 	jsr chrout
 	inx
 	cpx max
-	bcc svcon5
+	bcc :-
 	lda #$0d
 	jsr chrout
 	jsr clrchn
-	lda #<config
+	lda #<config_data
 	sta nlocat
-	lda #>config
+	lda #>config_data
 	sta nlocat+1
 	lda #nlocat
 	ldx #<endsav
 	ldy #>endsav
-	jsr $ffd8
+	jsr save
 	jsr losver
 losvab	rts
-savecfef
+
+;----------------------------------------------------------------------
+save_config_easyflash:
 	jmp writeconfigef
-loconf
-	lda efbyte;do we have an easyflash?
-	beq loadcf2;nope, we are using the non-easyflash version
+
+;----------------------------------------------------------------------
+load_config:
+	lda easyflash_support
+	beq :+
 	lda diskoref
-	beq loadcfef
-loadcf2
-	jsr losvco
+	beq load_config_easyflash
+:	jsr losvco
 	beq losvab
-loadcf
-	ldx #<config
-	ldy #>config
-	lda #0     ;load
+
+;----------------------------------------------------------------------
+load_config_file:
+	ldx #<config_data
+	ldy #>config_data
+	lda #0		; load
 	jsr $ffd5
 	jsr losver
-loadcfpart2
+load_config_done:
 	jsr themeroutine
-	jsr rsopen
+	jsr rsopen	; [XXX jmp]
 	rts
-loadcfef
+
+;----------------------------------------------------------------------
+load_config_easyflash:
 	jsr readconfigef
-	jmp loadcfpart2
-losver
+	jmp load_config_done
+
+;----------------------------------------------------------------------
+losver:
 	jsr disablemodem
-	ldx #15
+	ldx #LFN_DISK_CMD
 	jsr chkin
-losve2	jsr getin
+:	jsr getin
 	cmp #$0d
-	bne losve2
+	bne :-
 	jmp clrchn

@@ -1,33 +1,31 @@
 ;----------------------------------------------------------------------
+; change terminal params/dial
 handle_f7_config:
-	;terminal params/dial
 	jsr disablemodem
 	lda #0
 	sta $d020
 	sta $d021
-	lda #<f7mtxt   ;print f7 menu
-	ldy #>f7mtxt
+	lda #<txt_settings_menu
+	ldy #>txt_settings_menu
 	jsr outstr
-	lda efbyte
-	beq f7noef
-f7ef
-	lda #<f7mtx3ef
-	ldy #>f7mtx3ef
+	lda easyflash_support
+	beq @1
+	lda #<txt_edit_macros_cfg_device
+	ldy #>txt_edit_macros_cfg_device
 	jsr outstr
-	jmp f7continue
-f7noef
-	lda #<f7mtx3noef
-	ldy #>f7mtx3noef
+	jmp @2
+@1:	lda #<txt_edit_macros
+	ldy #>txt_edit_macros
 	jsr outstr
-f7continue
-	lda #<f7mtxcont
-	ldy #>f7mtxcont
+@2:	lda #<txt_load_save_config
+	ldy #>txt_load_save_config
 	jsr outstr
-	lda #<f7mtx2
-	ldy #>f7mtx2
+	lda #<txt_press_return_to_abort
+	ldy #>txt_press_return_to_abort
 	jsr outstr
-f7opts
-	lda #$00
+
+config_loop:
+	lda #0
 	sta $c6
 	jsr f7parm
 f7chos
@@ -37,235 +35,276 @@ f7chos
 	lda JIFFIES
 	and #$10
 	beq f7oprt
-	lda #<prret
-	ldy #>prret
+	lda #<txt_press_return_to_abort
+	ldy #>txt_press_return_to_abort
 	jsr outstr
 	jmp f7chgk
 f7oprt
-	lda #<prret2
-	ldy #>prret2
+	lda #<txt_return
+	ldy #>txt_return
 	jsr outstr
 f7chgk
 	jsr getin
-	cmp #$00
+	cmp #0
 	beq f7chos
-f7chs0
+
+; A: auto-dial
 	and #$7f
-	cmp #$41   ;A-auto-dial opt
-	bne f7chs1
-	lda baudrt
+	cmp #'A'
+	bne @no1
+
+	lda baud_rate
 	sta bautmp
 	lda ascii_mode
 	sta gratmp
 	jmp phbook
-f7chs1
-	cmp #$42 	;B-Baud Rate
-	bne f7chs2
-;baud rate change
-	ldy motype
-	beq move24tp
-	cpy #$01
-	beq move96tp
-	cpy #$03;check for swift df - we'll do the no reu check if selected
-	bne brinc
+@no1:
+
+; B: Baud Rate
+	cmp #'B'
+	bne @no2
+
+	ldy modem_type
+	beq @baud1	; MODEM_TYPE_USERPORT
+	cpy #MODEM_TYPE_UP9600
+	beq @baud2
+	cpy #MODEM_TYPE_SWIFTLINK_DF; skip REU if there's SwiftLink at $DF00
+	bne @inc
 	jsr noreu
-	jmp brinc
-move24tp
-	lda baudrt
-	cmp #$02
-	bmi brinc
-	jmp brrst
-move96tp
-	lda baudrt
-	cmp #$04
-	bmi brinc
-	jmp brrst
-brinc	inc baudrt
-	lda baudrt
-	cmp #$07
-	bne mobaud
-brrst
-	lda #$00
-	sta baudrt
-mobaud
-	jsr rsopen;5-16 add failsafe....
-	jmp f7opts
-f7chs2
-	cmp #$44 	;D-Duplex
-	bne f7chs5
-;duplex change
+	jmp @inc
+@baud1:	lda baud_rate
+	cmp #BAUD_2400
+	bmi @inc
+	jmp @reset
+@baud2:	lda baud_rate
+	cmp #BAUD_9600
+	bmi @inc
+	jmp @reset
+@inc:	inc baud_rate
+	lda baud_rate
+	cmp #BAUD_38400+1
+	bne :+
+@reset:	lda #BAUD_300
+	sta baud_rate
+:	jsr rsopen	;5-16 add failsafe....
+	jmp config_loop
+@no2:
+
+; D: Duplex
+	cmp #'D'
+	bne @no3
+
 	lda half_duplex
 	eor #1
 	sta half_duplex
-	jmp f7opts
-f7chs5
-	cmp #$46;F-Firmware
-	bne f7chstheme
-	lda mopo1
-	eor #$01
-	sta mopo1
-	jmp f7opts
-f7chstheme
-	cmp #$54;theme
-	bne f7chsconfig
+	jmp config_loop
+@no3:
+
+; F: Firmware
+	cmp #'F'
+	bne @no4
+
+	lda firmware_zimmers
+	eor #1
+	sta firmware_zimmers
+	jmp config_loop
+@no4:
+
+; T: theme
+	cmp #'T'
+	bne @no5
 	inc theme
 	lda theme
-	cmp #$06
-	bne f7theme2
-	lda #$00
+	cmp #6
+	bne :+
+	lda #0
 	sta theme
-f7theme2
-	jsr themeroutine
-	jmp f7opts
-f7chsconfig;easyflash only
-	cmp #$43 	;C-Config EF/Disk
-	bne f7chs3
-	lda efbyte;do we have an easyflash? no? then go on then and forget about this option
-	beq f7chs3
+:	jsr themeroutine
+	jmp config_loop
+@no5:
+
+; C: Config EF/Disk (EasyFlash only)
+	cmp #'C'
+	bne @no6
+	lda easyflash_support
+	beq @no6
 	lda diskoref
-	eor #$01
+	eor #1
 	sta diskoref
-	jmp f7opts
-f7chs3
-	cmp #$4d	;M-modem type
-	bne f7chsp
-;change modem type
-	inc motype
-	lda motype
+	jmp config_loop
+@no6:
+
+; M: modem type
+	cmp #'M'
+	bne @no7
+
+	inc modem_type
+	lda modem_type
 	pha
-	lda efbyte
-	beq modems5
+	lda easyflash_support
+	beq @mod1
 	pla
-	cmp #$02;only 2 modems in easyflash mode
-	bcc incmod
-	jmp modems6
-modems5
-	pla
-	cmp #$05;max # of modems
-	bcc incmod
-modems6
-	lda #$00
-	sta motype
-	lda #$02
-	sta baudrt
-incmod
+	cmp #2		; only 2 modems in easyflash mode
+	bcc @incmod
+	jmp @mod2
+@mod1:	pla
+	cmp #5		; max # of modems
+	bcc @incmod
+@mod2:	lda #0
+	sta modem_type
+	lda #BAUD_2400
+	sta baud_rate
+@incmod:
 	jsr rsopen
-	jmp f7opts
-f7chsp;x-modem crc fix
-	cmp #$50	;P-Protocol
-	bne f7chs6
+	jmp config_loop
+@no7:
+
+; P: Protocol
+	cmp #'P'
+	bne @no8
+
 	inc protoc
 	lda protoc
-	cmp #$03
-	bcc f7chspmoveon
-	lda #$00
+	cmp #3
+	bcc :+
+	lda #0
 	sta protoc
-f7chspmoveon
-	jmp f7opts
-f7chs6
-	cmp #$53;S-save
-	bne f7chs7
-	jsr svconf
+:	jmp config_loop
+@no8:
+
+; S: save
+	cmp #'S'
+	bne @no9
+	jsr save_config
 	jmp handle_f7_config
-f7chs7
-	cmp #$4c
-	bne f7chs8
-	jsr loconf
+@no9:
+
+; L: load
+	cmp #'L'
+	bne @no10
+	jsr load_config
 	jmp handle_f7_config
-f7chs8
-	cmp #$45
-	bne f7chs9
+@no10:
+
+; E: edit macros
+	cmp #'E'
+	bne @no11
 	jsr edtmac
 	jmp handle_f7_config
-f7chs9
-	cmp #$56
-	bne f7chsa
+@no11:
+
+; V: view message
+	cmp #'V'
+	bne @no12
 	jsr viewmg
 	jmp handle_f7_config
-f7chsa
-	cmp #$0d
-	beq f7chsb
-f7gbkk	jmp f7chos
-f7chsb
-	lda nicktemp
-	beq moveonterm
-moveonterm
-	jsr enablemodem
-	jmp term
+@no12:
 
-prmopt	.byte <op1txt,>op1txt,<op2txt,>op2txt,<op6txt,>op6txt,<op3txt,>op3txt,<op4txt,>op4txt,<op5txt,>op5txt
-prmlen	.byte 4,18,8,10,20,19
-op1txt	.byte "fULL"
+	cmp #$0d
+	jne f7chos
+
+; return to terminal
+	lda nicktemp	; [XXX no-op]
+	beq *+2		; [XXX no-op]
+
+	jsr enablemodem
+	jmp term_entry
+
+prmopt:
+	.word op1txt
+	.word op2txt
+	.word op6txt
+	.word op3txt
+	.word op4txt
+	.word op5txt
+
+prmlen:
+	.byte 4,18,8,10,20,19
+
+op1txt:
+	.byte "fULL"
 	.byte "hALF"
-op2txt	.byte 'uSER pORT 300-2400'
+
+op2txt:
+	.byte 'uSER pORT 300-2400'
 	.byte 'up9600 / ez232    '
 	.byte 'sWIFT / tURBO de  '
 	.byte 'sWIFT / tURBO df  '
 	.byte 'sWIFT / tURBO d7  '
-op6txt	.byte "sTANDARDzIMODEM "
-op3txt	.byte "pUNTER    ","xMODEM    ","xMODEM-crc"
-	;themes
-	;0-classic
-	;1-Iman of XPB v7.1
-	;2-v8.1 Predator/FCC
-	;3-9.4 Ice THEME
-	;4-17.2 Defcon/Unicess
-op4txt	.byte "cLASSIC ccgms V5.5  "
+
+op6txt:
+	.byte "sTANDARD"
+	.byte "zIMODEM "
+
+op3txt:
+	.byte "pUNTER    ","xMODEM    ","xMODEM-crc"
+
+op4txt:
+	.byte "cLASSIC ccgms V5.5  "
 	.byte "iMAN / xpb V7.1     "
 	.byte "pREDATOR / fcc V8.1 "
 	.byte "iCE THEME V9.4      "
 	.byte "dEFCON/uNICESS V17.2"
 	.byte "aLWYZ / ccgms 2021  "
-op5txt	.byte 29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,"ef  ",29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,"dISK"
-prmtab
+
+op5txt:
+	.res 15,CSR_RIGHT
+	.byte "ef  "
+	.res 15,CSR_RIGHT
+	.byte "dISK"
+
+prmtab:
 	lda #$0d
 	jsr chrout
 	jsr chrout
 	ldx #17
 	jmp outspc
-prmclc;duplex/modem type/protocol display
+
+; display duplex, modem type, protocol
+prmclc:
 	tya
 	asl a
 	tax
 	lda prmopt,x
-	sta prmadr+1
+	sta prmadr
 	lda prmopt+1,x
-	sta prmadr+2
+	sta prmadr+1
 	rts
-prmprt
+
+prmprt:
 	dex
 	bmi prmpr2
-	lda prmadr+1
+	lda prmadr
 	clc
 	adc prmlen,y
+	sta prmadr
+	lda prmadr+1
+	adc #0
 	sta prmadr+1
-	lda prmadr+2
-	adc #$00
-	sta prmadr+2
 	bne prmprt
 prmpr2
 	inx
-prmadr
-	lda op1txt,x
+prmadr=*+1
+:	lda op1txt,x
 	jsr chrout
 	inx
 	txa
 	cmp prmlen,y
-	bne prmadr
+	bne :-
 	jmp prmtab
-;
-f7parm
-	lda #19
+
+;----------------------------------------------------------------------
+f7parm:
+	lda #HOME
 	jsr chrout
 	lda #1
-	sta 646
+	sta textcl
 	ldy f7thob
-prmlop
-	jsr prmtab
+:	jsr prmtab
 	dey
-	bne prmlop
+	bne :-
 	jsr prmclc
-	lda baudrt
+	lda baud_rate
 	asl a
 	tax
 	lda bpsspd+1,x
@@ -274,21 +313,21 @@ prmlop
 	tax
 	pla
 	jsr outnum
-	lda #$20
+	lda #' '
 	jsr chrout
 	jsr chrout
 	jsr prmtab
-	ldy #0;duplex
+	ldy #0		; duplex
 	jsr prmclc
 	ldx half_duplex
 	jsr prmprt
 	iny
 	jsr prmclc
-	ldx motype
+	ldx modem_type
 	jsr prmprt
 	ldy #2
 	jsr prmclc
-	ldx mopo1
+	ldx firmware_zimmers
 	jsr prmprt
 	ldy #3
 	jsr prmclc
@@ -298,45 +337,65 @@ prmlop
 	jsr prmclc
 	ldx theme
 	jsr prmprt
-	lda efbyte
-	beq skipeflisting
+	lda easyflash_support
+	beq :+
 	ldy #5
 	jsr prmclc
 	ldx diskoref
 	jmp prmprt
-skipeflisting
-	rts
+:	rts
 
-scracf	.byte "S0:",0
-svctxt	.byte $93,13,5,"fILENAME: ",0
-conffn	.byte "CCGMS-PHONE",0
-f7thob	.byte 2
-f7mtxt	.byte $93,16,14,5
-	.byte "   dIALER/pARAMETERS",13
-	.byte 31,"   ",163,163,163,163,163,163,163,163,163,163,163,163,163,163
-	.byte 163,163,163,13,5
-f7mtx1	.byte 16
-	.byte 05,32,2,"AUTO-dIALER/pHONEBOOK",13,13
-	.byte 32,2,"BAUD rATE   -",13,13
-	.byte 32,2,"DUPLEX      -",13,13
-	.byte 32,2,"MODEM tYPE  -",13,13
-f7mtxpre
-	.byte 32,2,"F IRMWARE    -",13,13
-	.byte 32,2,"PROTOCOL    -",13,13
-	.byte 32,2,"THEME       -",13,13,0
-f7mtx3noef
-	.byte 32,2,"EDIT mACROS",13,13,0
-f7mtx3ef
-	.byte 32,2,"EDIT mACROS  ",32,2,"CFG dEVICE -",13,13,0
-f7mtxcont
-	.byte 32,2,"LOAD/",2,"SAVE pHONE bOOK AND cONFIG.",13,13
-	.byte 32,2,"VIEW aUTHOR'S mESSAGE",13,13,0
-f7mtx2
-prret	.byte 3,22,0,5,cp,"RESS <",158,18,"r",e,t,u,cr,n,146,5,"> TO ABORT.",13,0
-prret2	.byte 3,22,7,159,"return",13,0
+txt_cmd_scratch:
+	.byte "S0:",0
 
-bpsspd	.byte 44,1,176,4,96,9,192,18,128,37,0,75,0,150;new rates
-	;  300  1200  2400 4800   9600   19200  38400
-	;  00   01    02    03   04     05     06
-	;  256  256   1024  2304 4608   9472   19200
+txt_filename:
+	.byte CLR,CR,WHITE,"fILENAME: ",0
+
+filename_config:
+	.byte "CCGMS-PHONE",0
+
+f7thob:
+	.byte 2
+
+txt_settings_menu:
+	.byte CLR,16,14,WHITE
+	.byte "   dIALER/pARAMETERS",CR
+	.byte BLUE,"   ",163,163,163,163,163,163,163,163,163,163,163,163,163,163
+	.byte 163,163,163,CR,WHITE,16
+f7mtx1:
+	.byte WHITE; overwritten by theme
+	.byte 32,2,"AUTO-dIALER/pHONEBOOK",CR,CR
+	.byte 32,2,"BAUD rATE   -",CR,CR
+	.byte 32,2,"DUPLEX      -",CR,CR
+	.byte 32,2,"MODEM tYPE  -",CR,CR
+	.byte 32,2,"F"
+f7mtxpre:
+	.byte ' '; overwritten by theme
+	.byte "IRMWARE    -",CR,CR
+	.byte 32,2,"PROTOCOL    -",CR,CR
+	.byte 32,2,"THEME       -",CR,CR,0
+
+txt_edit_macros:
+	.byte 32,2,"EDIT mACROS",CR,CR,0
+txt_edit_macros_cfg_device:
+	.byte 32,2,"EDIT mACROS  ",32,2,"CFG dEVICE -",CR,CR,0
+
+txt_load_save_config:
+	.byte 32,2,"LOAD/",2,"SAVE pHONE bOOK AND cONFIG.",CR,CR
+	.byte 32,2,"VIEW aUTHOR'S mESSAGE",CR,CR,0
+
+txt_press_return_to_abort:
+	.byte 3,22,0,WHITE,cp,"RESS <",YELLOW,18,"r",e,t,u,cr,n,146,WHITE,"> TO ABORT.",CR,0
+
+txt_return:
+	.byte 3,22,7,CYAN,"return",CR,0
+
+bpsspd:
+	.word 300
+	.word 1200
+	.word 2400
+	.word 4800
+	.word 9600
+	.word 19200
+	.word 38400
 

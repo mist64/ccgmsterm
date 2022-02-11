@@ -1,37 +1,37 @@
 ;----------------------------------------------------------------------
 txt_newpunter:
-	.byte 13,13,5,'new pUNTER ',00
+	.byte CR,CR,WHITE,'new pUNTER ',00
 txt_up:
 	.byte 'uP',00
 txt_down:
 	.byte 'dOWN',00
 txt_load:
-	.byte 'LOAD.',13,00
+	.byte 'LOAD.',CR,00
 txt_enter_filename:
 	.byte 'eNTER fILENAME: ',00
 txt_yellow:
-	.byte 13,158,32,32,0 ; CR, YELLOW, SP, SP
+	.byte CR,YELLOW,' ',' ',0
 txt_loading:
-	.byte 'LOADING: ',159,0
+	.byte 'LOADING: ',CYAN,0
 txt_press_c_to_abort:
-	.byte 13,5,'  (pRESS c= TO ABORT.)',13,13,00
+	.byte CR,WHITE,'  (pRESS c= TO ABORT.)',CR,CR,00
 txt_aborted:
-	.byte 'aBORTED.',13,00
+	.byte 'aBORTED.',CR,00
 txt_good_bad_blocks:
-	.byte 153,32,'gOOD bLOCKS: ',5,'000',5,'   -   '
-	.byte 153,'bAD bLOCKS: ',5,'000',13,0
+	.byte LTGREEN,' ','gOOD bLOCKS: ',WHITE,'000',WHITE,'   -   '
+	.byte LTGREEN,'bAD bLOCKS: ',WHITE,'000',CR,0
 txt_graphics:
-	.byte 153,'gRAPHICS',00
+	.byte LTGREEN,'gRAPHICS',00
 txt_graphics2:
-	.byte 18,31,'c',154,'/',159,'g',146,158,0
+	.byte 18,BLUE,'c',LTBLUE,'/',CYAN,'g',146,YELLOW,0
 txt_ascii:
-	.byte 159,'aNSCII',00
+	.byte CYAN,'aNSCII',00
 txt_terminal_ready:
-	.byte ' tERMINAL rEADY.',155,13,13,00
+	.byte ' tERMINAL rEADY.',LTGRAY,CR,CR,00
 txt_term_activated:
-	.byte ' tERM aCTIVATED.',155,13,13,00
+	.byte ' tERM aCTIVATED.',LTGRAY,CR,CR,00
 txt_disconnecting:
-	.byte 13,13,5,'dISCONNECTING...',155,13,13,0
+	.byte CR,CR,WHITE,'dISCONNECTING...',LTGRAY,CR,CR,0
 
 ;----------------------------------------------------------------------
 drtype	.byte 'D','S','P','U','R'
@@ -39,7 +39,7 @@ drtyp2	.byte 'E','E','R','S','E'
 drtyp3	.byte 'L','Q','G','S','L'
 
 ;----------------------------------------------------------------------
-drform	.byte 158,2,157,157,5,6,32,159,14,153,32,63,32,0
+drform	.byte YELLOW,2,157,157,WHITE,6,' ',CYAN,14,LTGREEN,' ',63,' ',0
 
 ;----------------------------------------------------------------------
 proto	.byte $08   ;start with
@@ -48,10 +48,17 @@ bdoutl	.byte $51
 bdouth	.byte $0d
 protoe	.byte $02 ;length of proto
 dreset	.byte "I0"
-diskdv	.byte $08
-drivepresent
-	.byte $01
-alrlod	.byte 0
+
+; device number of the (first) disk drive
+device_disk:
+	.byte 8
+
+; is a drive present in the system
+drive_present:
+	.byte 1
+
+config_file_loaded:
+	.byte 0
 
 prev_char:
 	.byte 0
@@ -72,7 +79,7 @@ supercpu:
 	.byte 0
 
 txt_supercpu_enabled:
-	.byte "sUPERcpu eNABLED!",13,13,0
+	.byte "sUPERcpu eNABLED!",CR,CR,0
 
 nicktemp
 	.byte $00

@@ -1,20 +1,22 @@
-input
+;----------------------------------------------------------------------
+input:
 	jsr inpset
 	jmp inputl
-inpset
+
+;----------------------------------------------------------------------
+inpset:
 	stx max
-	cpy #$00
-	beq inpcon
+	cpy #0
+	beq :+
 	jsr outstr
-inpcon
-	jsr clrchn
+:	jsr clrchn
 	sec
 	jsr plot
-	stx $9e
-	sty $9f
-	jsr finpos    ;set up begin &
-	lda locat+1   ;end of input
-	sta begpos+1  ;ptrs
+	stx tmp9e
+	sty tmp9f
+	jsr finpos	; set up begin &
+	lda locat+1	; end of input
+	sta begpos+1	; ptrs
 	sta endpos+1
 	lda locat
 	sta begpos
@@ -22,39 +24,39 @@ inpcon
 	adc max
 	sta endpos
 	lda endpos+1
-	adc #$00
+	adc #0
 	sta endpos+1
 	rts
-inputl
+
+;----------------------------------------------------------------------
+inputl:
 	lda #0
-	sta 204
+	sta BLNSW
 	jsr savech
-inpwat
+inpwat:
 	jsr getin
 	beq inpwat
 	sta tmp03
-	and #127
-	cmp #17
+	and #$7f
+	cmp #CSR_DOWN
 	beq inpcud
-	cmp #34
+	cmp #'"'
 	beq inpwat
-	cmp #13
-	bne inpwt1
-	jmp inpret
-inpwt1
+	cmp #CR
+	jeq inpret
 	lda tmp03
-	cmp #20
+	cmp #DEL
 	beq inpdel
-	cmp #157
+	cmp #CSR_LEFT
 	beq inpdel
 	and #$7f
-	cmp #19
+	cmp #HOME
 	beq inpcls
 	bne inpprc
 inpcud
 	jsr restch
 	lda tmp03
-	cmp #145
+	cmp #CSR_UP
 	beq inphom
 	jsr inpcu1
 	jmp inpmov
@@ -63,29 +65,29 @@ inpcu2
 	dey
 	bmi inpcu3
 	lda (begpos),y
-	cmp #$20
+	cmp #' '
 	beq inpcu2
 inpcu3
 	iny
 	tya
 	clc
-	adc $9f
+	adc tmp9f
 	tay
 	rts
 inpcls
 	jsr restch
 	lda tmp03
-	cmp #$93
+	cmp #CLR
 	bne inphom
 	ldy max
-	lda #$20
+	lda #' '
 inpcl2	sta (begpos),y
 	dey
 	bpl inpcl2
 inphom
-	ldy $9f
+	ldy tmp9f
 inpmov
-	ldx $9e
+	ldx tmp9e
 	clc
 	jsr plot
 	jmp inputl
@@ -109,76 +111,72 @@ inpprc
 	jmp inpwat
 inpins
 	lda tmp03
-	cmp #148
+	cmp #INST
 	bne inprst
 	dec endpos+1
 	ldy #$ff
 	lda (endpos),y
 	inc endpos+1
-	cmp #$20
+	cmp #' '
 	beq inprst
 	jmp inpwat
 inprst
-	ldx #$03
-	stx 651
+	ldx #3
+	stx KOUNT
 	jsr restch
 	lda tmp03
 	jsr chrout
 	jsr quote_insert_off
 	jmp inputl
-inpret
+
+inpret:
 	jsr restch
 	jsr inpcu1
 	cmp COLUMN
-	bcc inpre2
-	ldx $9e
+	bcc :+
+	ldx tmp9e
 	clc
 	jsr plot
-inpre2
-	jsr finpos
+:	jsr finpos
 	lda locat
 	sec
 	sbc begpos
 	pha
 	tay
-	lda #$20
-inpspc
-	sta (begpos),y
+	lda #' '
+:	sta (begpos),y
 	cpy max
-	beq inpinp
+	beq :+
 	iny
-	bne inpspc
-inpinp
-	pla
+	bne :-
+:	pla
 	sta max
-	ldx $9e
-	ldy $9f
+	ldx tmp9e
+	ldy tmp9f
 	clc
 	jsr plot
 	lda #1
-	sta 204
-	lda #$03
-	ldy #$00
+	sta BLNSW
+	lda #3
+	ldy #0
 	tax
 	jsr setlfs
-	lda #$00
+	lda #0
 	jsr setnam
 	jsr open
-	ldx #$03
+	ldx #3
 	jsr chkin
-	ldy #$00
-inpsto
-	cpy max
-	beq inpend
+	ldy #0
+:	cpy max
+	beq :+
 	jsr chrin
 	sta inpbuf,y
 	iny
-	bne inpsto
-inpend
-	lda #$00
+	bne :-
+:	lda #0
 	sta inpbuf,y
 	jsr clrchn
-	lda #$03
+	lda #3
 	jsr close
 	ldx max
 	rts

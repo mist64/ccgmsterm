@@ -1,16 +1,19 @@
-dirmdm	.byte 0
-;directory routine
-dirfn	.byte '$'
-dir
+; Show disk directory
+
+dirmdm:
+	.byte 0
+
+dirfn:
+	.byte '$'
+
+dir:
 	jsr disablexfer
 	lda #$0d
-	ldx diskdv
-	ldy #$00
+	ldx device_disk
+	ldy #0
 	jsr setlfs
 	jsr drvchk
-	bpl dirst
-	jmp drexit
-dirst
+	jmi drexit
 	jsr clrchn
 	jsr cosave
 	lda #$0d
@@ -20,17 +23,15 @@ dirst
 	sta dirmdm
 	lda SHFLAG
 	cmp #SHFLAG_CBM	; c= f6
-	bne dirlp0
+	bne :+
 	lda #1
 	sta dirmdm
-dirlp0
-	ldx #$0d
+:	ldx #$0d
 	jsr chkin
 	ldy #03
-drlp1
-	jsr getch
+@loop:	jsr getch
 	dey
-	bpl drlp1
+	bpl @loop
 	jsr getch
 	sta $0b
 	jsr getch
@@ -38,26 +39,24 @@ drlp1
 	jsr outnum
 	lda #$20
 	jsr chrout
-drlp2
-	jsr getch
+@skip:	jsr getch
 	ldx dirmdm
-	beq drlpm
+	beq @1
 	cmp #0
-	beq drlpm2
-	cmp #$20
-	bcc drlp2
-drlpm
-	jsr chrout
-	bne drlp2
-drlpm2
-	jsr drret
+	beq @2
+	cmp #' '
+	bcc @skip
+@1:	jsr chrout
+	bne @skip
+@2:	jsr drret
 	ldy #01
-	bne drlp1
-getch
+	bne @loop
+
+getch:
 	jsr getin
 	ldx status
 	bne drlp3
-	cmp #00
+	cmp #0
 	rts
 drlp3
 	pla
@@ -69,46 +68,43 @@ drexit
 	jsr chrout
 	jsr close
 	jmp enablexfer
-drret
+
+drret:
 	lda #$0d
 	jsr chrout
 	jsr clrchn
 	jsr getin
-	beq drcont
+	beq @cont
 	cmp #$03
 	beq drlp3
 	lda #$00
 	sta $c6
-drwait
-	jsr getin
-	beq drwait
-drcont
-	ldx dirmdm
+:	jsr getin
+	beq :-
+@cont:	ldx dirmdm
 	beq dircoe
-	lda #145
+	lda #CSR_UP
 	jsr chrout
-	lda #3     ;screen
-	sta 153    ;def input dev
-	ldx #5
+	lda #3		; screen
+	sta 153		; def input dev
+	ldx #LFN_MODEM
 	jsr chkout
 	ldy #0
 drcon2
-	lda #$5
-	sta dget2+1
-	jsr dirget;grab bytes in buffer so we dont lock up nmis
-	bcs drcon4 ; no bytes
-	jmp drcon2
-drcon4
-	jsr disablexfer
+	lda #5
+	sta dget2
+	jsr dirget	; grab bytes in buffer so we dont lock up nmis
+	bcs :+		; no bytes
+	jmp drcon2	; [XXX bcc drcon2 would work]
+:	jsr disablexfer
 	jsr getin
 	jsr enablexfer
 	jsr chrout
 	tya
 	pha
 	lda #$15
-	sta dget2+1
-	jsr dirget;grab bytes in buffer so we dont lock up nmis
-drcon6
+	sta dget2
+	jsr dirget	; grab bytes in buffer so we dont lock up nmis
 	pla
 	tay
 	iny
@@ -119,46 +115,47 @@ drcon6
 	jsr clrchn
 	lda #$0d
 	jsr chrout
-	ldx #5
+	ldx #LFN_MODEM
 	jsr chkin
-drcon3	jsr getin
+:	jsr getin
 	lda $029b
 	cmp $029c
-	bne drcon3
-dircoe
+	bne :-
+dircoe:
 	jsr clrchn
 	ldx #$0d
 	jmp chkin
-drvchk
-	lda #00
+
+drvchk:
+	lda #0
 	sta status
-	lda diskdv
+	lda device_disk
 	jsr $ed0c
 	lda #$f0
 	jsr $edbb
 	ldx status
-	bmi drc2
+	bmi :+
 	jsr $f654
-	lda #$00
-drc2	rts
-dirget	;this timeout failsafe makes sure the byte is received back from modem
-	;before accessing disk for another byte otherwise we can have
-	;all sorts of nmi related issues.... this solves everything.
-	;uses the 'fake' rtc / jiffy counter function / same as xmmget...
-dget2	lda #10;timeout failsafe
+	lda #0
+:	rts
+
+;this timeout failsafe makes sure the byte is received back from modem
+;before accessing disk for another byte otherwise we can have
+;all sorts of nmi related issues.... this solves everything.
+;uses the 'fake' rtc / jiffy counter function / same as xmmget...
+dirget:
+dget2=*+1
+	lda #10		; timeout failsafe
 	sta xmodel
 	lda #0
 	sta rtca1
 	sta rtca2
 	sta rtca0
-ddxmogt1
-	jsr modget
-	bcs ddxmmgt2
-	jmp dirgetout
-ddxmmgt2
-	jsr xmmrtc
+@1:	jsr modget
+	bcs :+		; [XXX bcc @rts]
+	jmp @rts
+:	jsr xmmrtc
 	lda rtca1
 	cmp xmodel
-	bcc ddxmogt1
-dirgetout
-	rts
+	bcc @1
+@rts:	rts

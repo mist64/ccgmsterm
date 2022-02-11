@@ -9,23 +9,24 @@ reu_enabled:
 	.byte 0
 
 ; detect REU
-detectreu
-	;jmp noreu;temp byte to default to no reu, for troubleshooting if needed
+reu_detect:
+	; enable this to temporarily disable REU support
+	;jmp noreu
 
 	ldx #2
-loop1	txa
+:	txa
 	sta $df00,x
 	inx
 	cpx #6
-	bne loop1
+	bne :-
 
 	ldx #2
-loop2	txa
+:	txa
 	cmp $df00,x
 	bne noreu
 	inx
 	cpx #6
-	bne loop2
+	bne :-
 
 	lda #1
 	sta reu_enabled
@@ -41,9 +42,10 @@ loop2	txa
 	sta bufend+1
 	rts
 
-noreu	lda #0
+noreu:
+	lda #0
 	sta reu_enabled
-	lda #<endprg   ;set buffer start
+	lda #<endprg	; set buffer start
 	sta buffst
 	lda #>endprg
 	sta buffst+1
@@ -53,13 +55,14 @@ noreu	lda #0
 	sta bufend+1
 	rts
 
-bufend	.word 0
+bufend:
+	.word 0
 
 ;read/write to from reu
 
-length	= 0001;one byte at a time
+length	= 1	; one byte at a time
 
-reuwrite
+reuwrite:
 	sta bufptrreu
 	pha
 	lda #<bufptrreu
@@ -78,13 +81,12 @@ reuwrite
 	sta $df08
 	lda #0
 	sta $df0a
-c64toreu
 	lda #$b0
 	sta $df01
 	pla
 	rts
 
-reuread
+reuread:
 	lda #<buffstreu
 	sta $df02
 	lda #>buffstreu
@@ -101,7 +103,6 @@ reuread
 	sta $df08
 	lda #0
 	sta $df0a
-reutoc64
 	lda #$b1
 	sta $df01
 	lda buffstreu

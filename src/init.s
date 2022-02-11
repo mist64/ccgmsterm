@@ -1,19 +1,18 @@
 ;pal/ntsc detect
-prestart
+start
 l1	lda $d012
 l2	cmp $d012
 	beq l2
 	bmi l1
 	cmp #$20
-	bcc start	; ntsc selected
+	bcc :+		; NTSC
 	ldx #1
 	stx is_pal_system
+:
 
-start
-
-supercpudetect:
+; SuperCPU detection
 ; "it should just tell you to turn that shit off.
-; who needs 20MHz for 9600 baud, anyway?"
+;  who needs 20MHz for 9600 baud, anyway?"
 	lda $d0bc
 	asl a
 	bcs :+
@@ -21,8 +20,8 @@ supercpudetect:
 	sta supercpu
 :
 
-;SETUP INIT
-	jsr $e3bf;refresh basic reset - mostly an easyflash fix
+; system setup
+	jsr $e3bf	; refresh basic reset - mostly an easyflash fix
 	sei
 	cld
 	ldx #$ff
@@ -31,66 +30,78 @@ supercpudetect:
 	sta $00
 	lda #$37
 	sta $01
+
+; editor/screen setup
 	lda #1
-	sta 204
-	lda #bcolor  ;settup
+	sta BLNSW	; enable cursor blinking
+	lda #BCOLOR
 	sta backgr
 	sta border
-	lda #tcolor
+	lda #TCOLOR
 	sta textcl
+
 	lda #$80
-	sta 650      ;rpt
+	sta RPTFLA	; key repeat on
 	lda #$0e
-	sta $d418
-	lda #$00
+	sta $d418	; *almost* full volume
+
+; clear secondary screens
+	lda #<SCREENS_BASE
 	sta locat
-	lda #$e0       ;clear secondary
-	sta locat+1    ;screens
-	lda #$20
-	ldy #$00
-erasl1
-	sta (locat),y
+	lda #>SCREENS_BASE
+	sta locat+1
+	lda #>$2000
+	ldy #0
+:	sta (locat),y
 	iny
-	bne erasl1
+	bne :-
 	inc locat+1
-	bne erasl1
+	bne :-
+
 	cli
-initdrive
-	lda $ba        ;current dev#
-	jmp stodv2
-stodev	inc diskdv
-	lda diskdv
-	cmp #16;originally #16, try #30 here for top drive #?
-	beq stodv5
-	jmp stodv2
-stodv5
-	lda #$00
-	sta drivepresent;we have no drives
-	lda #$08
-	sta diskdv
-	jmp stodv3
-stodv2	sta diskdv
+
+; find first disk drive
+	lda FA		; current dev#
+	jmp @dsk1
+@loop:	inc device_disk
+	lda device_disk
+	cmp #16		; try #30 here for top drive #?
+	beq :+
+	jmp @dsk1
+:	lda #0
+	sta drive_present; we have no drives
+	lda #8
+	sta device_disk
+	jmp @dsk2
+@dsk1:	sta device_disk
 	jsr drvchk
-	bmi stodev
-	lda #$01
-	sta drivepresent;we have a drive!
-stodv3
-	lda efbyte
-	beq stodv6;no easyflash - go ahead and look to see if we have an reu
+	bmi @loop
+	lda #1
+	sta drive_present; we have a drive!
+@dsk2:
+
+; REU detection
+	lda easyflash_support
+	beq @ef1	; skip REU detection if we have EasyFlash
 	jsr noreu
-	jmp stodv7
-stodv6
-	jsr detectreu
-stodv7
-	lda newbuf	; init. buffer
-	sta buffer_ptr	; & open rs232
+	jmp @ef2
+@ef1:
+	jsr reu_detect
+@ef2:
+
+; init. buffer & open rs232
+	lda newbuf
+	sta buffer_ptr
 	lda newbuf+1
 	sta buffer_ptr+1
-stodv4
+
 	jsr rsopen
 	jsr ercopn
-	jmp init
-rsopen	;open rs232 file
+	jmp init	; [XXX the next two functions are in the way]
+
+;----------------------------------------------------------------------
+; open rs232 file
+rsopen:
 	jsr rsuser_disable
 	jsr up9600_disable
 	jsr enablemodem
@@ -103,24 +114,28 @@ rsopen	;open rs232 file
 	ldx #<proto
 	ldy #>proto
 	jsr setnam
-	jsr open;$ffc2
-	lda #>ribuf ;move rs232 buffers
-	sta 248       ;for the userport 300-2400 modem nmi handling
+	jsr open
+	lda #>ribuf	; move rs232 buffers
+	sta RIBUF+1	; for the userport 300-2400 modem nmi handling
 	jsr disablemodem
-	rts
-ercopn
-	lda drivepresent
-	beq ercexit
+	rts		; [XXX jmp]
+
+;----------------------------------------------------------------------
+ercopn:
+	lda drive_present
+	beq :+
 	lda #$02;file length      ;open err chan
 	ldx #<dreset
 	ldy #>dreset
 	jsr setnam
 	lda #15
-	ldx diskdv
+	ldx device_disk
 	tay
 	jsr setlfs
-	jsr open;$ffc0
-ercexit	rts
+	jsr open
+:	rts
+
+;----------------------------------------------------------------------
 init
 	lda #1
 	sta cursor_flag	; non-destructive
@@ -131,22 +146,25 @@ init
 	sta buffer_open
 	sta half_duplex	; full duplex
 	jsr $e544	; clear screen
-	lda alrlod	; already loaded config file?
-	bne noload
-	lda drivepresent
-	beq noload	; no drive exists
-;-------------
+	lda config_file_loaded; already loaded config file?
+	bne @noload
+	lda drive_present
+	beq @noload	; no drive exists
+
+; load config file from disk
 	jsr disablemodem
 	lda #1
-	sta alrlod
-	ldx #<conffn
-	ldy #>conffn
+	sta config_file_loaded
+	ldx #<filename_config
+	ldy #>filename_config
 	lda #11
 	jsr setnam
 	lda #2
-	ldx diskdv
+	ldx device_disk
 	ldy #0
 	jsr setlfs
-	jsr loadcf
-;-------------
-	jmp begin
+	jsr load_config_file
+
+	jmp term_entry_first
+
+@noload=term_entry_first	; [XXX]

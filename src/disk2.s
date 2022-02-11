@@ -1,7 +1,7 @@
-dsktxt	.byte 5,13
+dsktxt	.byte WHITE,CR
 	.byte "#"
 dsktx2	.byte "**>      "
-	.byte 157,157,157,157,157,157,00
+	.byte CSR_LEFT,CSR_LEFT,CSR_LEFT,CSR_LEFT,CSR_LEFT,CSR_LEFT,0
 dskdtx	.byte '8 9 101112131415161718192021222324252627282930'
 
 ;----------------------------------------------------------------------
@@ -11,7 +11,7 @@ handle_f5_diskcommand:
 	jsr ercopn
 	jsr cosave
 dskcmd
-	lda diskdv
+	lda device_disk
 	sec
 	sbc #$08
 	asl a
@@ -40,11 +40,11 @@ dskcmd
 	ldy #>inpbuf
 	jmp dodir
 drvsnd
-	ldx diskdv
+	ldx device_disk
 	stx 612    ;dev# table, log#15
-	ldx #$0f
+	ldx #LFN_DISK_CMD
 	jsr chkout
-	ldx #$00
+	ldx #0
 drvlop
 	lda inpbuf,x
 	jsr chrout
@@ -59,12 +59,12 @@ drvext
 	lda #$0d
 	jsr chrout
 	jsr enablexfer
-	jmp main
+	jmp term_mainloop
 drverr
 	jsr drvchk
 	bmi drvext
 	jsr clrchn
-	ldx #$0f
+	ldx #LFN_DISK_CMD
 	jsr chkin
 drver2
 	jsr getin
@@ -102,19 +102,19 @@ chgdv9
 	cmp #$1e;highest drive # (30)
 	bcs drvext
 	tay;y now holds complete hex of drive #
-	lda diskdv
+	lda device_disk
 	pha
-	sty diskdv
+	sty device_disk
 	sty 612
 	jsr drvchk
 	bmi chgdv3
 	pla
-	lda #145
+	lda #CSR_UP
 	jsr chrout
 	jmp dskcmd
 chgdv3
 	pla
-	sta diskdv
+	sta device_disk
 	sta 612
 chgdv4
 	lda #$20

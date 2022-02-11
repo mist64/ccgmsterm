@@ -40,7 +40,7 @@ scnbf2	jsr finscp
 scnbf3
 	lda #$0d
 	jsr buffer_put
-	lda #$93
+	lda #CLR
 	jsr buffer_put
 	lda $d018
 	and #2
@@ -145,13 +145,13 @@ scnbr2
 	bcs scnbre
 scnbr3	jmp scnbnl
 scnbre
-	ldx 646
+	ldx textcl
 	lda COLTAB,x
 	jsr buffer_put
 scnbr4
 	pla
 	sta buffer_open
-	jmp main
+	jmp term_mainloop
 ;
 finscp
 	ldy stbyps

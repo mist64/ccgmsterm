@@ -2,7 +2,7 @@ cosave
 	ldx textcl
 	stx tmp04
 cochng
-	ldx #tcolor
+	ldx #TCOLOR
 	stx textcl
 	rts
 coback
@@ -19,7 +19,7 @@ dodir:
 	jsr setnam
 	jsr dir
 	jsr enablexfer
-	jmp main
+	jmp term_mainloop
 
 ;----------------------------------------------------------------------
 handle_f8_switch_term:
@@ -31,7 +31,7 @@ handle_f8_switch_term:
 	eor #1
 	sta ascii_mode
 	jsr bell
-	jmp term
+	jmp term_entry
 
 ;----------------------------------------------------------------------
 ; ascii crsr toggle
@@ -40,7 +40,7 @@ crsrtg:
 	lda cursor_flag
 	eor #1
 	sta cursor_flag
-	jmp main
+	jmp term_mainloop
 
 ;----------------------------------------------------------------------
 ; hang up phone
@@ -52,12 +52,12 @@ hangup:
 	lda #<txt_disconnecting
 	ldy #>txt_disconnecting
 	jsr outstr
-	lda motype
-	beq droprs
-	cmp #$01
+	lda modem_type
+	beq droprs	; MODEM_TYPE_USERPORT
+	cmp #MODEM_TYPE_UP9600
 	beq dropup
 	jmp dropswift
-hangup6	jmp main
+hangup6	jmp term_mainloop
 
 ;----------------------------------------------------------------------
 droprs:
@@ -71,7 +71,7 @@ droprs:
 	bmi :-
 	lda #4
 	sta $dd01
-	jmp main
+	jmp term_mainloop
 
 dropup	lda #$04
 	sta $dd03    ;cia2: data direction register b
@@ -83,8 +83,8 @@ a7ef3	bit JIFFIES
 	bmi a7ef3
 	lda #$02
 	sta $dd03    ;cia2: data direction register b
-	jmp main
+	jmp term_mainloop
 
 dropswift
 	jsr sw_dropdtr
-	jmp main
+	jmp term_mainloop

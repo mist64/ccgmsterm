@@ -11,9 +11,9 @@ swap_screen:
 	asl a
 	asl a
 	clc
-	adc #$e0
+	adc #>SCREENS_BASE
 	sta locat+1
-	lda #$04
+	lda #>$0400
 	sta tmp03
 	lda #$00
 	sta locat
@@ -22,35 +22,35 @@ swap_screen:
 	lda $d011
 	pha
 	lda #$0b
-	sta $d011
+	sta $d011	; screen off
 	lda #<ramnmi
 	sta $fffa
 	lda #>ramnmi
 	sta $fffb
 	lda #$2f
 	sta $00
-	lda #$35
+	lda #$35	; disable ROMs
 	sta $01
 scrtg1
 	jsr scrnl1
 	cmp #$08
 	bcc scrtg1
-	lda #$d8
+	lda #>$d800
 	sta tmp03
 scrtg2
 	jsr scrnl1
-	cmp #$dc
+	cmp #>$dc00
 	bcc scrtg2
 	pla
 	sta $d011
 	lda #$37
-	sta $01
+	sta $01		; enable ROMs
 	cli
-	jmp main
+	jmp term_mainloop
 ramnmi
 	sta tempch
 	lda #$37
-	sta $01
+	sta $01		; enable ROMs
 	plp
 	php
 	sta tempcl
@@ -65,7 +65,7 @@ ramnmi
 ramnm2
 	pha
 	lda #$35
-	sta $01
+	sta $01		; enable ROMs
 	pla
 	rti
 scrnl1
@@ -97,7 +97,7 @@ scrnl3	lda #<ramnmi
 	lda tmp03
 	rts
 outspc
-	lda #29    ;crsr right
+	lda #CSR_RIGHT
 outsp1
 	jsr chrout
 	dex

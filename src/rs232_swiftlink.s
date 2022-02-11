@@ -126,7 +126,7 @@ sm16	sta sw_cmd
 	lda #%00010000
 sm17	sta sw_ctrl
 
-	lda baudrt	;0=300, 1=1200, 2=2400,3=4800,4=9600, 5=19200, 6=38400
+	lda baud_rate
 	tax
 sm18	lda sw_ctrl
 	and #$f0

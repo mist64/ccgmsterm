@@ -1,78 +1,78 @@
-;
-;phone book stuff begins here
-entcol	.byte 5
-hilcol	.byte 158
+; Phone Book
+
+entcol	.byte WHITE
+hilcol	.byte YELLOW
 phhtxt
-	.byte 19,13
-	.byte 5,18,161
+	.byte 19,CR
+	.byte WHITE,18,161
 	.byte "crsr kEYS"
-	.byte 182,146,154
+	.byte 182,146,LTBLUE
 	.byte " - mOVE"
-	.byte 5,18,161
+	.byte WHITE,18,161
 	.byte "rETURN"
-	.byte 182,146,154
+	.byte 182,146,LTBLUE
 	.byte " - sELECT"
-	.byte 13
-	.byte 159,2
+	.byte CR
+	.byte CYAN,2
 	.byte "DIAL uNLISTED #  "
 	.byte 2
 	.byte "EDIT cURRENT #"
-	.byte 13
+	.byte CR
 	.byte 2
 	.byte "CALL cURRENT #   "
 	.byte 2
 	.byte "A-dIAL sELECTED"
-	.byte 13,2
+	.byte CR,2
 	.byte "REVERSE cALL     "
 	.byte 2
 	.byte "X-rETURN tO mENU"
-	.byte 13
-	.byte 152,3,5,0,18
+	.byte CR
+	.byte GRAY,3,WHITE,0,18
 	.byte "           >>>pHONE bOOK<<<           "
-	.byte 29,20,32,157,148,32,13,0
-stattx	.byte 152,3,21,0,18
+	.byte 29,20,' ',CSR_LEFT,INST,' ',CR,0
+stattx	.byte GRAY,3,21,0,18
 	.byte "                                      "
 	.byte 29,20
-	.byte 32,157,148,32,13,145,18,0
-staptx	.byte 152,3,21,0,18,32,0
+	.byte ' ',CSR_LEFT,INST,' ',CR,CSR_UP,18,0
+staptx	.byte GRAY,3,21,0,18,' ',0
 	.byte 0
 toetxt	.byte 3,6,0,0
-curbtx	.byte 3,22,1,159
+curbtx	.byte 3,22,1,CYAN
 	.byte "nAME:"
-	.byte 13
+	.byte CR
 	.byte "   ip:"
-	.byte 13,32
+	.byte CR,' '
 	.byte "pORT: "
 	.byte 29,29,29,29,29
 	.byte " id: "
 	.byte 29,29,29,29,29,29,29,29,29,29,29
 	.byte " tRY: "
-	.byte 29,29,29,29,20,145,13,0
-curbt3	.byte 3,22,1,159
+	.byte 29,29,29,29,20,CSR_UP,CR,0
+curbt3	.byte 3,22,1,CYAN
 	.byte "nAME:"
-	.byte 13
+	.byte CR
 	.byte " dIAL:"
-	.byte 13,32
+	.byte CR,' '
 	.byte "      "
 	.byte 29,29,29,29,29
 	.byte "     "
 	.byte 29,29,29,29,29,29,29,29,29,29,29
 	.byte " tRY: "
-	.byte 29,29,29,29,20,145,13,0
-curbt2	.byte 159," pw:             ",0
-curbt4	.byte 159," id: ",0
-nontxt	.byte 5
+	.byte 29,29,29,29,20,CSR_UP,CR,0
+curbt2	.byte CYAN," pw:             ",0
+curbt4	.byte CYAN," id: ",0
+nontxt	.byte WHITE
 	.byte "(nONE)             "
-	.byte 13,0
+	.byte CR,0
 clrlnt	.byte 3,22,7
 	.byte "                  "
-	.byte 3,22,7,5,0
-empbbs	.byte 151
-	.res 18, PETSCII_UNDERLINE
+	.byte 3,22,7,WHITE,0
+empbbs	.byte DKGRAY
+	.res 18, UNDERLINE
 curbbs	.byte 146
-colbbs	.byte 153
+colbbs	.byte LTGREEN
 nambbs	.byte "                "
-	.byte 146,5,0
+	.byte 146,WHITE,0
 curpik	.byte 0
 tmppik	.byte 0
 bautmp	.byte 6
@@ -193,7 +193,7 @@ phinit
 	ldy #>toetxt
 	jsr outstr
 phini2
-	lda #29
+	lda #CSR_RIGHT
 	jsr chrout
 	jsr phnptr
 	jsr prtent
@@ -222,7 +222,7 @@ phini3	lda #21  ;col 21
 	jsr outstr
 	rts
 phnroc	.byte 3,0,0,0
-arrowt	.byte 32,93,93,32,60,125,109,62,32,32,0
+arrowt	.byte ' ',93,93,' ',60,125,109,62,' ',' ',0
 hilcur
 	ldx curpik
 	inx
@@ -342,7 +342,7 @@ shobau;start display of bottom line
 	lda #7
 	sta COLUMN
 	lda shocol
-	sta 646
+	sta textcl
 	lda unlisted
 	bne shocr5
 	ldy #53
@@ -380,7 +380,7 @@ shotty
 	lda #34
 	sta COLUMN
 	lda #7
-	sta 646
+	sta textcl
 	lda #<trycnt
 	ldy #>trycnt
 	jsr outstr
@@ -390,15 +390,15 @@ shotty2
 	lda #<curbtx
 	ldy #>curbtx
 	jsr outstr
-	lda #19
+	lda #HOME
 	jmp chrout
 shotty3
 	lda #<curbt3
 	ldy #>curbt3
 	jsr outstr
-;lda #$00
-;sta unlisted
-	lda #19
+;	lda #$00
+;	sta unlisted
+	lda #HOME
 	jmp chrout
 ;
 
@@ -459,7 +459,7 @@ newen3	iny
 	sta COLUMN
 newen4
 	lda #1
-	sta 646
+	sta textcl
 	jsr inputl
 	lda #0
 	sta inpbuf,x
@@ -729,7 +729,7 @@ newsl3	cmp #$0d
 	rts
 ;
 phbook
-	lda #$93
+	lda #CLR
 	jsr chrout
 	jsr phinit
 phloop
@@ -742,16 +742,16 @@ phloop
 	jsr shocur
 phbget
 	jsr getin
-	cmp #$00
+	cmp #0
 	beq phbget
-	cmp #157  ;left
+	cmp #CSR_LEFT
 	bne phb2
 	lda curpik
 	sbc #15
 	bcs phnupd
 	adc #30
 	jmp phnupd
-phb2	cmp #29 ;right
+phb2	cmp #CSR_RIGHT
 	bne phb3
 	lda curpik
 	clc
@@ -760,14 +760,14 @@ phb2	cmp #29 ;right
 	bcc phnupd
 	sbc #30
 	jmp phnupd
-phb3	cmp #145 ;up
+phb3	cmp #CSR_UP
 	bne phb4
 	lda curpik
 	sbc #1
 	bcs phnupd
 	adc #30
 	jmp phnupd
-phb4	cmp #17  ;down
+phb4	cmp #CSR_DOWN
 	bne phb5
 	lda curpik
 	clc
@@ -789,7 +789,7 @@ phb5
 phbhom	lda #0
 	beq phnupd
 phb6
-	cmp #$93
+	cmp #CLR
 	bne phb7
 	jsr clrent
 	jsr phinit
@@ -909,7 +909,7 @@ dalfcl	lda JIFFIES
 dalfc1	jsr bell
 dalfc2
 dalterm
-	jmp term
+	jmp term_entry
 dalf2
 	cmp #2      ;aborted
 	bne dalf3
@@ -978,11 +978,11 @@ dalfab
 	jmp phloop
 ;
 curunl
-	.byte 145,13,32,159
+	.byte CSR_UP,CR,' ',CYAN
 	.byte "pORT: "
 	.byte 05,0
 prtunl
-	.byte 145,13,32,159
+	.byte CSR_UP,CR,' ',CYAN
 	.byte "dIAL: "
 	.byte 05,0
 unlisted
@@ -1078,7 +1078,7 @@ dalun4	lda inpbuf,x
 calctx	.byte 'cALL cURRENT nUMBER...',0
 dalstx	.byte 'dIAL sELECTED nUMBERS...',0
 dulstx	.byte 'dIAL uNLISTED nUMBER.',0
-unlstx	.byte 'uNLISTED.',13,0
+unlstx	.byte 'uNLISTED.',CR,0
 wcrtxt	.byte 'wAITING fOR cARRIER...',0
 pabtxt	.byte 'dIALING...  ',cp,'RESS ',cs,t,o,cp,' TO ABORT.',0
 numptr	.byte 0
@@ -1143,19 +1143,19 @@ dlinit
 smrtdl	;hayes/paradyne dial
 	jsr clear232
 	jsr enablemodem
-	ldx #$05
+	ldx #LFN_MODEM
 	jsr chkout
 	lda #<pr3txt
 	ldy #>pr3txt
 	jsr outmod
-	lda mopo1
+	lda firmware_zimmers
 	bne haydat
-	lda #<atdtxt;atdt
-	ldy #>atdtxt
+	lda #<txt_atd
+	ldy #>txt_atd
 	jmp haydatcont
 haydat
-	lda #<atdtxt2;atd
-	ldy #>atdtxt2
+	lda #<txt_atd_zimmers
+	ldy #>txt_atd_zimmers
 haydatcont
 	jsr outstr
 	ldx #$00
@@ -1197,7 +1197,7 @@ haycon
 haydel
 	lda #$e8
 	sta JIFFIES
-	ldx #$05
+	ldx #LFN_MODEM
 	jsr chkin
 haydll	jsr getin
 	cmp #$0d
@@ -1234,14 +1234,19 @@ outmo1	lda #$e0
 outmo2	lda JIFFIES
 	bne outmo2
 	rts
-;
-nicktime
-	.byte $00
-atdtxt	.byte 'ATDT',0
-atdtxt2	.byte 'ATD',34,0;adds a " before dialing the bbs cause zimmers firmware needs this
-athtxt	.byte 'ATH',13,0
+
+nicktime:
+	.byte 0		; [XXX unused]
+
+txt_atd:
+	.byte 'ATDT',0
+txt_atd_zimmers:
+	; prepends address with a quote; zimmers firmware needs this
+	.byte 'ATD',34,0
+
+athtxt	.byte 'ATH',CR,0
 atplus	.byte '+++',0
-pr3txt	.byte 'ATV1',13,0
+pr3txt	.byte 'ATV1',CR,0
 bustxt	.byte "bUSY",0
 nantxt	.byte "nO cARRIER",0
 conntx	.byte "cONNECT!",0

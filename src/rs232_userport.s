@@ -274,7 +274,7 @@ rsuser_enable:
 
 ;----------------------------------------------------------------------
 rsuser_setbaud:
-	lda baudrt
+	lda baud_rate
 	asl
 .if 1	; [XXX This is incorrect! Instead, OFFSET has to be added if is_pal_system != 0]
 	clc

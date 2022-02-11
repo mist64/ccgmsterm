@@ -10,11 +10,11 @@ prwcmc
 	adc #$31;1
 	sta edfktx
 	rts
-edtmtx	.byte $93,5,13,13,e,'DIT WHICH MACRO?',13
-	.byte 158,'(ctrl f1 / f3 OR return '
-	.byte 'TO ABORT.) ',5,3,2,18,0
-edtrtx	.byte 19,13,5,e,'DIT ',f
-edfktx	.byte '1 mACRO...<',c,t,cr,l,'-',cx,'> TO END:',13,13,13,13,0
+edtmtx	.byte CLR,WHITE,CR,CR,e,'DIT WHICH MACRO?',CR
+	.byte YELLOW,'(ctrl f1 / f3 OR return '
+	.byte 'TO ABORT.) ',WHITE,3,2,18,0
+edtrtx	.byte 19,CR,WHITE,e,'DIT ',f
+edfktx	.byte '1 mACRO...<',c,t,cr,l,'-',cx,'> TO END:',CR,CR,CR,CR,0
 wchmac	.byte 0
 macfull	.byte 0
 edtmac
@@ -43,7 +43,7 @@ edtmc3
 edtmen
 	lda #0
 	sta 198
-	lda #$93
+	lda #CLR
 	jsr chrout
 	lda #0
 	sta $d020
@@ -64,7 +64,7 @@ edtstr
 	jsr restch
 	lda #$20
 	jsr chrout
-	lda #157
+	lda #CSR_LEFT
 	jsr chrout
 	jsr prtmc0
 edtinp	jsr cursor_show
@@ -73,9 +73,9 @@ edtkey
 	beq edtkey
 	cmp #16   ;ctrl-p
 	beq edtmen
-	cmp #19    ;no home or clr
+	cmp #HOME	; no home or clr
 	beq edtkey
-	cmp #$93
+	cmp #CLR
 	bne edtky1
 	ldx macxrg
 edtclr
@@ -91,7 +91,7 @@ edtky0	ldx wchmac
 edtky1
 	cmp #24   ;ctrl-x
 	beq edtbye
-	cmp #20   ;del
+	cmp #DEL
 	bne edtky2
 	lda macxrg
 	cmp wchmac
@@ -128,7 +128,7 @@ edtky4
 	inc macxrg
 	jsr cursor_off
 	pla
-	jsr check_control_codes
+	jsr handle_control_codes
 	bcc edtky5
 	jmp edtinp
 edtky5
@@ -156,31 +156,31 @@ edtdel
 	lda #0
 	sta macbkg
 	lda macmem-1,x
-	cmp #PETSCII_UNDERLINE
+	cmp #UNDERLINE
 	beq edtde2
 	and #$7f
 	cmp #$20
 	bcc edtde0
 	jmp edtdle
 edtde0
-	cmp #17
+	cmp #CSR_DOWN
 	beq edtde1
-	cmp #29
+	cmp #CSR_RIGHT
 	bne edtde3
 edtde1	lda macmem-1,x
 edtdeo	eor #$80
 	jmp edtdln
 edtde2
-	lda #148
+	lda #INST
 	jsr edprrv
-	lda #29
+	lda #CSR_RIGHT
 	jmp edtdln
 edtde3	lda macmem-1,x
-	cmp #148
+	cmp #INST
 	bne edtde4
-	lda #29
+	lda #CSR_RIGHT
 	jsr edprrv
-	lda #148
+	lda #INST
 	bne edtdeo
 edtde4	jsr edtcok
 	bmi edtde7
@@ -297,7 +297,7 @@ edtd19
 edtdle
 	lda #20
 	jsr edprrv
-	lda #148
+	lda #INST
 edtdln
 	jsr edprrv
 edtdla
@@ -315,7 +315,7 @@ edprrv
 	sta 199
 	jsr cursor_off
 	lda tmp02
-	jsr check_control_codes
+	jsr handle_control_codes
 	bcs edprr2
 	jsr chrout
 	jsr quote_insert_off

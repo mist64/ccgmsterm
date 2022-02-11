@@ -1,16 +1,20 @@
-noload:
-begin:
+; CCGMS Main Terminal Code
+
+; enter here on program start
+term_entry_first:
 	jsr enablemodem
 	jsr bell
 	jsr themeroutine
 
-term:
+; enter here to print banner again
+term_entry:
 	jsr print_banner; title screen/CCGMS!
 	jsr print_instr	; display commands f1 etc to terminal ready
 
-main:
+; enter here to just return into terminal mode
+term_mainloop:
 	lda supercpu
-	beq main5
+	beq @loop1
 	cmp #2		; already printed once
 	beq :+
 	lda #<txt_supercpu_enabled
@@ -18,13 +22,14 @@ main:
 	jsr outstr
 	lda #2
 	sta supercpu
-:	; supercpu = turn on 20mhz mode - for after all file transfer situations. already on? turn on again. no biggie. save code.
+:	; supercpu = turn on 20mhz mode - for after all file transfer situations.
+	; already on? turn on again. no biggie. save code.
 	jsr supercpu_on
 
-main5:
+@loop1:
 ; print tempbuf, unless empty
 	lda bustemp
-	beq @moveon
+	beq @skip
 	ldy #1
 :	lda tempbuf,y
 	jsr chrout
@@ -33,7 +38,7 @@ main5:
 	bne :-
 	ldy #0
 	sty bustemp
-@moveon:
+@skip:
 
 	ldx #$ff
 	txs
@@ -47,7 +52,9 @@ main5:
 	jsr clrchn
 	jsr cursor_show
 
-@main2:
+;----------------------------------------------------------------------
+; modem output
+@loop2:
 	lda buffer_ptr
 	sta newbuf
 	lda buffer_ptr+1
@@ -56,7 +63,7 @@ main5:
 	jsr clrchn
 	jsr getin	; get character from keyboard
 	cmp #0
-	jeq @main3
+	jeq @input_loop	; skip output code
 
 ; cbm-ctrl-f: reset/init user port RS-232
 	cmp #6		; ctrl-f
@@ -70,9 +77,9 @@ main5:
 	stx cia2ddrb
 	ldx #0
 	stx cia2pb
-	jmp @main2
+	jmp @loop2
 @no1
-;	cmp #PETSCII_UNDERLINE
+;	cmp #UNDERLINE
 ;	bne @no2
 ;	ldx SHFLAG	; shift <- toggles
 ;	beq @no4	; n/d cursor
@@ -81,7 +88,7 @@ main5:
 ;	lda allcap
 ;	eor #1
 ;	sta allcap
-;	jmp @main2
+;	jmp @loop2
 ;:	jmp crsrtg
 ;@no2:
 
@@ -94,7 +101,7 @@ main5:
 	beq :+
 	dex
 	bpl :-
-	jmp @main3
+	jmp @input_loop
 :	jmp swap_screen	; x holds pos 0-3
 @no3:
 
@@ -153,8 +160,8 @@ main5:
 	beq :+
 	jsr petscii_to_ascii
 	bne :+
-@main2alt:
-	jmp @main2
+@loop2b:
+	jmp @loop2
 :
 
 ; send to modem
@@ -169,23 +176,26 @@ main5:
 	beq :+
 	jsr ascii_to_petscii
 	sta tmp03
-	jeq @main2
+	jeq @loop2
 :
 
 ; half-duplex
 	ldx half_duplex
-	beq @main3
+	beq @nohd
 	jsr clrchn
 	lda tmp03	; char
 	ldx ascii_mode
 	beq :+
-	cmp #PETSCII_UNDERLINE	; [XXX no-op]
+	cmp #UNDERLINE	; [XXX no-op]
 	bne :+			; [XXX no-op]
-	lda #PETSCII_UNDERLINE
+	lda #UNDERLINE
 	sta tmp03	; _ in ascii/half dup
 :	jmp @bufchk	; skip modem input
+@nohd:
 
-@main3:
+;----------------------------------------------------------------------
+; modem input
+@input_loop:
 	jsr clrchn
 
 ; macro printing
@@ -200,7 +210,7 @@ main5:
 	lda #0
 	sta macmdm
 	jsr print_macro
-	jmp main5
+	jmp @loop1
 :
 
 ; charset switching
@@ -217,9 +227,9 @@ main5:
 	jsr chkin	; get the byte from the modem
 	jsr getin
 	cmp #0
-	beq @main2alt	; = @main2
+	beq @loop2b	; = @loop2
 	ldx status
-	bne @main2alt	; = @main2
+	bne @loop2b	; = @loop2
 	pha
 	jsr clrchn
 	pla
@@ -228,8 +238,8 @@ main5:
 	ldx ascii_mode
 	beq :+
 	jsr ascii_to_petscii
-	beq @main3
-:	cmp #$14	; PETSCII DEL from modem
+	beq @input_loop
+:	cmp #DEL
 	bne @bufchk	; [XXX no-op]
 	lda #$14	; [XXX no-op; was: $5F in Craig Smith source]
 @bufchk:
@@ -238,6 +248,7 @@ main5:
 
 ; [XXX this code is at a very awkward location, could be integrated better]
 ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+; store modem byte into buffer
 buffer_put:
 	; skip if closed
 	ldx buffer_open
@@ -264,13 +275,14 @@ buffer_put:
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 contn:
-	jsr check_control_codes
+	jsr handle_control_codes
 	bcc contn2
-	jmp main
+	jmp term_mainloop
 
 ; [XXX this code is at a very awkward location, could be integrated better]
 ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-check_control_codes:
+; handle control codes sent from the BBS
+handle_control_codes:
 	cmp #$0a	; ctrl-j: cursor on
 	beq @1
 	cmp #$0b	; ctrl-k: cursor off
@@ -328,7 +340,7 @@ check_control_codes:
 ;	cmp #$5f	; false del
 ;	bne @8		; (buff and 1/2 duplx)
 
-;	lda #$14	; PETSCII DEL
+;	lda #DEL
 ;	bne ctrlex
 
 ;@8:
@@ -355,7 +367,7 @@ contn2:
 	pha
 	jsr cursor_off
 	pla
-	jsr chrout
-	jsr quote_insert_off
-	jmp main
+	jsr chrout	; print input byte to screen
+	jsr quote_insert_off; kill modes the char might have enabled
+	jmp term_mainloop
 

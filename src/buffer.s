@@ -1,8 +1,8 @@
 ;
 txt_buffer:
-	.byte PETSCII_WHITE,"bUFFER ",0
+	.byte WHITE,"bUFFER ",0
 buftx2	.byte " BYTES FREE.  "
-	.byte 13,2
+	.byte CR,2
 	.byte "OPEN  "
 	.byte 2
 	.byte "CLOSE  "
@@ -10,7 +10,7 @@ buftx2	.byte " BYTES FREE.  "
 	.byte "ERASE  "
 	.byte 2
 	.byte "TRANSFER"
-	.byte 13,2
+	.byte CR,2
 	.byte "LOAD  "
 	.byte 2
 	.byte "SAVE   "
@@ -28,16 +28,18 @@ erstxt	.byte  "eRASE bUFFER! - "
 	.byte "YES OR "
 	.byte 2
 	.byte "NO?       "
-	.byte 157,157,157,15,157,157,157,0
-snbtxt	.byte 13,13
+	.byte CSR_LEFT,CSR_LEFT,CSR_LEFT,15
+	.byte CSR_LEFT,CSR_LEFT,CSR_LEFT,0
+snbtxt	.byte CR,CR
 	.byte "sENDING BUFFER..."
-	.byte 13,13,00
-dontxt	.byte 13,13,PETSCII_WHITE
+	.byte CR,CR,00
+txt_done:
+	.byte CR,CR,WHITE
 	.byte "dONE."
-	.byte 13,0
+	.byte CR,0
 
 txt_reu:
-	.byte PETSCII_WHITE,"reu ",0
+	.byte WHITE,"reu ",0
 
 ;----------------------------------------------------------------------
 print_buffer_info:
@@ -114,7 +116,7 @@ bufext
 	jsr chrout
 	jsr coback
 	jsr enablexfer
-	jmp main
+	jmp term_mainloop
 bufcmd
 	cmp #'O'
 	bne bufcm2
@@ -132,7 +134,7 @@ bufexa
 	jsr outcap
 	lda #$0d
 	jsr chrout
-	lda #145  ;crsr up
+	lda #CSR_UP
 	ldx #04
 bufex2
 	jsr chrout
@@ -146,7 +148,7 @@ bufcm3
 	jsr outcap
 	lda #$0d
 	jsr chrout
-	lda #145
+	lda #CSR_UP
 	ldx #02
 bufer1
 	jsr chrout
@@ -167,7 +169,7 @@ bufer2
 	jsr bufclr
 bufer3
 	jsr restch
-	lda #145
+	lda #CSR_UP
 	jsr chrout
 	jsr chrout
 	jmp bufask
@@ -180,14 +182,14 @@ bufcm4
 bufvew
 	cmp #'V'
 	bne bufcm5
-	lda #$93
+	lda #CLR
 	jsr chrout
 	lda #$80
 	sta bufflg
 	and #0
 	sta buffl2
 	jsr prtbuf
-	jmp main
+	jmp term_mainloop
 prtbuf	;buf.to screen
 	lda buffst
 	pha
@@ -345,7 +347,7 @@ bufcm6
 lodbuf
 	jsr disablexfer;5-13 put in, didnt seem to need it, need to test with it. might crash with it cause the program does that sometimes....
 	lda #$02
-	ldx diskdv
+	ldx device_disk
 	tay
 	jsr setlfs
 	lda max
@@ -353,7 +355,7 @@ lodbuf
 	ldy #>inpbuf
 	jsr setnam
 	jsr open
-	ldx #$02
+	ldx #LFN_FILE
 	jsr chkin
 lodbfl
 	jsr getin
@@ -408,12 +410,12 @@ sndbuf
 	jsr prtbuf
 	jsr cosave
 	jsr clear232
-	lda #<dontxt
-	ldy #>dontxt
+	lda #<txt_done
+	ldy #>txt_done
 	jsr outstr
 	jsr coback
 	jsr enablexfer
-	jmp main
+	jmp term_mainloop
 chgbpr
 	pha
 	cmp #'>'
@@ -447,12 +449,16 @@ chgben
 	pla
 	rts
 ;
-bufpdt	.byte 13,13,"dEVICE",0
-bufpda	.byte 13,cs,'ec.',ca,'.: ',0
-bufpdp	.byte $93,13,cp,'rinting...',13,0
+txt_device:
+	.byte CR,CR,"dEVICE",0
+txt_sec_addr:
+	.byte CR,cs,'ec.',ca,'.: ',0
+txt_printing:
+	.byte CLR,CR,cp,'rinting...',CR,0
+
 bufpro
-	lda #<bufpdt
-	ldy #>bufpdt
+	lda #<txt_device
+	ldy #>txt_device
 	ldx #1
 	jsr inpset
 	lda #'4'
@@ -469,8 +475,8 @@ bufpr2	lda inpbuf
 	bcs bufpra
 	and #$0f
 	pha
-	lda #<bufpda
-	ldy #>bufpda
+	lda #<txt_sec_addr
+	ldy #>txt_sec_addr
 	ldx #1
 	jsr inpset
 	lda #'7'
@@ -486,12 +492,12 @@ bufpr2	lda inpbuf
 	tay
 	pla
 	tax
-	lda #4
+	lda #LFN_PRINTER
 	jsr setlfs
 	lda #0
 	jsr setnam
-	lda #<bufpdp
-	ldy #>bufpdp
+	lda #<txt_printing
+	ldy #>txt_printing
 	jsr outstr
 	jsr open
 	ldx status
@@ -512,14 +518,14 @@ bufpr2	lda inpbuf
 	pla
 	sta buffst
 bufpr3
-	lda #4
+	lda #LFN_PRINTER
 	jsr close
-	lda #<dontxt
-	ldy #>dontxt
+	lda #<txt_done
+	ldy #>txt_done
 	jsr outstr
 	jsr coback
 	jsr enablexfer
-	jmp main
+	jmp term_mainloop
 mempro
 mempr2
 	jsr memget
@@ -531,7 +537,7 @@ mempr2
 	cmp #$20
 	bcc mempab
 memprp
-	ldx #4
+	ldx #LFN_PRINTER
 	jsr chkout
 	pla
 	jsr chrout

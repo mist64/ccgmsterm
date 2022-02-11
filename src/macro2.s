@@ -25,6 +25,7 @@ xferp3
 ;MACROS
 macmdm	.byte 0
 macxrg	.byte 0
+
 prmacx	;find index for macro
 	cpx #3     ;from LSTX f-key value
 	bne prmax2
@@ -52,7 +53,7 @@ prtmc0
 	pha
 	ldx macmdm
 	bne prtmc2
-	ldx #5
+	ldx #LFN_MODEM
 	jsr chkout
 	pla
 	pha
@@ -70,7 +71,7 @@ prtmcd	lda JIFFIES
 	sta JIFFIES
 prtmcd2	lda JIFFIES
 	bne prtmcd2
-	ldx #5
+	ldx #LFN_MODEM
 	jsr chkin
 	jsr getin
 	cmp #$00
@@ -99,7 +100,7 @@ prtmc2
 	bne prtmcs
 	jsr buffer_put
 prtmcs
-	jsr check_control_codes
+	jsr handle_control_codes
 	bcs prtmc3
 	jsr chrout
 	jsr quote_insert_off

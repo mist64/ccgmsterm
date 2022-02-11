@@ -15,22 +15,24 @@
 	.word 0
 	.byte 0
 
-	jmp prestart
+	jmp start
 
 .segment "S0812"  ;pxxxxx
 
 	.include "punter.s"
 	.include "misc2.s"
 
-efbyte ; 0 = no easyflash 1=easyflash mode
+easyflash_support:
+; 0 = no easyflash
+; 1 = easyflash mode
 	.byte EASYFLASH
 
-	;about 40 bytes still free here to play with before $1000
+;about 40 bytes still free here to play with before $1000
 
 .segment "S1000"
 
 	.include "init.s"
-	.include "main.s"
+	.include "terminal.s"
 	.include "sound.s"
 	.include "screens.s"
 	.include "banner.s"

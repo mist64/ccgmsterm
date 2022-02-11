@@ -165,7 +165,7 @@ newgethayes
 	ldx waittemp;so it doesn't lock up
 	cpx #$90;maybe change for various baud rates
 	beq newget2
-	ldx #$05
+	ldx #LFN_MODEM
 	jsr chkin
 	jsr getin
 	beq newgethayes

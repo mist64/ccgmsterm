@@ -29,10 +29,6 @@ STAT_MAX_RETRIES	= 3 ; too many errors retrying receiving a block
 STAT_SYNC_LOST		= 4 ; sender sent the wrong block
 STAT_USER_ABORTED	= 5 ; the user aborted the transfer
 
-; contents of the "protoc" variable
-PROTOCOL_XMODEM		= 1
-PROTOCOL_XMODEM_CRC	= 2
-
 ; memory
 xmobuf	= $fd	; zero page pointer to access the buffer
 xmoscn	= buffer; 3 send and receiver buffers
@@ -618,13 +614,13 @@ retry2:	jsr clear232
 ;----------------------------------------------------------------------
 ; error messages
 msg_cancelled:
-	.byte 13,'tRANSFER cANCELLED.',0
+	.byte CR,'tRANSFER cANCELLED.',0
 msg_no_eto_ack:
-	.byte 13,'eot nOT aCKNOWLEGED.',0
+	.byte CR,'eot nOT aCKNOWLEGED.',0
 msg_max_retries:
-	.byte 13,'tOO mANY bAD bLOCKS!',0
+	.byte CR,'tOO mANY bAD bLOCKS!',0
 msg_sync_lost:
-	.byte 13
+	.byte CR
 	.byte 'C'+128 ; [XXX this should not be here]
 	.byte 'sYNC lOST!',0
 

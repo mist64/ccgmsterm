@@ -19,8 +19,8 @@ llen	= 213
 qmode	= 212
 imode	= 216
 
-bcolor	= 0
-tcolor	= 15
+BCOLOR	= 0
+TCOLOR	= 15
 
 ascii_mode	= $0313	; PETSCII or ASCII
 
@@ -29,17 +29,16 @@ revtabup = $0380
 buftop	= $cafd
 bufptrreu = $cafe
 buffstreu = $caff
-mulfil	= $cb00 ; punter only
+mulfil	= $cb00	; punter only
 endmulfil = $cc00 ;end area for multipunter
-crclo	= $cc00;crc fIX;temp for runtime tables;use tempbuf and numbuf
-crchi	= $cd00;crc fix;temp for runtime tables
-tempbuf	= $cc00 ; dialer temp buf to print on screen after connect. check for busy and all that.
-numbuf	= $cd00 ; dialer number buffer. holds phone number and port number
-codebuf	= $cd00;punter buffer. can use same area as xmodem crc hi and phone buffer
-ribuf	= $ce00 ; rs232 receive input buffer points to $f7. no output buffers used on any modems in this release.
+crclo	= $cc00	; temp for runtime tables;use tempbuf and numbuf
+crchi	= $cd00	; temp for runtime tables
+tempbuf	= $cc00	; dialer temp buf to print on screen after connect. check for busy and all that.
+numbuf	= $cd00	; dialer number buffer. holds phone number and port number
+codebuf	= $cd00	; punter buffer. can use same area as xmodem crc hi and phone buffer
+ribuf	= $ce00 ; rs232 receive input buffer (we don't use an output buffer)
 inpbuf	= $cf00
-
-configarea = $5100
+SCREENS_BASE	= $e000	; 4 saved screens
 
 mulskp	= $07fc
 mlsall	= $07fd
@@ -94,6 +93,8 @@ buffl2	= $0c
 buffer_open	= $10
 half_duplex	= $12
 zpoutstr	= $22 ; 2 bytes
+tmp9e	= $9e
+tmp9f	= $9f
 endpos	= $ac
 buffst	= $b2
 buffer_ptr	= $b0 ; 2 bytes
@@ -107,7 +108,12 @@ status	= $90
 DFLTN	= $99
 DFLTO	= $9a
 JIFFIES	= $a2	; TIME+2
+FA	= $ba
 LSTX	= $c5	; last key pressed
+BLNSW   = $cc   ; cursor blinking
+RIBUF	= $f7	; RS232 buffer
+RPTFLA	= $028a	; key repeat flag
+KOUNT	= $028b	; counter for timing delay between key repeats
 SHFLAG	= $028d ; bitfield: modifier keys currently pressed
  SHFLAG_SHIFT	= 1
  SHFLAG_CBM	= 2
@@ -155,13 +161,60 @@ nofile	= $f701
 COLTAB  = $e8da ; PETSCII codes for the colors 0-15
 
 ; logical file numbers
-LFN_FILE	= 2 ; for upload/download
+LFN_FILE	= 2	; for upload/download
+LFN_PRINTER     = 4	; printing buffers
 LFN_MODEM	= 5
+LFN_DISK_CMD    = 15
 
 DEV_MODEM	= $02	; modem device
 SA_MODEM	= $03	; modem secondary address
 
-PETSCII_UNDERLINE	= $a4
-PETSCII_CSR_LEFT	= $9d
-PETSCII_WHITE		= $05
+CR			= $0d
+CSR_DOWN	= $11
+RVSON		= $12
+HOME		= $13
+DEL		= $14
+CSR_RIGHT	= $1d
+CSR_UP		= $91
+RVSOFF		= $92
+CLR		= $93
+INST		= $94
+CSR_LEFT	= $9d
+UNDERLINE	= $a4
+
+BLACK		= $90
+WHITE		= $05
+RED		= $1c
+CYAN		= $9f
+PURPLE		= $9c
+GREEN		= $1e
+BLUE		= $1f
+YELLOW		= $9e
+ORANGE		= $81
+BROWN		= $95
+LTRED		= $96
+DKGRAY		= $97
+GRAY		= $98
+LTGREEN		= $99
+LTBLUE		= $9a
+LTGRAY		= $9b
+
 CURSOR	= '_'	; cursor, ASCII "_"
+
+MODEM_TYPE_USERPORT	= 0
+MODEM_TYPE_UP9600	= 1
+MODEM_TYPE_SWIFTLINK_DE	= 2
+MODEM_TYPE_SWIFTLINK_DF	= 3
+MODEM_TYPE_SWIFTLINK_D7	= 4
+
+BAUD_300	= 0
+BAUD_1200	= 1
+BAUD_2400	= 2
+BAUD_4800	= 3
+BAUD_9600	= 4
+BAUD_19200	= 5
+BAUD_38400	= 6
+
+PROTOCOL_PUNTER		= 0
+PROTOCOL_XMODEM		= 1
+PROTOCOL_XMODEM_CRC	= 2

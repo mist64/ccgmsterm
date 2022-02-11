@@ -1,16 +1,16 @@
 ;----------------------------------------------------------------------
 txt_xmodem:
-	.byte 13,13,5,cx,m,'ODEM ',0
+	.byte CR,CR,WHITE,cx,m,'ODEM ',0
 txt_xmodem_crc:
-	.byte 13,13,5,cx,m,'ODEM-crc ',0
+	.byte CR,CR,WHITE,cx,m,'ODEM-crc ',0
 
 ;----------------------------------------------------------------------
 ; display "[protocol], enter name" and input string
 ui_prompt_filename:
 	pha
 	lda protoc
-	beq @2
-	cmp #$02
+	beq @2		; PROTOCOL_PUNTER
+	cmp #PROTOCOL_XMODEM_CRC
 	beq @1
 	lda #<txt_xmodem
 	ldy #>txt_xmodem
@@ -64,7 +64,7 @@ ui_abort:
 	lda #$02
 	jsr close
 	jsr enablexfer
-	jmp main
+	jmp term_mainloop
 
 ;----------------------------------------------------------------------
 xfermd	pha
@@ -75,13 +75,13 @@ ui_setup_xfer_screen:
 	lda #15
 	sta textcl	; LT GRAY
 	sta backgr	; make sure CLS fills will LT GRAY
-	lda #$93
+	lda #CLR
 	jsr chrout
-	lda #bcolor
+	lda #BCOLOR
 	sta backgr	; restore screen background color
 xferm0	lda #13
 	sta LINE
-	lda #$0d
+	lda #CR
 	jsr chrout
 	lda #6
 	sta textcl
@@ -158,7 +158,7 @@ uplmen:
 	jsr filtes
 	beq uplfil
 	pha
-	ldx #$0f
+	ldx #LFN_DISK_CMD
 	jsr chkin
 	pla
 	jmp drver3
@@ -182,12 +182,12 @@ filtes:
 	ldy #>inpbuf
 	jsr setnam
 	lda #2
-	ldx diskdv
+	ldx device_disk
 	ldy #0
 	jsr setlfs
 filopn:
 	jsr open
-	ldx #15
+	ldx #LFN_DISK_CMD
 	jsr chkin
 	jsr getin
 	cmp #'0'
@@ -206,7 +206,7 @@ uplok:
 	jsr ui_setup_xfer_screen
 	jsr clrchn
 	lda protoc
-	beq :+
+	beq :+		; PROTOCOL_PUNTER
 	; XMODEM
 	jsr crctable
 	jsr margin
@@ -244,7 +244,7 @@ xfrend:
 xfrdun:
 	jsr reset;clear and reenable
 	jsr gong
-	jmp main
+	jmp term_mainloop
 
 ;----------------------------------------------------------------------
 handle_f3_download:
@@ -257,7 +257,7 @@ handle_f3_download:
 	jsr ui_prompt_filename
 	jeq ui_abort
 	lda protoc
-	beq :+
+	beq :+		; PROTOCOL_PUNTER
 	jsr xmotyp
 	jmp dowmen
 :	ldy max
@@ -268,7 +268,7 @@ dowmen:
 	lda #01
 	jsr ui_setup_xfer_screen
 	ldx protoc
-	bne @1
+	bne @1		; != PROTOCOL_PUNTER
 	lda inpbuf
 	pha
 	jsr clrchn
@@ -288,7 +288,7 @@ dowmen:
 	stx maxsize
 	jsr disablexfer
 	jsr ercopn
-	ldx #$0f
+	ldx #LFN_DISK_CMD
 	jsr chkout
 	lda #'I'
 	jsr chrout
@@ -297,7 +297,7 @@ dowmen:
 	lda #$0d
 	jsr chrout
 	jsr clrchn
-	ldx #$0f
+	ldx #LFN_DISK_CMD
 	jsr chkout
 	lda #'S'
 	jsr chrout
@@ -341,7 +341,7 @@ dowsfn:
 	ldy #>inpbuf
 	jsr setnam
 	lda #02
-	ldx diskdv
+	ldx device_disk
 	tay
 	jmp setlfs
 
@@ -350,26 +350,26 @@ dowopn:
 	jsr filopn
 	beq :+
 	pha
-	ldx #$0f
+	ldx #LFN_DISK_CMD
 	jsr chkin
 	pla
 	jmp drver3
 
 :	lda protoc
-	beq :+
-	jsr crctable;create crc tables;crc fix
-	jmp xmodem_download;pick punter or xmodem here to really start downloading
+	beq :+		; PROTOCOL_PUNTER
+	jsr crctable	; create crc tables
+	jmp xmodem_download; pick punter or xmodem here to really start downloading
 
-:	jsr punter_reset;reset
-	jsr p49155;get data;pnt87
+:	jsr punter_reset; reset
+	jsr p49155	; get data
 	jsr clear232
-	jmp xfrend;close file
+	jmp xfrend	; close file
 
 ;----------------------------------------------------------------------
 txt_read_or_send:
-	.byte 13,13,5,2,'READ OR',2,'SEND FILE? ',00
+	.byte CR,CR,WHITE,2,'READ OR',2,'SEND FILE? ',00
 txt_read_or_send2:
-	.byte 'sPACE TO PAUSE - r/s TO ABORT',13,13,00
+	.byte 'sPACE TO PAUSE - r/s TO ABORT',CR,CR,00
 
 ;----------------------------------------------------------------------
 handle_f2_send_read:
@@ -422,11 +422,11 @@ sndlop
 	ldy #>txt_read_or_send2
 	jsr outstr
 	lda #2
-	ldx diskdv
+	ldx device_disk
 	tay
 	jsr setlfs
 	jsr open
-	ldx #$05
+	ldx #LFN_MODEM
 	jsr chkout
 	;lda #15
 	;jsr chrout
@@ -438,14 +438,13 @@ sndlop
 	jsr cochng
 	lda #$0d
 	jsr chrout
-	jmp main
+	jmp term_mainloop
 
 ;----------------------------------------------------------------------
-nickdelaybyte
 	.byte 0	; [XXX unused]
 
 ;----------------------------------------------------------------------
-tmsetl
+tmsetl:
 	ldx #0
 	stx JIFFIES
 :	ldx JIFFIES

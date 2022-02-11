@@ -187,7 +187,7 @@ ihitab:
 
 ;----------------------------------------------------------------------
 setbaudup:
-	lda baudrt
+	lda baud_rate
 b7e56	asl
 	ora is_pal_system
 	tax

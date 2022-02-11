@@ -1,21 +1,26 @@
-;ANSI STUFF HERE
-ansi	.byte 00
-ansitemp
-	.byte 00
-ansicolor
-	.byte 00
-ansi0colors
-	.byte 146,28,30,149,31,156,159,152,0,0,0
-ansi1colors
-	.byte 151,150,153,158,154,156,159,05,0,0,0
+; ASCII/ANSI Support
+
+ansi:
+	.byte 0
+
+ansitemp:
+	.byte 0
+
+ansicolor:
+	.byte 0
+
+ansi0colors:
+	.byte RVSOFF,RED,GREEN,BROWN,BLUE,PURPLE,CYAN,GRAY,0,0,0
+ansi1colors:
+	.byte DKGRAY,LTRED,LTGREEN,YELLOW,LTBLUE,PURPLE,CYAN,WHITE,0,0,0
+
 ;----------------------------------------------------------------------
-;convert standard ascii to c= ascii
+; convert standard ascii to c= ascii
 ascii_to_petscii:
 	pha
 	lda ansi
-jeq	satoca2;no ansi, but check for ansi
-ansion
-	cmp #$02;is ansi color code on?
+	jeq satoca2	; no ansi, but check for ansi
+	cmp #2		; is ansi color code on?
 	beq coloron2
 	pla
 	cmp #'2'
@@ -30,8 +35,8 @@ ansion
 	beq code4on;7 is rvs
 	cmp #'1'
 	beq turn1on
-	cmp #$3b;semicolon
-jeq	semion
+	cmp #';'
+	jeq semion
 	cmp #'['
 	beq leftbracketansi;[ after escape code
 	cmp #'M'
@@ -51,36 +56,45 @@ ansimend2:
 	beq ansimend
 	cmp #']'
 	beq outtahere
-	jmp cexit;out of ideas,move on
+	jmp cexit	; out of ideas,move on
+
 turn0on
 	lda #0
 	sta ansicolor
 	jmp outtahere
+
 turn1on
 	lda #1
 	sta ansicolor
 	jmp outtahere
-code4on;rvs on for next color
-	lda #$01
+
+; rvs on for next color
+code4on
+	lda #1
 	sta ansi
-	lda #$12;rvs on
+	lda #RVSON
 	jmp cexit
-clrhomeansi;rvs on for next color
-	lda #$01;ansi stays on to see if there's another command after
+
+;rvs on for next color
+clrhomeansi
+	lda #1		; ansi stays on to see if there's another command after
 	sta ansi
-	lda #$93;clr/home
+	lda #CLR
 	jmp cexit
-leftbracketansi;ansi is on and got the left bracket
-	lda #$01;ansi stays on to see if there's another command after
+
+leftbracketansi		; ansi is on and got the left bracket
+	lda #1		; ansi stays on to see if there's another command after
 	sta ansi
-	lda #$00;display nothing and move on in ansi mode
+	lda #0		; display nothing and move on in ansi mode
 	jmp cexit
+
 coloron
 	lda #$02
 	sta ansi
 outtahere
 	lda #$00
 	jmp cexit
+
 coloron2
 	lda ansicolor
 	beq ansizerocolors
@@ -95,107 +109,109 @@ ansionecolors
 	sta ansi
 	lda ansi1colors,y
 	jmp cexit
+
 ansizerocolors
 	pla
 	sec
 	sbc #48
 	tay
-	lda #$01
+	lda #1
 	sta ansi
 	lda ansi0colors,y
 	jmp cexit
+
 semion
 	lda #$01
 	sta ansi
 	lda #$00
 	jmp cexit
+
 ansimend
 	lda #$00
 	sta ansi
 	jmp cexit
+
 satoca2
 	pla
-	cmp #$1b;ansi escape code
+	cmp #$1b	; ANSI escape code
 	beq ansi1
 	jmp satoca1
+
 ansi1
-	lda #$01
-	sta ansi;turn ansi on
-	lda #$00
+	lda #1
+	sta ansi	; turn ansi on
+	lda #0
 	jmp cexit
+
 satoca1
-	cmp #PETSCII_UNDERLINE
-	bne clab0
-	lda #PETSCII_UNDERLINE
+	cmp #UNDERLINE
+	bne @0
+	lda #UNDERLINE
 	bne cexit
-clab0
-	and #127
+@0:	and #127
 	cmp #124
 	bcs cexit
 	cmp #96
-	bcc clab1
-	sbc #32
+	bcc @1
+	sbc #' '
 	bne cexit
-clab1
-	cmp #65
-	bcc clab2
-	cmp #91
+@1:	cmp #'A'
+	bcc @2
+	cmp #'Z'+1
 	bcs cexit
-	adc #128
+	adc #$80
 	bne cexit
-clab2
-	cmp #08
-	bne clab3
-	lda #20
-clab3
-	cmp #12
-	bne clab4
-	lda #$93
-clab4
-	cmp #32     ;don't allow home,
-	bcs cexit   ;cd, or cr
-	cmp #07
+@2:	cmp #8
+	bne @3
+	lda #DEL
+@3:	cmp #$0c
+	bne @4
+	lda #CLR
+@4:	cmp #' '	; don't allow home,
+	bcs cexit	; cd, or cr
+	cmp #7
 	beq cexit
-	cmp #$0d
+	cmp #CR
 	beq cexit
-	cmp #20
+	cmp #DEL
 	beq cexit
 	bne cerrc
-cexit	cmp #$00
+cexit	cmp #0
 	rts
-ansi0keys
 cerrc
-	lda #$00
+	lda #0
 	beq cexit
 
 ;----------------------------------------------------------------------
-;convert c= ascii to standard ascii
+; convert c= ascii to standard ascii
 petscii_to_ascii:
 	cmp #20
-	bne alab0
-	lda #08    ;delete
-	bne aexit
-alab0	cmp #PETSCII_UNDERLINE
-	bne alab1
-	lda #PETSCII_UNDERLINE
-alab1	cmp #65
+	bne @0
+	lda #8		; ctrl-h (backspace)
+	bne @exit
+@0:	cmp #UNDERLINE
+	bne @1
+	lda #UNDERLINE
+@1:	cmp #'A'
 	bcc cexit  ;if<then no conv
-	cmp #91
-	bcs alab2
-	adc #32    ;lower a...z..._
-	bne aexit
-alab2	cmp #160
-	bne alab3
-	lda #32    ;shift to space
-	bne aexit
-alab3	and #127
+	cmp #'Z'+1
+	bcs @2
+	adc #' '    ;lower a...z..._
+	bne @exit
+@2:	cmp #' '+$80
+	bne @3
+	lda #' '    ;shift to space
+	bne @exit
+@3:	and #127
 	cmp #65
 	bcc cerrc
 	cmp #96    ;upper a...z
 	bcs cerrc
-aexit	cmp #$00
+@exit:	cmp #0
 	rts
-savech
+
+;----------------------------------------------------------------------
+savech:
 	jsr finpos
 	sta tempch
 	eor #$80
@@ -221,7 +237,7 @@ restch:
 spleft:
 	lda #' '
 	jsr chrout
-	lda #PETSCII_CSR_LEFT
+	lda #CSR_LEFT
 	jmp chrout
 
 ;----------------------------------------------------------------------
@@ -237,6 +253,6 @@ cursor_show:
 	bne :+
 	lda #CURSOR
 	jsr chrout
-	lda #PETSCII_CSR_LEFT
+	lda #CSR_LEFT
 	jmp chrout
 :	jmp savech

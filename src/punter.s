@@ -190,9 +190,9 @@ dorts	pha
 sendcode
 	jsr clear232
 	jsr enablexfer
-	ldx #$05
+	ldx #LFN_MODEM
 	jsr chkout
-	ldx #$00
+	ldx #0
 sn1	lda codes,y
 	jsr chrout
 	iny
@@ -314,9 +314,9 @@ tx10	lda #":"
 	jsr altbuf
 	jsr clear232
 	jsr enablexfer
-	ldx #$05
+	ldx #LFN_MODEM
 	jsr chkout
-	ldy #$00
+	ldy #0
 tx6	lda (pntb),y  ;transmit alternate buffer
 	jsr chrout
 	iny
@@ -439,7 +439,7 @@ dummyblk	lda bufpnt
 	adc #$00
 	sta (pntb),y ;set block number high part
 	jsr disablexfer
-	ldx #$02
+	ldx #LFN_FILE
 	jsr chkin
 	ldy #datapos ;actual block
 db1	jsr chrin
@@ -586,7 +586,7 @@ rec1	jsr rechand
 	cmp #datapos
 	beq rec7
 	jsr disablexfer
-	ldx #$02
+	ldx #LFN_FILE
 	jsr chkout
 	ldy #datapos
 rec6	lda buffer,y

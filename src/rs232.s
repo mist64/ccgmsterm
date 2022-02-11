@@ -5,15 +5,15 @@
 ;----------------------------------------------------------------------
 ; RS232 driver dispatch: enable modem
 enablemodem
-	lda motype
-	beq @2
-	cmp #$01	; UP9600
+	lda modem_type
+	beq @2		; MODEM_TYPE_USERPORT
+	cmp #MODEM_TYPE_UP9600
 	beq @1
-	cmp #$02
+	cmp #MODEM_TYPE_SWIFTLINK_DE
 	beq @3
-	cmp #$03
+	cmp #MODEM_TYPE_SWIFTLINK_DF
 	beq @4
-	cmp #$04
+	cmp #MODEM_TYPE_SWIFTLINK_D7
 	beq @5
 	rts
 @1:	jmp up9600_setup
@@ -60,9 +60,9 @@ enablexfer:
 	pha
 	tya
 	pha
-	lda motype
-	beq @1
-	cmp #1		; UP9600
+	lda modem_type
+	beq @1		; MODEM_TYPE_USERPORT
+	cmp #MODEM_TYPE_UP9600
 	beq @2
 	jsr sw_enable
 	jmp xferout
@@ -80,9 +80,9 @@ disablemodem:
 	pha
 	tya
 	pha
-	lda motype
-	beq @2
-	cmp #1		; UP9600
+	lda modem_type
+	beq @2		; MODEM_TYPE_USERPORT
+	cmp #MODEM_TYPE_UP9600
 	beq @1
 	jsr sw_disable
 	jmp xferout
@@ -101,9 +101,9 @@ xferout:
 ;----------------------------------------------------------------------
 ; RS232 driver dispatch: get byte from modem
 modget:
-	lda motype
-	beq @2
-	cmp #1
+	lda modem_type
+	beq @2			; MODEM_TYPE_USERPORT
+	cmp #MODEM_TYPE_UP9600
 	beq @1
 	jmp sw_getxfer		; swiftlink
 @1:	jmp up9600_getxfer	; up9600

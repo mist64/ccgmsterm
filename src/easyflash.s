@@ -40,9 +40,9 @@ eapi3	inx
 	dey
 	bne eapi3
 	rts
-eapi2	jsr f10b0    ; delay 0,5 seconds
-	jsr f10b0    ; delay 0,5 seconds
-	jsr f10b0    ; delay 0,5 seconds
+eapi2	jsr f10b0    ; delay 0.5 seconds
+	jsr f10b0    ; delay 0.5 seconds
+	jsr f10b0    ; delay 0.5 seconds
 	rts
 
 ;EF READ CONFIG

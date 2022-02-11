@@ -15,7 +15,7 @@ mrloop
 	beq chstat
 dskmo
 	jsr disablexfer
-	ldx #02
+	ldx #LFN_FILE
 	jsr chkin
 	jsr getin
 	pha
@@ -33,7 +33,7 @@ jne	dskext
 	jsr cursor_off
 	pla
 	pha
-	jsr check_control_codes
+	jsr handle_control_codes
 	jsr chrout
 	jsr quote_insert_off
 	ldx buffl2 ;non zero=to modem
@@ -44,7 +44,7 @@ dskmo1
 	jsr clear232
 	jsr enablexfer
 	jsr clear232
-	ldx #05
+	ldx #LFN_MODEM
 	jsr chkout
 	pla
 	ldx ascii_mode

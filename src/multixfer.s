@@ -1,12 +1,12 @@
 ;----------------------------------------------------------------------
 txt_multixfer:
-	.byte 13,5,'mULTI-TRANSFER - pUNTER ONLY.',13,0
+	.byte CR,WHITE,'mULTI-TRANSFER - pUNTER ONLY.',CR,0
 
 ;----------------------------------------------------------------------
 cf1	;multi-send
 	jsr cosave
 	lda protoc
-	beq mulsav
+	beq mulsav	; PROTOCOL_PUNTER
 mulnop
 	lda #<txt_multixfer
 	ldy #>txt_multixfer
@@ -14,7 +14,7 @@ mulnop
 	jmp ui_abort
 mulsav
 	jsr supercpu_off
-	lda #$93
+	lda #CLR
 	jsr chrout
 ;lda buffer_ptr+1;old references comparing buffer area and making sure theres enough
 ;cmp #>mulfil;room for punter files to be stored, but since we're now
@@ -135,11 +135,11 @@ mlss6	jsr chrout
 mlssab	jsr clrchn
 	jsr coback
 	jsr gong
-	jmp term
+	jmp term_entry
 mlshdr
 	jsr clear232
 	jsr enablexfer
-	ldx #5
+	ldx #LFN_MODEM
 	jsr chkout
 	ldx #16
 	lda #09   ;ctrl-i
@@ -155,24 +155,24 @@ mulab2
 	jsr chrout
 	lda #02
 	jsr close
-	lda motype
-	cmp #$02
+	lda modem_type
+	cmp #MODEM_TYPE_SWIFTLINK_DE
 	bmi mulab3
 mulab3
 	jsr enablexfer
-	jmp term
+	jmp term_entry
 ;
 cf3	;multi-receive
 	jsr disablexfer
 	jsr cosave
 	lda protoc
-	beq mulrav
+	beq mulrav	; PROTOCOL_PUNTER
 	jmp mulnop
 mulrav
 	jsr supercpu_off
 	lda #$01
 	sta mulcnt
-	lda #$93
+	lda #CLR
 	jsr chrout
 	lda #<mrctxt
 	ldy #>mrctxt
@@ -188,7 +188,7 @@ mlrwat
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	beq mulab2
-	ldx #05
+	ldx #LFN_MODEM
 	jsr chkin
 	jsr getin
 	cmp #09
@@ -207,7 +207,7 @@ mlrflp
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	beq mulab2
-	ldx #5
+	ldx #LFN_MODEM
 	jsr chkin
 	jsr getin
 	cmp #0
@@ -264,18 +264,18 @@ goob4	inc 1837,x
 	rts
 
 ;----------------------------------------------------------------------
-msntxt	.byte 13,14,5,18,32,'mULTI-sEND ',146,32,45,32
-	.byte 'sELECT FILES:',13,13,0
-moptxt	.byte 154,32,'yES/nO/qUIT/sKIP8/dONE/'
-	.byte 'aLL',13,0
-mrctxt	.byte 13,14,5,18,32,'mULTI-rECEIVE ',13,13
-	.byte 159,'wAITING FOR HEADER...c= ABORTS.',13,0
+msntxt	.byte CR,14,WHITE,18,32,'mULTI-sEND ',146,32,45,32
+	.byte 'sELECT FILES:',CR,CR,0
+moptxt	.byte LTBLUE,' yES/nO/qUIT/sKIP8/dONE/'
+	.byte 'aLL',CR,0
+mrctxt	.byte CR,14,WHITE,18,32,'mULTI-rECEIVE ',CR,CR
+	.byte CYAN,'wAITING FOR HEADER...c= ABORTS.',CR,0
 
 ;----------------------------------------------------------------------
 ;multi - choose files
 mltdir
 	jsr disablexfer
-	lda diskdv
+	lda device_disk
 	jsr listen
 	lda #$f0
 	jsr second
@@ -292,7 +292,7 @@ mltdir
 	sta $fd
 	lda #>mulfil
 	sta $fe
-	lda diskdv
+	lda device_disk
 	jsr talk
 	lda #$60
 	jsr tksa
@@ -394,7 +394,7 @@ dirgrb
 mulpmt	dec mulskp
 	jsr drpol7
 mulnen
-	lda diskdv
+	lda device_disk
 	jsr talk
 	lda #$60
 	jsr tksa
@@ -407,7 +407,7 @@ mgetch	jsr acptr
 	rts
 mdrlp3	pla
 	pla
-mdrext	lda diskdv
+mdrext	lda device_disk
 	jsr listen
 	lda #$e0
 	jsr second
@@ -421,7 +421,7 @@ mdrret
 drpol0
 	sty tmp02
 	lda drform,y
-	cmp #02   ;ctrl-b
+	cmp #2		; ctrl-b
 	bne drpol1
 	ldy #00
 	lda $07e8,y
@@ -493,7 +493,7 @@ drpol5
 mlsf0
 	lda #' '
 	jsr chrout
-	lda #$9d
+	lda #CSR_LEFT
 	jsr chrout
 	jsr cursor_show
 mlswlp	jsr getin
@@ -508,7 +508,7 @@ mlswlp	jsr getin
 	pla
 	pha
 	jsr chrout
-	lda #$9d
+	lda #CSR_LEFT
 	jsr chrout
 	pla
 	cmp #'Y'
@@ -540,7 +540,7 @@ mlsf3
 	pla
 	pla
 	jsr clrchn
-	jmp term
+	jmp term_entry
 mlsf4
 	cmp #'S'
 	bne mlsf0
