@@ -7,10 +7,20 @@
 ;
 
 ;----------------------------------------------------------------------
+SET_PETSCII
 txt_xmodem:
-	.byte CR,CR,WHITE,cx,m,"ODEM ",0
+.ifdef BIN_2021
+	.byte CR,CR,WHITE,cx,m,"odem ",0
+.else
+	.byte CR,CR,WHITE,"XModem ",0
+.endif
 txt_xmodem_crc:
-	.byte CR,CR,WHITE,cx,m,"ODEM-crc ",0
+.ifdef BIN_2021
+	.byte CR,CR,WHITE,cx,m,"odem-CRC ",0
+.else
+	.byte CR,CR,WHITE,"XModem-CRC ",0
+.endif
+SET_ASCII
 
 ;----------------------------------------------------------------------
 ; display "[protocol], enter name" and input string
@@ -375,10 +385,12 @@ dowopn:
 	jmp xfrend	; close file
 
 ;----------------------------------------------------------------------
+SET_PETSCII
 txt_read_or_send:
-	.byte CR,CR,WHITE,HILITE,"READ OR",HILITE,"SEND FILE? ",0
+	.byte CR,CR,WHITE,HILITE,"read or",HILITE,"send file? ",0
 txt_read_or_send2:
-	.byte "sPACE TO PAUSE - r/s TO ABORT",CR,CR,0
+	.byte "Space to pause - R/S to abort",CR,CR,0
+SET_ASCII
 
 ;----------------------------------------------------------------------
 handle_f2_send_read:

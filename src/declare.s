@@ -57,6 +57,7 @@ rtail	= $029b
 rhead	= $029c
 rfree	= $029d ; used for swiftlink only
 
+.ifdef BIN_2021
 ;cap letters!
 ca	= 193
 b	= 194
@@ -82,6 +83,7 @@ w	= 215
 cx	= 216
 cy	= 217
 z	= 219
+.endif
 
 ; register saving, used by rs_user, swiftlink, up9600
 rsotm	= $97

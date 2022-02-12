@@ -7,8 +7,10 @@
 ;
 
 ;----------------------------------------------------------------------
+SET_PETSCII
 txt_multixfer:
-	.byte CR,WHITE,"mULTI-TRANSFER - pUNTER ONLY.",CR,0
+	.byte CR,WHITE,"Multi-transfer - Punter only.",CR,0
+SET_ASCII
 
 ;----------------------------------------------------------------------
 cf1_multi_send:
@@ -279,16 +281,18 @@ goobad:
 	rts
 
 ;----------------------------------------------------------------------
+SET_PETSCII
 txt_multisend_select:
-	.byte CR,LOCASE,WHITE,RVSON," mULTI-sEND ",RVSOFF," - "
-	.byte "sELECT FILES:",CR,CR,0
+	.byte CR,LOCASE,WHITE,RVSON," Multi-Send ",RVSOFF," - "
+	.byte "Select files:",CR,CR,0
 
 txt_yesnoquit:
-	.byte LTBLUE," yES/nO/qUIT/sKIP8/dONE/aLL",CR,0
+	.byte LTBLUE," Yes/No/Quit/Skip8/Done/All",CR,0
 
 txt_multirecv:
-	.byte CR,LOCASE,WHITE,RVSON," mULTI-rECEIVE ",CR,CR
-	.byte CYAN,"wAITING FOR HEADER...c= ABORTS.",CR,0
+	.byte CR,LOCASE,WHITE,RVSON," Multi-Receive ",CR,CR
+	.byte CYAN,"Waiting for header...C= aborts.",CR,0
+SET_ASCII
 
 ;----------------------------------------------------------------------
 select_files_from_disk:

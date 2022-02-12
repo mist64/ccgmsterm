@@ -7,39 +7,41 @@
 ;
 
 ;----------------------------------------------------------------------
+SET_PETSCII
 txt_newpunter:
-	.byte CR,CR,WHITE,"new pUNTER ",0
+	.byte CR,CR,WHITE,"NEW Punter ",0
 txt_up:
-	.byte "uP",0
+	.byte "Up",0
 txt_down:
-	.byte "dOWN",0
+	.byte "Down",0
 txt_load:
-	.byte "LOAD.",CR,0
+	.byte "load.",CR,0
 txt_enter_filename:
-	.byte "eNTER fILENAME: ",0
+	.byte "Enter Filename: ",0
 txt_yellow:
 	.byte CR,YELLOW,"  ",0
 txt_loading:
-	.byte "LOADING: ",CYAN,0
+	.byte "loading: ",CYAN,0
 txt_press_c_to_abort:
-	.byte CR,WHITE,"  (pRESS c= TO ABORT.)",CR,CR,0
+	.byte CR,WHITE,"  (Press C= to abort.)",CR,CR,0
 txt_aborted:
-	.byte "aBORTED.",CR,0
+	.byte "Aborted.",CR,0
 txt_good_bad_blocks:
-	.byte LTGREEN," ","gOOD bLOCKS: ",WHITE,"000",WHITE,"   -   "
-	.byte LTGREEN,"bAD bLOCKS: ",WHITE,"000",CR,0
+	.byte LTGREEN," ","Good Blocks: ",WHITE,"000",WHITE,"   -   "
+	.byte LTGREEN,"Bad Blocks: ",WHITE,"000",CR,0
 txt_graphics:
-	.byte LTGREEN,"gRAPHICS",0
+	.byte LTGREEN,"Graphics",0
 txt_graphics2:
-	.byte RVSON,BLUE,"c",LTBLUE,"/",CYAN,"g",RVSOFF,YELLOW,0
+	.byte RVSON,BLUE,"C",LTBLUE,"/",CYAN,"G",RVSOFF,YELLOW,0
 txt_ascii:
-	.byte CYAN,"aNSCII",0
+	.byte CYAN,"Anscii",0
 txt_terminal_ready:
-	.byte " tERMINAL rEADY.",LTGRAY,CR,CR,0
+	.byte " Terminal Ready.",LTGRAY,CR,CR,0
 txt_term_activated:
-	.byte " tERM aCTIVATED.",LTGRAY,CR,CR,0
+	.byte " Term Activated.",LTGRAY,CR,CR,0
 txt_disconnecting:
-	.byte CR,CR,WHITE,"dISCONNECTING...",LTGRAY,CR,CR,0
+	.byte CR,CR,WHITE,"Disconnecting...",LTGRAY,CR,CR,0
+SET_ASCII
 
 ;----------------------------------------------------------------------
 drtype:	.byte "DSPUR"
@@ -106,8 +108,10 @@ is_pal_system:
 supercpu:
 	.byte 0
 
+SET_PETSCII
 txt_supercpu_enabled:
-	.byte "sUPERcpu eNABLED!",CR,CR,0
+	.byte "SuperCPU Enabled!",CR,CR,0
+SET_ASCII
 
 nicktemp:
 	.byte 0		; [XXX unused]

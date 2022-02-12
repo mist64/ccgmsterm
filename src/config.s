@@ -34,43 +34,44 @@ phbmem:
 	; |  12 | password |
 	; total: 83 bytes
 
+SET_PETSCII
 	;.byte 0,6
-	;.byte "aFTERLIFE         "
+	;.byte "Afterlife         "
 	;.byte "192.168.0.8     ",0,"               ",0
 	;.byte "6401 ",0
-	;.byte "myuserid   ",0
-	;.byte "mypassword1",0
+	;.byte "MYUSERID   ",0
+	;.byte "MYPASSWORD1",0
 
 	;.byte 0,6
-	;.byte "aFTERLIFE         "
+	;.byte "Afterlife         "
 	;.byte "192.168.0.8:6401                ",0
 	;.byte "6400 ",0
-	;.byte "anotheruser",0
-	;.byte "mypassword1",0
+	;.byte "ANOTHERUSER",0
+	;.byte "MYPASSWORD1",0
 
 	;.byte 0,6
-	;.byte "aFTERLIFE         "
+	;.byte "Afterlife         "
 	;.byte "192.168.0.8:6401                ",0
 	;.byte "23   ",0
-	;.byte "myid       ",0
-	;.byte "mypassword1",0
+	;.byte "MYID       ",0
+	;.byte "MYPASSWORD1",0
 
 	.repeat 29
 	.res 83,0
 	.endrep
 
 	.byte 0,6
-	.byte "cOMMODORESERVER   "
-	.byte "COMMODORESERVER.COM",0,CR,0,0,0,0,0,0,0,0,0,0,0,0
+	.byte "Commodoreserver   "
+	.byte "commodoreserver.com",0,CR,0,0,0,0,0,0,0,0,0,0,0,0
 	.byte "1541",0,13
-	.byte "ID         ",0
-	.byte "PIN        ",0
+	.byte "id         ",0
+	.byte "pin        ",0
 	.byte 0,0
 
 ; Macros
 macmem:
 macmm1:
-	.byte "hELLO wORLD"
+	.byte "Hello World"
 	.res 64,0	; [XXX too many 0s]
 macmm2:
 	.res 64,0

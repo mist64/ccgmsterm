@@ -229,37 +229,41 @@ prmopt:
 prmlen:
 	.byte 4,18,8,10,20,19
 
+SET_PETSCII
 op1txt:
-	.byte "fULL"
-	.byte "hALF"
+	.byte "Full"
+	.byte "Half"
 
 op2txt:
-	.byte "uSER pORT 300-2400"
-	.byte "up9600 / ez232    "
-	.byte "sWIFT / tURBO de  "
-	.byte "sWIFT / tURBO df  "
-	.byte "sWIFT / tURBO d7  "
+	.byte "User Port 300-2400"
+	.byte "UP9600 / EZ232    "
+	.byte "Swift / Turbo DE  "
+	.byte "Swift / Turbo DF  "
+	.byte "Swift / Turbo D7  "
 
 op6txt:
-	.byte "sTANDARD"
-	.byte "zIMODEM "
+	.byte "Standard"
+	.byte "Zimodem "
 
 op3txt:
-	.byte "pUNTER    ","xMODEM    ","xMODEM-crc"
+	.byte "Punter    "
+	.byte "Xmodem    "
+	.byte "Xmodem-CRC"
 
 op4txt:
-	.byte "cLASSIC ccgms V5.5  "
-	.byte "iMAN / xpb V7.1     "
-	.byte "pREDATOR / fcc V8.1 "
-	.byte "iCE THEME V9.4      "
-	.byte "dEFCON/uNICESS V17.2"
-	.byte "aLWYZ / ccgms 2021  "
+	.byte "Classic CCGMS v5.5  "
+	.byte "Iman / XPB v7.1     "
+	.byte "Predator / FCC v8.1 "
+	.byte "Ice theme v9.4      "
+	.byte "Defcon/Unicess v17.2"
+	.byte "Alwyz / CCGMS 2021  "
 
 op5txt:
 	.res 15,CSR_RIGHT
-	.byte "ef  "
+	.byte "EF  "
 	.res 15,CSR_RIGHT
-	.byte "dISK"
+	.byte "Disk"
+SET_ASCII
 
 prmtab:
 	lda #CR
@@ -356,46 +360,52 @@ f7parm:
 txt_cmd_scratch:
 	.byte "S0:",0
 
+SET_PETSCII
 txt_filename:
-	.byte CLR,CR,WHITE,"fILENAME: ",0
+	.byte CLR,CR,WHITE,"Filename: ",0
 
 filename_config:
-	.byte "CCGMS-PHONE",0
+	.byte "ccgms-phone",0
 
 f7thob:
 	.byte 2
 
 txt_settings_menu:
 	.byte CLR,16,LOCASE,WHITE
-	.byte "   dIALER/pARAMETERS",CR
+	.byte "   Dialer/Parameters",CR
 	.byte BLUE,"   "
 	.res 17,$a3	; $A3: UPPER ONE EIGHTH BLOCK ('▔')
 	.byte CR,WHITE,16
 tcol27a	.byte WHITE
-	.byte " ",HILITE,"AUTO-dIALER/pHONEBOOK",CR,CR
-	.byte " ",HILITE,"BAUD rATE   -",CR,CR
-	.byte " ",HILITE,"DUPLEX      -",CR,CR
-	.byte " ",HILITE,"MODEM tYPE  -",CR,CR
-	.byte " ",HILITE,"F"
+	.byte " ",HILITE,"auto-Dialer/Phonebook",CR,CR
+	.byte " ",HILITE,"baud Rate   -",CR,CR
+	.byte " ",HILITE,"duplex      -",CR,CR
+	.byte " ",HILITE,"modem Type  -",CR,CR
+	.byte " ",HILITE,"f"
 tcol27b	.byte " "
-	.byte "IRMWARE    -",CR,CR
-	.byte " ",HILITE,"PROTOCOL    -",CR,CR
-	.byte " ",HILITE,"THEME       -",CR,CR,0
+	.byte "irmware    -",CR,CR
+	.byte " ",HILITE,"protocol    -",CR,CR
+	.byte " ",HILITE,"theme       -",CR,CR,0
 
 txt_edit_macros:
-	.byte " ",HILITE,"EDIT mACROS",CR,CR,0
+	.byte " ",HILITE,"edit Macros",CR,CR,0
 txt_edit_macros_cfg_device:
-	.byte " ",HILITE,"EDIT mACROS   ",HILITE,"CFG dEVICE -",CR,CR,0
+	.byte " ",HILITE,"edit Macros   ",HILITE,"cfg Device -",CR,CR,0
 
 txt_load_save_config:
-	.byte " ",HILITE,"LOAD/",HILITE,"SAVE pHONE bOOK AND cONFIG.",CR,CR
-	.byte " ",HILITE,"VIEW aUTHOR'S mESSAGE",CR,CR,0
+	.byte " ",HILITE,"load/",HILITE,"save Phone Book and Config.",CR,CR
+	.byte " ",HILITE,"view Author's Message",CR,CR,0
 
 txt_press_return_to_abort:
-	.byte SETCSR,22,0,WHITE,cp,"RESS <",YELLOW,RVSON,"r",e,t,u,cr,n,RVSOFF,WHITE,"> TO ABORT.",CR,0
+.ifdef BIN_2021
+	.byte SETCSR,22,0,WHITE,cp,"ress <",YELLOW,RVSON,"R",e,t,u,cr,n,RVSOFF,WHITE,"> to abort.",CR,0
+.else
+	.byte SETCSR,22,0,WHITE,"Press <",YELLOW,RVSON,"RETURN",RVSOFF,WHITE,"> to abort.",CR,0
+.endif
 
 txt_return:
-	.byte SETCSR,22,7,CYAN,"return",CR,0
+	.byte SETCSR,22,7,CYAN,"RETURN",CR,0
+SET_ASCII
 
 bpsspd:
 	.word 300

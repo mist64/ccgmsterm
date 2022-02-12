@@ -60,95 +60,97 @@ print_instr:
 	jmp outstr
 
 ;----------------------------------------------------------------------
+SET_PETSCII
 txt_banner:
 	.byte CR,CLR,LCKCASE,WHITE,LOCASE,RVSON," ",RED
-	.byte " c "
+	.byte " C "
 	.byte ORANGE
-	.byte " c "
+	.byte " C "
 	.byte YELLOW
-	.byte " g "
+	.byte " G "
 	.byte GREEN
-	.byte " m "
+	.byte " M "
 	.byte BLUE
-	.byte " s "
+	.byte " S "
 	.byte PURPLE
 	.byte " ! "
 	.byte WHITE
-	.byte "     tERMINAL 2021   "
+	.byte "     Terminal 2021   "
 	.byte 0
 
 txt_author:
-	.byte "BY cRAIG sMITH       mODS BY aLWYZ   "
+	.byte "by Craig Smith       Mods by Alwyz   "
 	.byte RVSOFF,DKGRAY,0
 
 txt_intro1:
 tcol1:	.byte WHITE
-	.byte "  ",RVSON,"f1",RVSOFF," "
+	.byte "  ",RVSON,"F1",RVSOFF," "
 tcol2:	.byte LTRED
-	.byte "uPLOAD          "
+	.byte "Upload          "
 tcol9:	.byte WHITE
-	.byte RVSON,"f2",RVSOFF," "
+	.byte RVSON,"F2",RVSOFF," "
 tcol10:	.byte LTRED
-	.byte "sEND/rEAD FILE",CR
+	.byte "Send/Read file",CR
 tcol3:	.byte WHITE
-	.byte "  ",RVSON,"f3",RVSOFF," "
+	.byte "  ",RVSON,"F3",RVSOFF," "
 tcol4:	.byte YELLOW
-	.byte "dOWNLOAD        "
+	.byte "Download        "
 tcol11:	.byte WHITE
-	.byte RVSON,"f4",RVSOFF," "
+	.byte RVSON,"F4",RVSOFF," "
 tcol12:	.byte YELLOW
-	.byte "bUFFER COMMANDS",CR
+	.byte "Buffer commands",CR
 tcol5:	.byte WHITE
-	.byte "  ",RVSON,"f5",RVSOFF," "
+	.byte "  ",RVSON,"F5",RVSOFF," "
 tcol6:	.byte LTGREEN
-	.byte "dISK COMMAND    "
+	.byte "Disk command    "
 tcol13:	.byte WHITE
-	.byte RVSON,"f6",RVSOFF," "
+	.byte RVSON,"F6",RVSOFF," "
 tcol14:	.byte LTGREEN
-	.byte "dIRECTORY",CR
+	.byte "Directory",CR
 tcol7:	.byte WHITE
-	.byte "  ",RVSON,"f7",RVSOFF," "
+	.byte "  ",RVSON,"F7",RVSOFF," "
 tcol8:	.byte GREEN
-	.byte "dIALER/pARAMS   "
+	.byte "Dialer/Params   "
 tcol15:	.byte WHITE
-	.byte RVSON,"f8",RVSOFF," "
+	.byte RVSON,"F8",RVSOFF," "
 tcol16:	.byte GREEN
-	.byte "sWITCH TERMS",CR,0
+	.byte "Switch terms",CR,0
 
 txt_intro2:
 tcol17a	.byte BLUE
-	.byte "c"
+	.byte "C"
 tcol26a	.byte RED
 	.byte "="
 tcol18	.byte WHITE
-	.byte RVSON,"f1",RVSOFF," "
+	.byte RVSON,"F1",RVSOFF," "
 tcol19	.byte CYAN
-	.byte "mULTI-sEND    "
+	.byte "Multi-Send    "
 tcol17b	.byte BLUE
-	.byte "c"
+	.byte "C"
 tcol26b	.byte RED
 	.byte "="
 tcol20	.byte WHITE
-	.byte RVSON,"f3",RVSOFF," "
+	.byte RVSON,"F3",RVSOFF," "
 tcol21	.byte CYAN
-	.byte "mULTI-rECEIVE",CR
+	.byte "Multi-Receive",CR
 tcol17c	.byte BLUE
-	.byte "c"
+	.byte "C"
 tcol26c	.byte RED
 	.byte "="
 tcol22	.byte WHITE
-	.byte RVSON,"f5",RVSOFF," "
+	.byte RVSON,"F5",RVSOFF," "
 tcol23	.byte LTBLUE
-	.byte "sEND DIR.     "
+	.byte "Send dir.     "
 tcol17d	.byte BLUE
-	.byte "c"
+	.byte "C"
 tcol26d	.byte RED
 	.byte "="
 tcol24	.byte WHITE
-	.byte RVSON,"f7",RVSOFF," "
+	.byte RVSON,"F7",RVSOFF," "
 tcol25	.byte LTBLUE
-	.byte "sCREEN TO bUFF.",CR,CR,0
+	.byte "Screen to Buff.",CR,CR,0
 ;
 mlswrn:	; [XXX code that uses this is commented out]
-	.byte CR,WHITE,"bUFFER TOO BIG - sAVE OR cLEAR fIRST!",CR,0
+	.byte CR,WHITE,"Buffer too big - Save or Clear First!",CR,0
 ;
+SET_ASCII

@@ -9,33 +9,34 @@
 entcol	.byte WHITE
 hilcol	.byte YELLOW
 
+SET_PETSCII
 txt_phonebook_menu:
 	.byte HOME,CR
 	.byte WHITE,RVSON,$a1	; $A1: LEFT HALF BLOCK ('▌')
-	.byte "crsr kEYS"
+	.byte "CRSR Keys"
 	.byte $b6,RVSOFF,LTBLUE	; $B6: RIGHT THREE EIGHTHS BLOCK
-	.byte " - mOVE"
+	.byte " - Move"
 	.byte WHITE,RVSON,$a1
-	.byte "rETURN"
+	.byte "Return"
 	.byte $b6,RVSOFF,LTBLUE
-	.byte " - sELECT"
+	.byte " - Select"
 	.byte CR
 	.byte CYAN,HILITE
-	.byte "DIAL uNLISTED #  "
+	.byte "dial Unlisted #  "
 	.byte HILITE
-	.byte "EDIT cURRENT #"
+	.byte "edit Current #"
 	.byte CR
 	.byte HILITE
-	.byte "CALL cURRENT #   "
+	.byte "call Current #   "
 	.byte HILITE
-	.byte "A-dIAL sELECTED"
+	.byte "a-Dial Selected"
 	.byte CR,HILITE
-	.byte "REVERSE cALL     "
+	.byte "reverse Call     "
 	.byte HILITE
-	.byte "X-rETURN tO mENU"
+	.byte "x-Return To Menu"
 	.byte CR
 	.byte GRAY,SETCSR,5,0,RVSON
-	.byte "           >>>pHONE bOOK<<<           "
+	.byte "           >>>Phone Book<<<           "
 	.byte CSR_RIGHT,DEL,' ',CSR_LEFT,INST,' ',CR,0
 stattx	.byte GRAY,SETCSR,21,0,RVSON
 	.byte "                                      "
@@ -48,39 +49,39 @@ toetxt	.byte SETCSR,6,0,0
 curbtx:
 	.byte SETCSR,22,1
 tcol28a	.byte CYAN
-	.byte "nAME:"
+	.byte "Name:"
 	.byte CR
-	.byte "   ip:"
+	.byte "   IP:"
 	.byte CR,' '
-	.byte "pORT: "
+	.byte "Port: "
 	.res 5,CSR_RIGHT
-	.byte " id: "
+	.byte " ID: "
 	.res 11,CSR_RIGHT
-	.byte " tRY: "
+	.byte " Try: "
 	.res 4,CSR_RIGHT
 	.byte DEL,CSR_UP,CR,0
 curbt3	.byte SETCSR,22,1
 tcol28b	.byte CYAN
-	.byte "nAME:"
+	.byte "Name:"
 	.byte CR
-	.byte " dIAL:"
+	.byte " Dial:"
 	.byte CR,' '
 	.byte "      "
 	.res 5,CSR_RIGHT
 	.byte "     "
 	.res 11,CSR_RIGHT
-	.byte " tRY: "
+	.byte " Try: "
 	.res 4,CSR_RIGHT
 	.byte DEL,CSR_UP,CR,0
 curbt2:
 tcol28c	.byte CYAN
-	.byte " pw:             ",0
+	.byte " PW:             ",0
 
 curbt4:
 tcol28d	.byte CYAN
-	.byte " id: ",0
+	.byte " ID: ",0
 nontxt	.byte WHITE
-	.byte "(nONE)             "
+	.byte "(None)             "
 	.byte CR,0
 clrlnt	.byte SETCSR,22,7
 	.byte "                  "
@@ -91,10 +92,13 @@ curbbs	.byte RVSOFF
 colbbs	.byte LTGREEN
 nambbs	.byte "                "
 	.byte RVSOFF,WHITE,0
+SET_ASCII
+
 curpik	.byte 0
 tmppik	.byte 0
 bautmp	.byte 6
 gratmp	.byte 0
+
 prtstt
 	pha
 	tya
@@ -995,16 +999,19 @@ dalfab
 	jsr outstr
 	jmp phloop
 ;
+SET_PETSCII
 curunl
 	.byte CSR_UP,CR," "
 tcol28e	.byte CYAN
-	.byte "pORT: "
-	.byte 05,0
+	.byte "Port: "
+	.byte WHITE,0
 prtunl
 	.byte CSR_UP,CR," "
 tcol28f	.byte CYAN
-	.byte "dIAL: "
-	.byte 05,0
+	.byte "Dial: "
+	.byte WHITE,0
+SET_ASCII
+
 unlisted
 	.byte 0
 unltemp	.byte 0
@@ -1094,20 +1101,26 @@ dalun4	lda inpbuf,x
 	lda #1
 	sta unlisted
 	jmp dial
-;
-txt_call:
-	.byte "cALL cURRENT nUMBER...",0
-txt_dial_selected:
-	.byte "dIAL sELECTED nUMBERS...",0
-txt_dial_unlisted:
-	.byte "dIAL uNLISTED nUMBER.",0
-txt_unlisted:
-	.byte "uNLISTED.",CR,0
 
-	.byte "wAITING fOR cARRIER...",0	; [XXX unused]
+SET_PETSCII
+txt_call:
+	.byte "Call Current Number...",0
+txt_dial_selected:
+	.byte "Dial Selected Numbers...",0
+txt_dial_unlisted:
+	.byte "Dial Unlisted Number.",0
+txt_unlisted:
+	.byte "Unlisted.",CR,0
+
+	.byte "Waiting For Carrier...",0	; [XXX unused]
 
 txt_dialing:
-	.byte "dIALING...  ",cp,"RESS ",cs,t,o,cp," TO ABORT.",0
+.ifdef BIN_2021
+	.byte "Dialing...  ",cp,"ress ",cs,t,o,cp," to abort.",0
+.else
+	.byte "Dialing...  Press STOP to abort.",0
+.endif
+SET_ASCII
 
 numptr:
 	.byte 0
@@ -1290,14 +1303,16 @@ txt_atd_zimmers:
 txt_atv1:
 	.byte "ATV1",CR,0
 
+SET_PETSCII
 txt_busy:
-	.byte "bUSY",0
+	.byte "Busy",0
 
 txt_no_carrier:
-	.byte "nO cARRIER",0
+	.byte "No Carrier",0
 
 txt_connect:
-	.byte "cONNECT!",0
+	.byte "Connect!",0
+SET_ASCII
 
 	.byte 0		; [XXX unused]
 

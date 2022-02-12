@@ -18,16 +18,30 @@ prwcmc
 	sta txt_edit_index
 	rts
 
+SET_PETSCII
 txt_edit_which_macro:
-	.byte CLR,WHITE,CR,CR,e,"DIT WHICH MACRO?",CR
-	.byte YELLOW,"(ctrl f1 / f3 OR return "
-	.byte "TO ABORT.) ",WHITE,SETCSR,2,18,0
+.ifdef BIN_2021
+	.byte CLR,WHITE,CR,CR,e,"dit which macro?",CR
+.else
+	.byte CLR,WHITE,CR,CR,"Edit which macro?",CR
+.endif
+	.byte YELLOW,"(CTRL F1 / F3 or RETURN "
+	.byte "to abort.) ",WHITE,SETCSR,2,18,0
 
 txt_edit:
-	.byte 19,CR,WHITE,e,"DIT ",f
+.ifdef BIN_2021
+	.byte 19,CR,WHITE,e,"dit ",f
+.else
+	.byte 19,CR,WHITE,"Edit F"
+.endif
 txt_edit_index:
 	.byte '1'
-	.byte " mACRO...<",c,t,cr,l,"-",cx,"> TO END:",CR,CR,CR,CR,0
+.ifdef BIN_2021
+	.byte " Macro...<",c,t,cr,l,"-",cx,"> to end:",CR,CR,CR,CR,0
+.else
+	.byte " Macro...<CTRL-X> to end:",CR,CR,CR,CR,0
+.endif
+SET_ASCII
 
 wchmac:
 	.byte 0

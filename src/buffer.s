@@ -7,56 +7,58 @@
 ;
 
 ;----------------------------------------------------------------------
+SET_PETSCII
 txt_buffer:
-	.byte WHITE,"bUFFER ",0
+	.byte WHITE,"Buffer ",0
 
 txt_bufcmds:
-	.byte " BYTES FREE.  "
+	.byte " bytes free.  "
 	.byte CR,HILITE
-	.byte "OPEN  "
+	.byte "open  "
 	.byte HILITE
-	.byte "CLOSE  "
+	.byte "close  "
 	.byte HILITE
-	.byte "ERASE  "
+	.byte "erase  "
 	.byte HILITE
-	.byte "TRANSFER"
+	.byte "transfer"
 	.byte CR,HILITE
-	.byte "LOAD  "
+	.byte "load  "
 	.byte HILITE
-	.byte "SAVE   "
+	.byte "save   "
 	.byte HILITE
-	.byte "PRINT  "
+	.byte "print  "
 	.byte HILITE
-	.byte "VIEW: "
+	.byte "view: "
 	.byte 0
 
 txt_open:
-	.byte "oPEN",0
+	.byte "Open",0
 
 txt_closed:
-	.byte "cLOSED",0
+	.byte "Closed",0
 
 txt_erase_buffer:
-	.byte  "eRASE bUFFER! - "
+	.byte  "Erase Buffer! - "
 	.byte HILITE
-	.byte "YES OR "
+	.byte "yes or "
 	.byte HILITE
-	.byte "NO?       "
+	.byte "no?       "
 	.byte CSR_LEFT,CSR_LEFT,CSR_LEFT,15
 	.byte CSR_LEFT,CSR_LEFT,CSR_LEFT,0
 
 txt_sending_buffer:
 	.byte CR,CR
-	.byte "sENDING BUFFER..."
+	.byte "Sending buffer..."
 	.byte CR,CR,00
 
 txt_done:
 	.byte CR,CR,WHITE
-	.byte "dONE."
+	.byte "Done."
 	.byte CR,0
 
 txt_reu:
-	.byte WHITE,"reu ",0
+	.byte WHITE,"REU ",0
+SET_ASCII
 
 ;----------------------------------------------------------------------
 print_buffer_info:
@@ -486,12 +488,22 @@ switch_buffer:
 	rts
 
 ;----------------------------------------------------------------------
+SET_PETSCII
 txt_device:
-	.byte CR,CR,"dEVICE",0
+	.byte CR,CR,"Device",0
 txt_sec_addr:
-	.byte CR,cs,"ec.",ca,".: ",0
+.ifdef BIN_2021
+	.byte CR,cs,"EC.",ca,".: ",0
+.else
+	.byte CR,"SEC.A.: ",0
+.endif
 txt_printing:
-	.byte CLR,CR,cp,"rinting...",CR,0
+.ifdef BIN_2021
+	.byte CLR,CR,cp,"RINTING...",CR,0
+.else
+	.byte CLR,CR,"PRINTING...",CR,0
+.endif
+SET_ASCII
 
 ;----------------------------------------------------------------------
 print_buffer:

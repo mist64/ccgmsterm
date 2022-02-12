@@ -619,16 +619,18 @@ retry2:	jsr clear232
 
 ;----------------------------------------------------------------------
 ; error messages
+SET_PETSCII
 msg_cancelled:
-	.byte CR,"tRANSFER cANCELLED.",0
+	.byte CR,"Transfer Cancelled.",0
 msg_no_eto_ack:
-	.byte CR,"eot nOT aCKNOWLEGED.",0
+	.byte CR,"EOT Not Acknowleged.",0
 msg_max_retries:
-	.byte CR,"tOO mANY bAD bLOCKS!",0
+	.byte CR,"Too Many Bad Blocks!",0
 msg_sync_lost:
 	.byte CR
-	.byte 'C'+128 ; [XXX this should not be here]
-	.byte "sYNC lOST!",0
+	.byte 'c'+128 ; [XXX this should not be here]
+	.byte "Sync Lost!",0
+SET_ASCII
 
 ;----------------------------------------------------------------------
 ; *** upload: send, handle status

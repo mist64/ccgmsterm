@@ -11,6 +11,7 @@
 	.macpack longbranch
 
 	.include "declare.s"
+	.include "include.s"
 
 .segment "S07FF"
 
