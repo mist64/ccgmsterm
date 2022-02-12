@@ -1,3 +1,10 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Text encoding macros
+;
 
 .ifdef BIN_2021
 ; just swaps uppercase and lowercase

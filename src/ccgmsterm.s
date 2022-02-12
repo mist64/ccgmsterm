@@ -11,7 +11,7 @@
 	.macpack longbranch
 
 	.include "declare.s"
-	.include "include.s"
+	.include "encoding.s"
 
 .segment "S07FF"
 
@@ -34,8 +34,6 @@ entry:
 	.include "misc2.s"
 
 easyflash_support:
-; 0 = no easyflash
-; 1 = easyflash mode
 	.byte EASYFLASH
 
 ;about 40 bytes still free here to play with before $1000
@@ -49,10 +47,11 @@ easyflash_support:
 	.include "banner.s"
 	.include "dir.s"
 	.include "ansi.s"
+	.include "cursor.s"
 	.include "input.s"
 	.include "misc.s"
-	.include "disk2.s"
-	.include "macro2.s"
+	.include "diskcmd.s"
+	.include "macroex.s"
 	.include "buffer2.s"
 	.include "xmodem.s"
 	.include "xfer.s"
@@ -61,9 +60,8 @@ easyflash_support:
 	.include "multixfer.s"
 	.include "buffer.s"
 	.include "phonebook.s"
-	.include "hayes.s"
-	.include "config2.s"
-	.include "showinstr.s"
+	.include "configldsv.s"
+	.include "instrprint.s"
 	.include "macro.s"
 	.include "configedit.s"
 	.include "rs232_userport.s"
@@ -80,6 +78,6 @@ easyflash_support:
 
 .segment "S5C00"
 
-	.include "instructions.s"
+	.include "instr.s"
 
 endprg	.byte 0

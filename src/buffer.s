@@ -114,12 +114,12 @@ bufask
 	jsr chrout
 	jsr print_buffer_menu
 bufwat
-	jsr savech
+	jsr invert_csr_char
 :	jsr getin
 	beq :-
 	and #$7f
 	pha
-	jsr restch
+	jsr restore_csr_char
 	pla
 	cmp #CR
 	bne bufcmd
@@ -177,7 +177,7 @@ no2
 	lda #<txt_erase_buffer
 	ldy #>txt_erase_buffer
 	jsr outstr
-	jsr savech
+	jsr invert_csr_char
 :	jsr getin
 	beq :-
 	and #$7f
@@ -186,7 +186,7 @@ no2
 	cmp #'Y'
 	bne :-
 	jsr bufclr
-:	jsr restch
+:	jsr restore_csr_char
 	lda #CSR_UP
 	jsr chrout
 	jsr chrout
@@ -222,10 +222,10 @@ prtbuf:
 	pha
 	lda #$2f
 	sta $00
-	lda #$36
+	lda #$36	; disable BASIC ROM
 	sta $01
 	jsr dskout
-	lda #$37
+	lda #$37	; enable BASIC ROM
 	sta $01
 	pla
 	sta buffst+1
@@ -328,10 +328,9 @@ savbuf
 	lda #0
 	sta buffst
 	sta buffst+1
-	jmp amoveon
+	jmp :+
 afuckit	jsr $f624
-amoveon
-	php
+:	php
 	lda #$37
 	sta $01
 	plp
@@ -344,6 +343,7 @@ amoveon
 	sta buffst+1
 	jmp ui_abort
 
+;----------------------------------------------------------------------
 ;reu needs a special save routine cause craig decided to be all fancy with this one :)
 af624	jsr $fcd1	; check the tape read/write pointer
 	bcs @end
@@ -366,6 +366,7 @@ af624	jsr $fcd1	; check the tape read/write pointer
 	bne af624
 @end:	jsr $edfe;UNLSTN.
 	jmp $f642
+;----------------------------------------------------------------------
 
 bsaved
 	jsr enablexfer

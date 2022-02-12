@@ -6,6 +6,8 @@
 ; Configuration data & phone book
 ;
 
+;----------------------------------------------------------------------
+;----------------------------------------------------------------------
 ;  This data gets saved to disk/EasyFlash
 config_data:
 
@@ -22,6 +24,7 @@ mopo2:
 modem_type:
 	.byte MODEM_TYPE_USERPORT
 
+;----------------------------------------------------------------------
 ; Phone book
 phbmem:
 	; | len | contents |
@@ -57,7 +60,7 @@ SET_PETSCII
 	;.byte "MYPASSWORD1",0
 
 	.repeat 29
-	.res 83,0
+	.res 83,0	; empty entry
 	.endrep
 
 	.byte 0,6
@@ -68,6 +71,7 @@ SET_PETSCII
 	.byte "pin        ",0
 	.byte 0,0
 
+;----------------------------------------------------------------------
 ; Macros
 macmem:
 macmm1:
@@ -80,21 +84,21 @@ macmm3:
 macmm4:
 	.res 64,0
 
+;----------------------------------------------------------------------
 ; file transmission protocol
 protoc:
 	.byte 0
 
-; 0: classic
-; 1: Iman of XPB v7.1
-; 2: v8.1 Predator/FCC
-; 3: 9.4 Ice THEME
-; 4: 17.2 Defcon/Unicess
+; current theme; see theme.s
 theme:
 	.byte 0
 
-diskoref:
-	.byte 0;00 = ef - 01=disk
+; save config to disk even though we have an EasyFlash
+easyflash_use_disk:
+	.byte 0
 
 config_data_end:
-	.byte 0		; [XXX not necessary, *symbol* is used as end address]
+;----------------------------------------------------------------------
+
+	.byte 0		; [XXX unused; not part of config file]
 

@@ -16,7 +16,7 @@ prompt_file_type:
 	lda #<txt_prg_seq_usr
 	ldy #>txt_prg_seq_usr
 	jsr outstr
-	jsr savech
+	jsr invert_csr_char
 
 @1:	jsr getin
 	beq @1

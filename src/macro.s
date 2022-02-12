@@ -18,6 +18,7 @@ prwcmc
 	sta txt_edit_index
 	rts
 
+;----------------------------------------------------------------------
 SET_PETSCII
 txt_edit_which_macro:
 .ifdef BIN_2021
@@ -25,8 +26,7 @@ txt_edit_which_macro:
 .else
 	.byte CLR,WHITE,CR,CR,"Edit which macro?",CR
 .endif
-	.byte YELLOW,"(CTRL F1 / F3 or RETURN "
-	.byte "to abort.) ",WHITE,SETCSR,2,18,0
+	.byte YELLOW,"(CTRL F1 / F3 or RETURN to abort.) ",WHITE,SETCSR,2,RVSON,0
 
 txt_edit:
 .ifdef BIN_2021
@@ -43,17 +43,19 @@ txt_edit_index:
 .endif
 SET_ASCII
 
+;----------------------------------------------------------------------
 wchmac:
 	.byte 0
 
 macfull:
 	.byte 0
 
+;----------------------------------------------------------------------
 edtmac:
 	lda #<txt_edit_which_macro
 	ldy #>txt_edit_which_macro
 	jsr outstr
-	jsr savech
+	jsr invert_csr_char
 edtmlp	lda LSTX
 	cmp #1    ;return
 	bne edtmc2
@@ -63,7 +65,7 @@ edtmc2	cmp #4
 	cmp #6
 	bcs edtmlp
 	pha
-	jsr restch
+	jsr restore_csr_char
 	pla
 	tax
 edtmc3
@@ -93,7 +95,7 @@ edtstr
 	clc
 	adc #62
 	sta macfull
-	jsr restch
+	jsr restore_csr_char
 	lda #' '
 	jsr chrout
 	lda #CSR_LEFT

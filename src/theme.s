@@ -6,6 +6,14 @@
 ; Theming
 ;
 
+; The columns are:
+;  0: Classic CCGMS v5.5
+;  1: Iman / XPB v7.1
+;  2: Predator / FCC v8.1
+;  3: Ice theme v9.4
+;  4: Defcon/Unicess v17.2
+;  5: Alwyz / CCGMS 2021
+
 tc1:	.byte WHITE,BLUE,WHITE,WHITE,BLUE,DKGRAY	; f1
 tc2:	.byte LTRED,LTRED,BLUE,DKGRAY,DKGRAY,PURPLE	; Upload
 tc3:	.byte WHITE,LTBLUE,WHITE,WHITE,PURPLE,GRAY	; f3

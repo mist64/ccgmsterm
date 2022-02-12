@@ -3,7 +3,7 @@
 ; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
 ; This project is licensed under the BSD 3-Clause License.
 ;
-; Show credits and instructions
+; Show instructions and credits
 ;
 
 show_instructions:

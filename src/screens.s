@@ -3,7 +3,7 @@
 ; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
 ; This project is licensed under the BSD 3-Clause License.
 ;
-; Screen swapping
+; Screen swapping, cursor logic
 ;
 
 ;----------------------------------------------------------------------
@@ -117,20 +117,22 @@ bufclr
 	lda buffst+1
 	sta buffer_ptr+1
 	rts
-finpos	;calculate screenpos
+
+;----------------------------------------------------------------------
+; calculate screen pointer (and read)
+calc_scr_ptr:
 	ldy LINE
-	lda $ecf0,y
+	lda $ecf0,y	; low byte of screen address for line
 	sta locat
-	lda $d9,y
+	lda $d9,y	; hi byte
 	and #$7f
 	sta locat+1
 	lda COLUMN
 	cmp #40
-	bcc finp2
+	bcc :+
 	sbc #40
 	clc
-finp2
-	adc locat
+:	adc locat
 	sta locat
 	lda locat+1
 	adc #0
@@ -138,8 +140,11 @@ finp2
 	ldy #0
 	lda (locat),y
 	rts
-fincol	;calculate color ptr
-	jsr finpos
+
+;----------------------------------------------------------------------
+; calculate color RAM pointer (and read)
+calc_col_ptr:
+	jsr calc_scr_ptr
 	lda #$d4
 	clc
 	adc locat+1

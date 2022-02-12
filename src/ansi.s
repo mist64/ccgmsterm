@@ -6,13 +6,16 @@
 ; ASCII/PETSCII conversion and ANSI control code emulation
 ;
 
-ansi:
+; 0: not escape mode
+; 1: ESC encountered
+; 2: ESC-set-color encountered
+ansi_escape_mode:
 	.byte 0
 
 ansitemp:
 	.byte 0
 
-ansicolor:
+ansi_color_table:
 	.byte 0
 
 ansi0colors:
@@ -21,245 +24,203 @@ ansi1colors:
 	.byte DKGRAY,LTRED,LTGREEN,YELLOW,LTBLUE,PURPLE,CYAN,WHITE,0,0,0
 
 ;----------------------------------------------------------------------
-; convert standard ascii to c= ascii
+; Convert an ASCII character to PETSCII; interpret ANSI control codes
 ascii_to_petscii:
 	pha
-	lda ansi
-	jeq satoca2	; no ansi, but check for ansi
+	lda ansi_escape_mode
+	jeq plain_mode	; not in ANSI escape mode, check for it
+
+; in ANSI escape mode
 	cmp #2		; is ansi color code on?
 	beq coloron2
+
 	pla
 	cmp #'2'
-	beq clrhomeansi
+	beq ansi_clrhome
 	cmp #'3'
-	beq coloron
+	beq ansi_set_color_mode
 	cmp #'4'
-	beq coloron;code4on when we figure out rvs
+	beq ansi_set_color_mode	; ansi_rvs_on when we figure out rvs
 	cmp #'0'
-	beq turn0on
+	beq ansi_set_color_table_0
 	cmp #'7'
-	beq code4on;7 is rvs
+	beq ansi_rvs_on		; rvs
 	cmp #'1'
-	beq turn1on
+	beq ansi_set_color_table_1
 	cmp #';'
-	jeq semion
+	jeq ansi_semicolon
 	cmp #'['
-	beq leftbracketansi;[ after escape code
+	beq ansi_leftbracket	; [ after escape code
 	cmp #'M'
 	bne :+
-ansimend2:
-	jmp ansimend
-:
-	cmp #'m'
-	beq ansimend2
+@end:	jmp ansi_end		; [XXX beq @end]
+:	cmp #'m'
+	beq @end
 	cmp #'J'
-	beq ansimend
+	beq ansi_end
 	cmp #'j'
-	beq ansimend
+	beq ansi_end
 	cmp #'H'
-	beq ansimend
+	beq ansi_end
 	cmp #'h'
-	beq ansimend
+	beq ansi_end
 	cmp #']'
-	beq outtahere
-	jmp cexit	; out of ideas,move on
+	beq ansi_return_0
+	jmp ansi_return	; out of ideas,move on
 
-turn0on
+ansi_set_color_table_0:
 	lda #0
-	sta ansicolor
-	jmp outtahere
+	sta ansi_color_table
+	jmp ansi_return_0
 
-turn1on
+ansi_set_color_table_1:
 	lda #1
-	sta ansicolor
-	jmp outtahere
+	sta ansi_color_table
+	jmp ansi_return_0
 
-; rvs on for next color
-code4on
-	lda #1
-	sta ansi
+ansi_rvs_on:
+	lda #1		; escape mode stays on
+	sta ansi_escape_mode
 	lda #RVSON
-	jmp cexit
+	jmp ansi_return
 
-;rvs on for next color
-clrhomeansi
-	lda #1		; ansi stays on to see if there's another command after
-	sta ansi
+ansi_clrhome:
+	lda #1		; escape mode stays on
+	sta ansi_escape_mode
 	lda #CLR
-	jmp cexit
+	jmp ansi_return
 
-leftbracketansi		; ansi is on and got the left bracket
-	lda #1		; ansi stays on to see if there's another command after
-	sta ansi
+ansi_leftbracket:	; ansi is on and got the left bracket
+	lda #1		; escape mode stays on
+	sta ansi_escape_mode
 	lda #0		; display nothing and move on in ansi mode
-	jmp cexit
+	jmp ansi_return
 
-coloron
+ansi_set_color_mode:
 	lda #2
-	sta ansi
-outtahere
+	sta ansi_escape_mode
+ansi_return_0:
 	lda #0
-	jmp cexit
+	jmp ansi_return
 
-coloron2
-	lda ansicolor
-	beq ansizerocolors
-ansionecolors
+; in ANSI escape *color* mode
+coloron2:
+	lda ansi_color_table
+	beq @1
+
+; color table 1
 	lda #0
-	sta ansicolor
+	sta ansi_color_table
 	pla
 	sec
-	sbc #48
+	sbc #'0'
 	tay
 	lda #1
-	sta ansi
+	sta ansi_escape_mode
 	lda ansi1colors,y
-	jmp cexit
+	jmp ansi_return
 
-ansizerocolors
-	pla
+; color table 0
+@1:	pla
 	sec
-	sbc #48
+	sbc #'0'
 	tay
 	lda #1
-	sta ansi
+	sta ansi_escape_mode
 	lda ansi0colors,y
-	jmp cexit
+	jmp ansi_return
 
-semion
-	lda #1
-	sta ansi
+ansi_semicolon:
+	lda #1		; escape mode stays on
+	sta ansi_escape_mode
 	lda #0
-	jmp cexit
+	jmp ansi_return
 
-ansimend
+ansi_end:
 	lda #0
-	sta ansi
-	jmp cexit
+	sta ansi_escape_mode
+	jmp ansi_return
 
-satoca2
+; not in ANSI escape mode
+plain_mode:
 	pla
-	cmp #$1b	; ANSI escape code
-	beq ansi1
-	jmp satoca1
+	cmp #27		; ESC: ANSI escape code
+	beq :+
+	jmp plain_char	; [XXX bne plain_char]
 
-ansi1
-	lda #1
-	sta ansi	; turn ansi on
+:	lda #1
+	sta ansi_escape_mode
 	lda #0
-	jmp cexit
+	jmp ansi_return
 
-satoca1
+plain_char:
 	cmp #UNDERLINE
 	bne @0
-	lda #UNDERLINE
-	bne cexit
+	lda #UNDERLINE	; [XXX remove]
+	bne ansi_return
 @0:	and #$7f
-	cmp #124
-	bcs cexit
-	cmp #96
+	cmp #$7c
+	bcs ansi_return
+	cmp #$60
 	bcc @1
 	sbc #' '
-	bne cexit
+	bne ansi_return
 @1:	cmp #'A'
 	bcc @2
 	cmp #'Z'+1
-	bcs cexit
+	bcs ansi_return
 	adc #$80
-	bne cexit
-@2:	cmp #8
+	bne ansi_return
+@2:	cmp #8		; backspace
 	bne @3
 	lda #DEL
-@3:	cmp #$0c
+@3:	cmp #$0c	; form feed
 	bne @4
 	lda #CLR
-@4:	cmp #' '	; don't allow home,
-	bcs cexit	; cd, or cr
-	cmp #7
-	beq cexit
+@4:	cmp #' '
+	bcs ansi_return
+	cmp #7		; bell
+	beq ansi_return
 	cmp #CR
-	beq cexit
+	beq ansi_return
 	cmp #DEL
-	beq cexit
-	bne cerrc
-cexit	cmp #0
+	beq ansi_return	; [XXX]
+	bne ansi_return_0b
+
+ansi_return:
+	cmp #0
 	rts
-cerrc
+ansi_return_0b:		; [XXX duplicate]
 	lda #0
-	beq cexit
+	beq ansi_return
 
 ;----------------------------------------------------------------------
-; convert c= ascii to standard ascii
+; Convert PETSCII to ASCII
 petscii_to_ascii:
-	cmp #20
+	cmp #DEL
 	bne @0
 	lda #8		; ctrl-h (backspace)
 	bne @exit
-@0:	cmp #UNDERLINE
-	bne @1
-	lda #UNDERLINE
+
+@0:	cmp #UNDERLINE	; [XXX no-op]
+	bne @1		; [XXX no-op]
+	lda #UNDERLINE	; [XXX no-op]
 @1:	cmp #'A'
-	bcc cexit  ;if<then no conv
+	bcc ansi_return  ;if<then no conv
 	cmp #'Z'+1
 	bcs @2
 	adc #' '    ;lower a...z..._
 	bne @exit
+
 @2:	cmp #' '+$80
 	bne @3
 	lda #' '    ;shift to space
 	bne @exit
+
 @3:	and #$7f
-	cmp #65
-	bcc cerrc
-	cmp #96    ;upper a...z
-	bcs cerrc
+	cmp #$41
+	bcc ansi_return_0b
+	cmp #$60    ;upper a...z
+	bcs ansi_return_0b
 @exit:	cmp #0
 	rts
-
-;----------------------------------------------------------------------
-savech:
-	jsr finpos
-	sta tempch
-	eor #$80
-	sta (locat),y
-	jsr fincol
-	sta tempcl
-	lda textcl
-	sta (locat),y
-	rts
-
-;----------------------------------------------------------------------
-; restore char und non-crsr
-restch:
-	jsr finpos
-	lda tempch
-	sta (locat),y
-	jsr fincol
-	lda tempcl
-	sta (locat),y
-	rts
-
-;----------------------------------------------------------------------
-;output space, crsrleft
-spleft:
-	lda #' '
-	jsr chrout
-	lda #CSR_LEFT
-	jmp chrout
-
-;----------------------------------------------------------------------
-cursor_off:
-	ldx cursor_flag
-	bne restch
-	jsr quote_insert_off
-	jmp spleft
-
-;----------------------------------------------------------------------
-cursor_show:
-	lda cursor_flag
-	bne :+
-	lda #CURSOR
-	jsr chrout
-	lda #CSR_LEFT
-	jmp chrout
-:	jmp savech

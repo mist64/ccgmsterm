@@ -7,12 +7,14 @@
 ;
 ; Only uses first bank; 64 KB is more than enough
 
+;----------------------------------------------------------------------
 ; REU in use
 ;  0: no (RAM buffers)
 ;  1: yes (REU buffers)
 reu_enabled:
 	.byte 0
 
+;----------------------------------------------------------------------
 ; detect REU
 reu_detect:
 	; enable this to temporarily disable REU support
@@ -47,6 +49,7 @@ reu_detect:
 	sta bufend+1
 	rts
 
+;----------------------------------------------------------------------
 noreu:
 	lda #0
 	sta reu_enabled
@@ -60,6 +63,7 @@ noreu:
 	sta bufend+1
 	rts
 
+;----------------------------------------------------------------------
 bufend:
 	.word 0
 
@@ -67,6 +71,7 @@ bufend:
 
 length	= 1	; one byte at a time
 
+;----------------------------------------------------------------------
 reuwrite:
 	sta bufptrreu
 	pha
@@ -91,6 +96,7 @@ reuwrite:
 	pla
 	rts
 
+;----------------------------------------------------------------------
 reuread:
 	lda #<buffstreu
 	sta $df02

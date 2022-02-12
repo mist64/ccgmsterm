@@ -34,7 +34,7 @@ losvco:
 save_config:
 	lda easyflash_support
 	beq :+
-	lda diskoref
+	lda easyflash_use_disk
 	beq save_config_easyflash
 :	jsr losvco
 	bne *+2		; [XXX]
@@ -74,7 +74,7 @@ save_config_easyflash:
 load_config:
 	lda easyflash_support
 	beq :+
-	lda diskoref
+	lda easyflash_use_disk
 	beq load_config_easyflash
 :	jsr losvco
 	beq losvab

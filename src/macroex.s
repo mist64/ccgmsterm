@@ -6,7 +6,7 @@
 ; Macro Execution
 ;
 
-;xfer id and pw to macros F5 and F7
+; xfer id and pw to macros F5 and F7
 xferidpw
 	ldy #59
 xferid
@@ -30,7 +30,6 @@ xferp3
 	sta macmem+121,y
 	rts
 
-;MACROS
 macmdm	.byte 0
 macxrg	.byte 0
 
@@ -71,11 +70,11 @@ prtmc0
 prtmc1
 	jsr chrout
 	jsr clrchn
-	lda #$fd
+	lda #$100-3
 	sta JIFFIES
 prtmcd	lda JIFFIES
 	bne prtmcd
-	lda #$fd
+	lda #$100-3
 	sta JIFFIES
 prtmcd2	lda JIFFIES
 	bne prtmcd2

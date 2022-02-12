@@ -8,10 +8,10 @@
 
 ; PAL/NTSC detection
 start
-l1	lda $d012
-l2	cmp $d012
-	beq l2
-	bmi l1
+@1:	lda $d012
+@2:	cmp $d012
+	beq @2
+	bmi @1
 	cmp #$20
 	bcc :+		; NTSC
 	ldx #1

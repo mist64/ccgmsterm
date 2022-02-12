@@ -136,9 +136,9 @@ f7chgk
 	bne @no6
 	lda easyflash_support
 	beq @no6
-	lda diskoref
+	lda easyflash_use_disk
 	eor #1
-	sta diskoref
+	sta easyflash_use_disk
 	jmp config_loop
 @no6:
 
@@ -265,6 +265,7 @@ op5txt:
 	.byte "Disk"
 SET_ASCII
 
+;----------------------------------------------------------------------
 prmtab:
 	lda #CR
 	jsr chrout
@@ -319,9 +320,9 @@ f7parm:
 	lda baud_rate
 	asl a
 	tax
-	lda bpsspd+1,x
+	lda baudrates+1,x
 	pha
-	lda bpsspd,x
+	lda baudrates,x
 	tax
 	pla
 	jsr outnum
@@ -353,10 +354,11 @@ f7parm:
 	beq :+
 	ldy #5
 	jsr prmclc
-	ldx diskoref
+	ldx easyflash_use_disk
 	jmp prmprt
 :	rts
 
+;----------------------------------------------------------------------
 txt_cmd_scratch:
 	.byte "S0:",0
 
@@ -407,7 +409,8 @@ txt_return:
 	.byte SETCSR,22,7,CYAN,"RETURN",CR,0
 SET_ASCII
 
-bpsspd:
+;----------------------------------------------------------------------
+baudrates:
 	.word 300
 	.word 1200
 	.word 2400

@@ -30,11 +30,11 @@ print_banner:
 
 ;----------------------------------------------------------------------
 print_instr:
-	lda #<txt_intro1
-	ldy #>txt_intro1
+	lda #<txt_banner1
+	ldy #>txt_banner1
 	jsr outstr
-	lda #<txt_intro2
-	ldy #>txt_intro2
+	lda #<txt_banner2
+	ldy #>txt_banner2
 	jsr outstr
 
 	ldx ascii_mode
@@ -82,7 +82,7 @@ txt_author:
 	.byte "by Craig Smith       Mods by Alwyz   "
 	.byte RVSOFF,DKGRAY,0
 
-txt_intro1:
+txt_banner1:
 tcol1:	.byte WHITE
 	.byte "  ",RVSON,"F1",RVSOFF," "
 tcol2:	.byte LTRED
@@ -116,7 +116,7 @@ tcol15:	.byte WHITE
 tcol16:	.byte GREEN
 	.byte "Switch terms",CR,0
 
-txt_intro2:
+txt_banner2:
 tcol17a	.byte BLUE
 	.byte "C"
 tcol26a	.byte RED
@@ -149,8 +149,7 @@ tcol24	.byte WHITE
 	.byte RVSON,"F7",RVSOFF," "
 tcol25	.byte LTBLUE
 	.byte "Screen to Buff.",CR,CR,0
-;
+
 mlswrn:	; [XXX code that uses this is commented out]
 	.byte CR,WHITE,"Buffer too big - Save or Clear First!",CR,0
-;
 SET_ASCII

@@ -22,7 +22,7 @@ inpset:
 	jsr plot
 	stx tmp9e
 	sty tmp9f
-	jsr finpos	; set up begin &
+	jsr calc_scr_ptr; set up begin &
 	lda locat+1	; end of input
 	sta begpos+1	; ptrs
 	sta endpos+1
@@ -40,7 +40,7 @@ inpset:
 inputl:
 	lda #0
 	sta BLNSW
-	jsr savech
+	jsr invert_csr_char
 inpwat:
 	jsr getin
 	beq inpwat
@@ -62,7 +62,7 @@ inpwat:
 	beq inpcls
 	bne inpprc
 inpcud
-	jsr restch
+	jsr restore_csr_char
 	lda tmp03
 	cmp #CSR_UP
 	beq inphom
@@ -83,7 +83,7 @@ inpcu3
 	tay
 	rts
 inpcls
-	jsr restch
+	jsr restore_csr_char
 	lda tmp03
 	cmp #CLR
 	bne inphom
@@ -100,7 +100,7 @@ inpmov
 	jsr plot
 	jmp inputl
 inpdel
-	jsr finpos
+	jsr calc_scr_ptr
 	lda locat
 	cmp begpos
 	bne inprst
@@ -109,7 +109,7 @@ inpdel
 	beq inpwat
 	bne inprst
 inpprc
-	jsr finpos
+	jsr calc_scr_ptr
 	lda locat
 	cmp endpos
 	bne inpins
@@ -131,21 +131,21 @@ inpins
 inprst
 	ldx #3
 	stx KOUNT
-	jsr restch
+	jsr restore_csr_char
 	lda tmp03
 	jsr chrout
 	jsr quote_insert_off
 	jmp inputl
 
 inpret:
-	jsr restch
+	jsr restore_csr_char
 	jsr inpcu1
 	cmp COLUMN
 	bcc :+
 	ldx tmp9e
 	clc
 	jsr plot
-:	jsr finpos
+:	jsr calc_scr_ptr
 	lda locat
 	sec
 	sbc begpos

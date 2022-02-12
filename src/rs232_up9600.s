@@ -310,7 +310,7 @@ newoutup:
 	and #$7f
 	tax
 	cli
-	lda #$fd
+	lda #$100-3
 	sta JIFFIES
 :	lda outstat
 	beq :+

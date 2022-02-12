@@ -16,16 +16,15 @@ stbmay	.byte 0
 cf7_screen_to_buffer:
 	lda #0
 	sta 198
-	lda #$f1
+	lda #$100-15
 	sta JIFFIES
-scnbf0	lda JIFFIES
-	bne scnbf0
+:	lda JIFFIES
+	bne :-
 	jsr getin
 	cmp #140
-	bne scnbfs
+	bne :+
 	jsr bufclr
-scnbfs
-	lda buffer_open
+:	lda buffer_open
 	pha
 	lda #1
 	sta buffer_open

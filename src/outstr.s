@@ -56,7 +56,7 @@ outstr:
 	pha
 	lda #1
 	sta textcl
-	lda #$12	; RVS ON
+	lda #RVSON
 	jsr chrout
 	lda #$a1	; '▌' LEFT HALF BLOCK
 	jsr chrout

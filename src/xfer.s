@@ -407,7 +407,7 @@ send:
 	lda #<txt_read_or_send
 	ldy #>txt_read_or_send
 	jsr outstr
-	jsr savech
+	jsr invert_csr_char
 @loop:	jsr getin
 	cmp #'S'
 	bne @1
@@ -419,7 +419,7 @@ send:
 	beq @3
 @2:	cmp #CR
 	bne @loop
-	jsr restch
+	jsr restore_csr_char
 	lda #CR
 	jsr chrout
 @abt:	jmp ui_abort
