@@ -1,38 +1,55 @@
+; CCGMS Terminal
 ;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Buffer manipulation functions
+;
+
+;----------------------------------------------------------------------
 txt_buffer:
 	.byte WHITE,"bUFFER ",0
-buftx2	.byte " BYTES FREE.  "
-	.byte CR,2
+
+txt_bufcmds:
+	.byte " BYTES FREE.  "
+	.byte CR,HILITE
 	.byte "OPEN  "
-	.byte 2
+	.byte HILITE
 	.byte "CLOSE  "
-	.byte 2
+	.byte HILITE
 	.byte "ERASE  "
-	.byte 2
+	.byte HILITE
 	.byte "TRANSFER"
-	.byte CR,2
+	.byte CR,HILITE
 	.byte "LOAD  "
-	.byte 2
+	.byte HILITE
 	.byte "SAVE   "
-	.byte 2
+	.byte HILITE
 	.byte "PRINT  "
-	.byte 2
+	.byte HILITE
 	.byte "VIEW: "
 	.byte 0
+
 txt_open:
 	.byte "oPEN",0
+
 txt_closed:
 	.byte "cLOSED",0
-erstxt	.byte  "eRASE bUFFER! - "
-	.byte 2
+
+txt_erase_buffer:
+	.byte  "eRASE bUFFER! - "
+	.byte HILITE
 	.byte "YES OR "
-	.byte 2
+	.byte HILITE
 	.byte "NO?       "
 	.byte CSR_LEFT,CSR_LEFT,CSR_LEFT,15
 	.byte CSR_LEFT,CSR_LEFT,CSR_LEFT,0
-snbtxt	.byte CR,CR
+
+txt_sending_buffer:
+	.byte CR,CR
 	.byte "sENDING BUFFER..."
 	.byte CR,CR,00
+
 txt_done:
 	.byte CR,CR,WHITE
 	.byte "dONE."
@@ -52,20 +69,18 @@ print_buffer_info:
 	ldy #>txt_buffer
 	jsr outstr
 	lda buffer_open
-	beq bufms1
+	beq @1
 	lda #<txt_open
 	ldy #>txt_open
 	clc
-	bcc bufms2
-bufms1
-	lda #<txt_closed
+	bcc @2
+@1:	lda #<txt_closed
 	ldy #>txt_closed
-bufms2
-	jmp outstr
+@2:	jmp outstr
 
 ;----------------------------------------------------------------------
-bufprm
-	lda #$0d
+print_buffer_menu:
+	lda #CR
 	jsr chrout
 	jsr print_buffer_info
 	lda #' '
@@ -80,108 +95,113 @@ bufprm
 	tax
 	lda bufend+1
 	sbc buffer_ptr+1
-	jsr outnum
-	lda #<buftx2
-	ldy #>buftx2
+	jsr outnum	; # of bytes free
+	lda #<txt_bufcmds
+	ldy #>txt_bufcmds
 	jmp outstr
 
 ;----------------------------------------------------------------------
 handle_f4_buffer:
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
-	bne buffrc
-	jmp cf3
-buffrc	;buffer cmds
-	jsr cosave
+	jeq cf3_multi_receive
+
+	jsr text_color_save
 bufask
-	lda #$0d
+	lda #CR
 	jsr chrout
-	jsr bufprm
+	jsr print_buffer_menu
 bufwat
 	jsr savech
-buflop
-	jsr getin
-	beq buflop
-	and #127
+:	jsr getin
+	beq :-
+	and #$7f
 	pha
 	jsr restch
 	pla
-	cmp #$0d
+	cmp #CR
 	bne bufcmd
-bufext
+
+return_to_term:
 	lda #' '
 	jsr chrout
-	lda #$0d
+	lda #CR
 	jsr chrout
 	jsr chrout
-	jsr coback
+	jsr text_color_restore
 	jsr enablexfer
 	jmp term_mainloop
-bufcmd
+
+bufcmd:
+; O: open
 	cmp #'O'
-	bne bufcm2
-	ldx #$01
+	bne @no1
+	ldx #1
 	stx buffer_open
 	bne bufex1
-bufcm2
+@no1:
+
+; C: close
 	cmp #'C'
-	bne bufcm3
+	bne no2
 	ldx #0
 	stx buffer_open
 bufex1
 	ora #$80
 bufexa
 	jsr outcap
-	lda #$0d
+	lda #CR
 	jsr chrout
 	lda #CSR_UP
-	ldx #04
-bufex2
-	jsr chrout
+	ldx #4
+:	jsr chrout
 	dex
-	bpl bufex2
+	bpl :-
 	jmp bufask
-bufcm3
+no2
+
+; E: erase
 	cmp #'E'
-	bne bufcm4
+	bne @no3
 	ora #$80
 	jsr outcap
-	lda #$0d
+	lda #CR
 	jsr chrout
 	lda #CSR_UP
-	ldx #02
-bufer1
-	jsr chrout
+	ldx #2
+:	jsr chrout
 	dex
-	bpl bufer1
-	lda #<erstxt
-	ldy #>erstxt
+	bpl :-
+	lda #<txt_erase_buffer
+	ldy #>txt_erase_buffer
 	jsr outstr
 	jsr savech
-bufer2
-	jsr getin
-	beq bufer2
-	and #127
+:	jsr getin
+	beq :-
+	and #$7f
 	cmp #'N'
-	beq bufer3
+	beq :+
 	cmp #'Y'
-	bne bufer2
+	bne :-
 	jsr bufclr
-bufer3
-	jsr restch
+:	jsr restch
 	lda #CSR_UP
 	jsr chrout
 	jsr chrout
 	jmp bufask
-bufcm4
+@no3
+
+; P: print
 	cmp #'P'
-	bne bufvew
+	bne @no4
 	ora #$80
 	jsr outcap
-	jmp bufpro
-bufvew
+	jmp print_buffer
+@no4
+
+; V: view
 	cmp #'V'
-	bne bufcm5
+	bne no5
 	lda #CLR
 	jsr chrout
 	lda #$80
@@ -190,7 +210,10 @@ bufvew
 	sta buffl2
 	jsr prtbuf
 	jmp term_mainloop
-prtbuf	;buf.to screen
+
+;----------------------------------------------------------------------
+; buf to screen
+prtbuf:
 	lda buffst
 	pha
 	lda buffst+1
@@ -207,7 +230,9 @@ prtbuf	;buf.to screen
 	pla
 	sta buffst
 	rts
-memget
+
+;----------------------------------------------------------------------
+get_memory_byte:
 	ldx buffst
 	cpx buffer_ptr
 	bcc memok
@@ -217,8 +242,8 @@ memget
 memgab	ldx #$40
 	stx status
 	rts
-memok
-	ldy reu_enabled
+
+memok	ldy reu_enabled
 	beq memok2
 	jsr reuread
 	jmp memok3
@@ -233,6 +258,8 @@ memext
 	ldx #0
 	stx status
 	rts
+
+;----------------------------------------------------------------------
 skpbuf
 	lda buffst+1
 	cmp buffer_ptr+1
@@ -246,16 +273,17 @@ skpbf2
 	cmp buffer_ptr
 	bcs memgab
 	bcc memext
-;
-bufcm5
+no5
+
+; S: save
 	cmp #'S'
-jne	bufcm6
+	jne no6
 	jsr solfil
 	jmp savbuf
 solfil
 	ora #$80
 	jsr outcap
-	lda #$0d
+	lda #CR
 	jsr chrout
 	jsr chrout
 	jsr ui_get_filename
@@ -266,7 +294,7 @@ savbuf
 	jsr disablexfer;to be save 5-13 fix?? worked without it, but this should be here
 	lda #0
 	sta mulcnt
-	lda #$02
+	lda #2
 	sta filetype
 	jsr dowsfn
 	lda #$36
@@ -277,7 +305,7 @@ savbuf
 	sta $c2
 	lda buffer_ptr;end of buffer
 	clc
-	adc #$01
+	adc #1
 	sta $ae;Tape End Addresses/End of Program ($ae / $af)
 	lda buffer_ptr+1
 	adc #0
@@ -295,7 +323,7 @@ savbuf
 	lda reu_enabled
 	beq afuckit
 	jsr af624
-	lda #$00
+	lda #0
 	sta buffst
 	sta buffst+1
 	jmp amoveon
@@ -306,47 +334,49 @@ amoveon
 	sta $01
 	plp
 	bcc bsaved
-	lda #$0d
+	lda #CR
 	jsr chrout
 	jsr bell
-	lda #$00
+	lda #0
 	sta buffst
 	sta buffst+1
 	jmp ui_abort
+
 ;reu needs a special save routine cause craig decided to be all fancy with this one :)
-af624	jsr $fcd1;check the tape read/write pointer
-af627	bcs af63f;
-af629	;lda ($ac),y
+af624	jsr $fcd1	; check the tape read/write pointer
+	bcs @end
+;	lda ($ac),y
 	jsr reuread
-af62b	jsr $eddd;send a byte to an i/o device over the serial bus
-af62e	jsr $ffe1;stop. query stop key indicator, at memory address $0091; if pressed, call clrchn and clear keyboard buffer.
-af631	bne af63a
-af633	jsr $f642
-af636	lda #$00
-af638	sec
-af639	rts
-af63a
-	inc buffst
+	jsr $eddd	; send a byte to an i/o device over the serial bus
+	jsr $ffe1	; stop. query stop key indicator, at memory address $0091; if pressed, call clrchn and clear keyboard buffer.
+	bne :+
+	jsr $f642
+	lda #0
+	sec
+	rts
+:	inc buffst
 	lda buffst
-	beq anext
+	beq :+
 	jsr $fcdb
 	bne af624
-anext	inc buffst+1
+:	inc buffst+1
 	jsr $fcdb;advance tape pointer
-af63d	bne af624
-af63f	jsr $edfe;UNLSTN.
-afnext	jmp $f642
-;done
+	bne af624
+@end:	jsr $edfe;UNLSTN.
+	jmp $f642
+
 bsaved
 	jsr enablexfer
-	jmp bufext
-bufcm6
+	jmp return_to_term
+no6
+
+; L: load
 	cmp #'L'
 	bne bufcm7
 	jsr solfil
 lodbuf
 	jsr disablexfer;5-13 put in, didnt seem to need it, need to test with it. might crash with it cause the program does that sometimes....
-	lda #$02
+	lda #2
 	ldx device_disk
 	tay
 	jsr setlfs
@@ -382,81 +412,89 @@ lodbokreu
 	bne lodbfl
 lodbex
 	jsr clrchn
-	lda #$02
+	lda #2
 	jsr close
 	jsr enablexfer
-	jmp bufext
+	jmp return_to_term
 bufcm7
+
+; T: transfer
 	cmp #'T'
-	beq sndbuf
+	beq send_buffer
+
+; </>
 	cmp #'<'
-	beq bufchg
+	beq :+
 	cmp #'>'
 	bne bufbak
-bufchg
-	jsr chgbpr
+:	jsr switch_buffer
 	jmp bufexa
+
 bufbak
 	jmp bufwat
-sndbuf
+
+
+send_buffer:
 	ora #$80
 	jsr outcap
-	lda #<snbtxt
-	ldy #>snbtxt
+	lda #<txt_sending_buffer
+	ldy #>txt_sending_buffer
 	jsr outstr
 	lda #$ff
 	sta bufflg
 	sta buffl2
 	jsr prtbuf
-	jsr cosave
+	jsr text_color_save
 	jsr clear232
 	lda #<txt_done
 	ldy #>txt_done
 	jsr outstr
-	jsr coback
+	jsr text_color_restore
 	jsr enablexfer
 	jmp term_mainloop
-chgbpr
+
+;----------------------------------------------------------------------
+switch_buffer:
 	pha
 	cmp #'>'
-	beq chgbp3
+	beq @3
 	lda buffer_ptr+1
 	cmp #>endprg
-	bne chgbp1
+	bne @1
 	lda buffer_ptr
 	cmp #<endprg
-	beq chgben
-chgbp1
-	lda buffer_ptr
-	bne chgbp2
+	beq @end
+@1:	lda buffer_ptr
+	bne @2
 	dec buffer_ptr+1
-chgbp2	dec buffer_ptr
-	jmp chgben
-chgbp3
-	lda buffer_ptr+1
+@2:	dec buffer_ptr
+	jmp @end
+
+@3:	lda buffer_ptr+1
 	cmp bufend
-	bne chgbp4
+	bne @4
 	lda buffer_ptr
 	cmp bufend+1
-	beq chgben
-chgbp4
-	inc buffer_ptr
-	bne chgben
+	beq @end
+@4:	inc buffer_ptr
+	bne @end
 	inc buffer_ptr+1
-chgben
-	ldx #1
-	stx 651
+
+@end:	ldx #1
+	stx KOUNT
 	pla
 	rts
-;
+
+;----------------------------------------------------------------------
 txt_device:
 	.byte CR,CR,"dEVICE",0
 txt_sec_addr:
-	.byte CR,cs,'ec.',ca,'.: ',0
+	.byte CR,cs,"ec.",ca,".: ",0
 txt_printing:
-	.byte CLR,CR,cp,'rinting...',CR,0
+	.byte CLR,CR,cp,"rinting...",CR,0
 
-bufpro
+;----------------------------------------------------------------------
+print_buffer:
 	lda #<txt_device
 	ldy #>txt_device
 	ldx #1
@@ -464,15 +502,16 @@ bufpro
 	lda #'4'
 	jsr chrout
 	jsr inputl
-	bne bufpr2
-bufpra	lda #$0d
+	bne @2
+@1:	lda #CR
 	jsr chrout
 	jmp ui_abort
-bufpr2	lda inpbuf
+
+@2:	lda inpbuf
 	cmp #'3'
-	bcc bufpra
+	bcc @1
 	cmp #'6'
-	bcs bufpra
+	bcs @1
 	and #$0f
 	pha
 	lda #<txt_sec_addr
@@ -482,12 +521,12 @@ bufpr2	lda inpbuf
 	lda #'7'
 	jsr chrout
 	jsr inputl
-	beq bufpra
+	beq @1
 	lda inpbuf
 	cmp #'0'
-	bcc bufpra
-	cmp #':'
-	bcs bufpra
+	bcc @1
+	cmp #'9'+1
+	bcs @1
 	and #$0f
 	tay
 	pla
@@ -501,50 +540,48 @@ bufpr2	lda inpbuf
 	jsr outstr
 	jsr open
 	ldx status
-	bne bufpr3
+	bne @3
 	lda buffst
 	pha
 	lda buffst+1
 	pha
 	lda #$2f
 	sta $00
-	lda #$36
+	lda #$36	; disable BASIC ROM
 	sta $01
-	jsr mempro
-	lda #$37
+	jsr print_buffer_bytes
+	lda #$37	; enable BASIC ROM
 	sta $01
 	pla
 	sta buffst+1
 	pla
 	sta buffst
-bufpr3
-	lda #LFN_PRINTER
+@3:	lda #LFN_PRINTER
 	jsr close
 	lda #<txt_done
 	ldy #>txt_done
 	jsr outstr
-	jsr coback
+	jsr text_color_restore
 	jsr enablexfer
 	jmp term_mainloop
-mempro
-mempr2
-	jsr memget
-	bne mempr3
+
+;----------------------------------------------------------------------
+print_buffer_bytes:
+	jsr get_memory_byte
+	bne @3
 	pha
 	and #$7f
-	cmp #$0d
-	beq memprp
-	cmp #$20
-	bcc mempab
-memprp
-	ldx #LFN_PRINTER
+	cmp #CR
+	beq @1
+	cmp #' '
+	bcc @2
+@1:	ldx #LFN_PRINTER
 	jsr chkout
 	pla
 	jsr chrout
 	ldx status
-	bne mempr3
-	jmp mempr2
-mempab	pla
-	jmp mempr2
-mempr3
-	jmp clrchn
+	bne @3
+	jmp print_buffer_bytes
+@2:	pla
+	jmp print_buffer_bytes
+@3:	jmp clrchn

@@ -1,3 +1,11 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Startup message and instructions
+;
+
 ;----------------------------------------------------------------------
 print_banner:
 	lda #<txt_banner
@@ -22,11 +30,11 @@ print_banner:
 
 ;----------------------------------------------------------------------
 print_instr:
-	lda #<txt_instructions1
-	ldy #>txt_instructions1
+	lda #<txt_intro1
+	ldy #>txt_intro1
 	jsr outstr
-	lda #<txt_instructions2
-	ldy #>txt_instructions2
+	lda #<txt_intro2
+	ldy #>txt_intro2
 	jsr outstr
 
 	ldx ascii_mode
@@ -53,40 +61,94 @@ print_instr:
 
 ;----------------------------------------------------------------------
 txt_banner:
-	.byte CR,CLR,8,WHITE,14,18,32,RED,32
-	.byte "c"
-	.byte 32,ORANGE,32
-	.byte "c"
-	.byte 32,YELLOW,32
-	.byte "g"
-	.byte 32,GREEN,32
-	.byte "m"
-	.byte 32,BLUE,32
-	.byte "s"
-	.byte 32,PURPLE
+	.byte CR,CLR,LCKCASE,WHITE,LOCASE,RVSON," ",RED
+	.byte " c "
+	.byte ORANGE
+	.byte " c "
+	.byte YELLOW
+	.byte " g "
+	.byte GREEN
+	.byte " m "
+	.byte BLUE
+	.byte " s "
+	.byte PURPLE
 	.byte " ! "
-	.byte WHITE,32
-	.byte "    tERMINAL 2021   "
-	.byte 00
+	.byte WHITE
+	.byte "     tERMINAL 2021   "
+	.byte 0
+
 txt_author:
 	.byte "BY cRAIG sMITH       mODS BY aLWYZ   "
-	.byte 146,DKGRAY,00
-;
-txt_instructions1:
-	.byte WHITE,'  ',18,'f1',146,32,LTRED,'uPLOAD          '
-	.byte WHITE,18,'f2',146,32,LTRED,'sEND/rEAD FILE',CR
-	.byte WHITE,'  ',18,'f3',146,32,YELLOW,'dOWNLOAD        '
-	.byte WHITE,18,'f4',146,32,YELLOW,'bUFFER COMMANDS',CR
-	.byte WHITE,'  ',18,'f5',146,32,LTGREEN,'dISK COMMAND    '
-	.byte WHITE,18,'f6',146,32,LTGREEN,'dIRECTORY',CR
-	.byte WHITE,'  ',18,'f7',146,32,GREEN,'dIALER/pARAMS   '
-	.byte WHITE,18,'f8',146,32,GREEN,'sWITCH TERMS',CR,0
-txt_instructions2:
-	.byte BLUE,'c',RED,'=',WHITE,18,'f1',146,32,CYAN,'mULTI-sEND    '
-	.byte BLUE,'c',RED,'=',WHITE,18,'f3',146,32,CYAN,'mULTI-rECEIVE',CR
-	.byte BLUE,'c',RED,'=',WHITE,18,'f5',146,32,LTBLUE,'sEND DIR.     '
-	.byte BLUE,'c',RED,'=',WHITE,18,'f7',146,32,LTBLUE,'sCREEN TO bUFF.',CR,CR,0
+	.byte RVSOFF,DKGRAY,0
+
+txt_intro1:
+tcol1:	.byte WHITE
+	.byte "  ",RVSON,"f1",RVSOFF," "
+tcol2:	.byte LTRED
+	.byte "uPLOAD          "
+tcol9:	.byte WHITE
+	.byte RVSON,"f2",RVSOFF," "
+tcol10:	.byte LTRED
+	.byte "sEND/rEAD FILE",CR
+tcol3:	.byte WHITE
+	.byte "  ",RVSON,"f3",RVSOFF," "
+tcol4:	.byte YELLOW
+	.byte "dOWNLOAD        "
+tcol11:	.byte WHITE
+	.byte RVSON,"f4",RVSOFF," "
+tcol12:	.byte YELLOW
+	.byte "bUFFER COMMANDS",CR
+tcol5:	.byte WHITE
+	.byte "  ",RVSON,"f5",RVSOFF," "
+tcol6:	.byte LTGREEN
+	.byte "dISK COMMAND    "
+tcol13:	.byte WHITE
+	.byte RVSON,"f6",RVSOFF," "
+tcol14:	.byte LTGREEN
+	.byte "dIRECTORY",CR
+tcol7:	.byte WHITE
+	.byte "  ",RVSON,"f7",RVSOFF," "
+tcol8:	.byte GREEN
+	.byte "dIALER/pARAMS   "
+tcol15:	.byte WHITE
+	.byte RVSON,"f8",RVSOFF," "
+tcol16:	.byte GREEN
+	.byte "sWITCH TERMS",CR,0
+
+txt_intro2:
+tcol17a	.byte BLUE
+	.byte "c"
+tcol26a	.byte RED
+	.byte "="
+tcol18	.byte WHITE
+	.byte RVSON,"f1",RVSOFF," "
+tcol19	.byte CYAN
+	.byte "mULTI-sEND    "
+tcol17b	.byte BLUE
+	.byte "c"
+tcol26b	.byte RED
+	.byte "="
+tcol20	.byte WHITE
+	.byte RVSON,"f3",RVSOFF," "
+tcol21	.byte CYAN
+	.byte "mULTI-rECEIVE",CR
+tcol17c	.byte BLUE
+	.byte "c"
+tcol26c	.byte RED
+	.byte "="
+tcol22	.byte WHITE
+	.byte RVSON,"f5",RVSOFF," "
+tcol23	.byte LTBLUE
+	.byte "sEND DIR.     "
+tcol17d	.byte BLUE
+	.byte "c"
+tcol26d	.byte RED
+	.byte "="
+tcol24	.byte WHITE
+	.byte RVSON,"f7",RVSOFF," "
+tcol25	.byte LTBLUE
+	.byte "sCREEN TO bUFF.",CR,CR,0
 ;
 mlswrn:	; [XXX code that uses this is commented out]
-	.byte CR,WHITE,'bUFFER TOO BIG - sAVE OR cLEAR fIRST!',CR,0
+	.byte CR,WHITE,"bUFFER TOO BIG - sAVE OR cLEAR fIRST!",CR,0
 ;

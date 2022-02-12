@@ -1,4 +1,10 @@
-;THEME ROUTINES
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Theming
+;
 
 tc1:	.byte WHITE,BLUE,WHITE,WHITE,BLUE,DKGRAY	; f1
 tc2:	.byte LTRED,LTRED,BLUE,DKGRAY,DKGRAY,PURPLE	; Upload
@@ -32,71 +38,71 @@ tc28:	.byte CYAN,LTRED,LTRED,LTRED,LTRED,LTBLUE	; phonebook color
 themeroutine:
 	ldy theme
 	lda tc1,y
-	sta txt_instructions1
+	sta tcol1
 	lda tc2,y
-	sta txt_instructions1+8
+	sta tcol2
 	lda tc9,y
-	sta txt_instructions1+25
+	sta tcol9
 	lda tc10,y
-	sta txt_instructions1+31
+	sta tcol10
 	lda tc3,y
-	sta txt_instructions1+47
+	sta tcol3
 	lda tc4,y
-	sta txt_instructions1+55
+	sta tcol4
 	lda tc11,y
-	sta txt_instructions1+72
+	sta tcol11
 	lda tc12,y
-	sta txt_instructions1+78
+	sta tcol12
 	lda tc5,y
-	sta txt_instructions1+95
+	sta tcol5
 	lda tc6,y
-	sta txt_instructions1+103
+	sta tcol6
 	lda tc13,y
-	sta txt_instructions1+120
+	sta tcol13
 	lda tc14,y
-	sta txt_instructions1+126
+	sta tcol14
 	lda tc7,y
-	sta txt_instructions1+137
+	sta tcol7
 	lda tc8,y
-	sta txt_instructions1+145
+	sta tcol8
 	lda tc15,y
-	sta txt_instructions1+162
+	sta tcol15
 	lda tc16,y
-	sta txt_instructions1+168
+	sta tcol16
 	lda tc17,y
-	sta txt_instructions2
-	sta txt_instructions2+25
-	sta txt_instructions2+50
-	sta txt_instructions2+75
+	sta tcol17a
+	sta tcol17b
+	sta tcol17c
+	sta tcol17d
 	lda tc26,y
-	sta txt_instructions2+2
-	sta txt_instructions2+27
-	sta txt_instructions2+52
-	sta txt_instructions2+77
+	sta tcol26a
+	sta tcol26b
+	sta tcol26c
+	sta tcol26d
 	lda tc18,y
-	sta txt_instructions2+4
+	sta tcol18
 	lda tc20,y
-	sta txt_instructions2+29
+	sta tcol20
 	lda tc22,y
-	sta txt_instructions2+54
+	sta tcol22
 	lda tc24,y
-	sta txt_instructions2+79
+	sta tcol24
 	lda tc19,y
-	sta txt_instructions2+10
+	sta tcol19
 	lda tc21,y
-	sta txt_instructions2+35
+	sta tcol21
 	lda tc23,y
-	sta txt_instructions2+60
+	sta tcol23
 	lda tc25,y
-	sta txt_instructions2+85
+	sta tcol25
 	lda tc27,y
-	sta f7mtx1
-	sta f7mtxpre
+	sta tcol27a
+	sta tcol27b
 	lda tc28,y
-	sta curbtx+3
-	sta curbt3+3
-	sta curbt2
-	sta curbt4
-	sta curunl+3
-	sta prtunl+3
+	sta tcol28a
+	sta tcol28b
+	sta tcol28c
+	sta tcol28d
+	sta tcol28e
+	sta tcol28f
 	rts

@@ -1,3 +1,11 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Macro Execution
+;
+
 ;xfer id and pw to macros F5 and F7
 xferidpw
 	ldy #59
@@ -74,7 +82,7 @@ prtmcd2	lda JIFFIES
 	ldx #LFN_MODEM
 	jsr chkin
 	jsr getin
-	cmp #$00
+	cmp #0
 	bne prtmci
 	ldx half_duplex
 	beq prtmca

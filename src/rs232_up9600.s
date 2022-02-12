@@ -1,6 +1,10 @@
-;----------------------------------------------------------------------
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
 ; RS232 UP9600 Driver
-;----------------------------------------------------------------------
+;
 
 ; calls from outside code:
 ;  up9600_setup
@@ -320,10 +324,10 @@ newoutup:
 	eor #$04
 	beq :-
 	lda revtabup,x
-	adc #$00
+	adc #0
 	lsr
 	sta $dc0c	; cia1: synchronous serial i/o data buffer
-	lda #$02
+	lda #2
 	sta outstat
 	ror
 	ora #$7f

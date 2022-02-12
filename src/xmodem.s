@@ -1,4 +1,10 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
 ; XMODEM and XMODEM/CRC Send and Receive
+;
 
 MAX_RETRIES	= 10
 PAYLOAD_SIZE	= 128
@@ -609,20 +615,20 @@ retry2:	jsr clear232
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 ; does not belong to XMODEM source
-.include "xmotyp.s"
+.include "filetype.s"
 
 ;----------------------------------------------------------------------
 ; error messages
 msg_cancelled:
-	.byte CR,'tRANSFER cANCELLED.',0
+	.byte CR,"tRANSFER cANCELLED.",0
 msg_no_eto_ack:
-	.byte CR,'eot nOT aCKNOWLEGED.',0
+	.byte CR,"eot nOT aCKNOWLEGED.",0
 msg_max_retries:
-	.byte CR,'tOO mANY bAD bLOCKS!',0
+	.byte CR,"tOO mANY bAD bLOCKS!",0
 msg_sync_lost:
 	.byte CR
 	.byte 'C'+128 ; [XXX this should not be here]
-	.byte 'sYNC lOST!',0
+	.byte "sYNC lOST!",0
 
 ;----------------------------------------------------------------------
 ; *** upload: send, handle status
@@ -635,7 +641,7 @@ xmodem_upload
 xmodem_download:
 	jsr xmodem_receive	; receive
 xmodon
-	lda #$0d	; CR
+	lda #CR
 	jsr chrout
 	lda xmstat
 	bne :+		; success
@@ -665,7 +671,7 @@ xmodn5
 xmodnp
 	jsr outstr
 	jsr gong
-	lda #$0d	; CR
+	lda #CR
 	jsr chrout
 xmodna
 	jmp ui_abort

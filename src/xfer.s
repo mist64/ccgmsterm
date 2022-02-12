@@ -1,8 +1,16 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; File transfer generic code and UI
+;
+
 ;----------------------------------------------------------------------
 txt_xmodem:
-	.byte CR,CR,WHITE,cx,m,'ODEM ',0
+	.byte CR,CR,WHITE,cx,m,"ODEM ",0
 txt_xmodem_crc:
-	.byte CR,CR,WHITE,cx,m,'ODEM-crc ',0
+	.byte CR,CR,WHITE,cx,m,"ODEM-crc ",0
 
 ;----------------------------------------------------------------------
 ; display "[protocol], enter name" and input string
@@ -48,7 +56,7 @@ ui_get_filename:
 	ldx #16
 	jsr input
 	php
-	lda #$0d
+	lda #CR
 	jsr chrout
 	plp
 	rts
@@ -59,9 +67,9 @@ ui_abort:
 	lda #<txt_aborted
 	ldy #>txt_aborted
 	jsr outstr
-	jsr coback
+	jsr text_color_restore
 	jsr disablexfer
-	lda #$02
+	lda #LFN_FILE
 	jsr close
 	jsr enablexfer
 	jmp term_mainloop
@@ -69,6 +77,7 @@ ui_abort:
 ;----------------------------------------------------------------------
 xfermd	pha
 	jmp xferm0
+
 ;----------------------------------------------------------------------
 ui_setup_xfer_screen:
 	pha
@@ -115,7 +124,7 @@ xferm0	lda #13
 	jsr chrout
 	lda inpbuf+1,y
 	jsr chrout
-	lda #$0d
+	lda #CR
 	jsr chrout
 	lda #<txt_press_c_to_abort
 	ldy #>txt_press_c_to_abort
@@ -133,7 +142,7 @@ upltyp:
 handle_f1_upload:
 	jsr supercpu_off
 	jsr disablexfer
-	jsr cosave
+	jsr text_color_save
 	lda #0
 	sta mulcnt
 	jsr ui_prompt_filename
@@ -142,17 +151,17 @@ handle_f1_upload:
 	ldy max
 	lda #','
 	sta inpbuf,y
-	lda #$50;'P'
+	lda #'P'
 	sta inpbuf+1,y
 	jsr filtes
 	beq uplfil
 	ldy max
-	lda #$53;'S'
+	lda #'S'
 	sta inpbuf+1,y
 	jsr filtes
 	beq uplfil
 	ldy max
-	lda #$55;'U'
+	lda #'U'
 	sta inpbuf+1,y
 uplmen:
 	jsr filtes
@@ -163,7 +172,7 @@ uplmen:
 	pla
 	jmp drver3
 uplfil:	ldy max
-	ldx #03
+	ldx #3
 :	lda upltyp,x
 	cmp inpbuf+1,y
 	beq :+
@@ -181,7 +190,7 @@ filtes:
 	ldx #<inpbuf
 	ldy #>inpbuf
 	jsr setnam
-	lda #2
+	lda #LFN_FILE
 	ldx device_disk
 	ldy #0
 	jsr setlfs
@@ -194,7 +203,7 @@ filopn:
 	beq :+
 	php
 	pha
-	lda #$02
+	lda #LFN_FILE
 	jsr close
 	pla
 	plp
@@ -229,20 +238,20 @@ uplok:
 	jsr p49158
 xfrend:
 	jsr disablexfer
-	lda #02
+	lda #LFN_FILE
 	jsr close
 	jsr clrchn
-	lda #$0d
+	lda #CR
 	jsr chrout
 	lda mulcnt
 	beq :+
 	rts
 :	lda inpbuf
-	cmp #$01
+	cmp #1
 	bne xfrdun
 	jmp ui_abort
 xfrdun:
-	jsr reset;clear and reenable
+	jsr reset	; clear and reenable
 	jsr gong
 	jmp term_mainloop
 
@@ -251,29 +260,29 @@ handle_f3_download:
 	jsr disablexfer
 	lda #0
 	sta mulcnt
-	jsr cosave
+	jsr text_color_save
 	jsr supercpu_off
 	lda #1
 	jsr ui_prompt_filename
 	jeq ui_abort
 	lda protoc
 	beq :+		; PROTOCOL_PUNTER
-	jsr xmotyp
+	jsr prompt_file_type
 	jmp dowmen
 :	ldy max
 	lda #160
 	sta inpbuf,y
 	sta inpbuf+1,y
 dowmen:
-	lda #01
+	lda #1
 	jsr ui_setup_xfer_screen
 	ldx protoc
 	bne @1		; != PROTOCOL_PUNTER
 	lda inpbuf
 	pha
 	jsr clrchn
-	jsr punter_reset	; enable rs232 to receive;reset
-	jsr p49161		; zero out punter buffers for new download and get file info from sender
+	jsr punter_reset; enable rs232 to receive;reset
+	jsr p49161	; zero out punter buffers for new download and get file info from sender
 	ldx inpbuf
 	pla
 	sta inpbuf
@@ -294,7 +303,7 @@ dowmen:
 	jsr chrout
 	lda #'0'
 	jsr chrout
-	lda #$0d
+	lda #CR
 	jsr chrout
 	jsr clrchn
 	ldx #LFN_DISK_CMD
@@ -311,7 +320,7 @@ dowmen:
 	inx
 	cpx max
 	bne :-
-	lda #$0d
+	lda #CR
 	jsr chrout
 	jsr dowsfn
 	lda #1
@@ -340,7 +349,7 @@ dowsfn:
 	ldx #<inpbuf
 	ldy #>inpbuf
 	jsr setnam
-	lda #02
+	lda #LFN_FILE
 	ldx device_disk
 	tay
 	jmp setlfs
@@ -367,28 +376,27 @@ dowopn:
 
 ;----------------------------------------------------------------------
 txt_read_or_send:
-	.byte CR,CR,WHITE,2,'READ OR',2,'SEND FILE? ',00
+	.byte CR,CR,WHITE,HILITE,"READ OR",HILITE,"SEND FILE? ",0
 txt_read_or_send2:
-	.byte 'sPACE TO PAUSE - r/s TO ABORT',CR,CR,00
+	.byte "sPACE TO PAUSE - r/s TO ABORT",CR,CR,0
 
 ;----------------------------------------------------------------------
 handle_f2_send_read:
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	bne send
-	jmp cf1
+	jmp cf1_multi_send
 
 ;----------------------------------------------------------------------
 ; send text file
-send
+send:
 	jsr disablexfer
-	jsr cosave
+	jsr text_color_save
 	lda #<txt_read_or_send
 	ldy #>txt_read_or_send
 	jsr outstr
 	jsr savech
-sndlop
-	jsr getin
+@loop:	jsr getin
 	cmp #'S'
 	bne @1
 	ldx #$40
@@ -397,22 +405,22 @@ sndlop
 	bne @2
 	ldx #0
 	beq @3
-@2:	cmp #$0d
-	bne sndlop
+@2:	cmp #CR
+	bne @loop
 	jsr restch
-	lda #$0d
+	lda #CR
 	jsr chrout
 @abt:	jmp ui_abort
 
 @3:	ora #$80
 	jsr outcap
-	lda #$0d
+	lda #CR
 	jsr chrout
 	stx bufflg
 	stx buffl2
 	jsr ui_get_filename
 	beq @abt
-	lda #$0d
+	lda #CR
 	jsr chrout
 	lda max
 	ldx #<inpbuf
@@ -421,7 +429,7 @@ sndlop
 	lda #<txt_read_or_send2
 	ldy #>txt_read_or_send2
 	jsr outstr
-	lda #2
+	lda #LFN_FILE
 	ldx device_disk
 	tay
 	jsr setlfs
@@ -431,12 +439,12 @@ sndlop
 	;lda #15
 	;jsr chrout
 	jsr dskout
-	lda #2
+	lda #LFN_FILE
 	jsr close
 	lda #0
 	jsr enablexfer
-	jsr cochng
-	lda #$0d
+	jsr text_color_set
+	lda #CR
 	jsr chrout
 	jmp term_mainloop
 

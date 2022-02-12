@@ -1,39 +1,73 @@
-dsktxt	.byte WHITE,CR
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Disk Command
+;
+
+;----------------------------------------------------------------------
+txt_diskcommand:
+	.byte WHITE,CR
 	.byte "#"
-dsktx2	.byte "**>      "
+txt_diskcommand_devno:
+	.byte "**"
+	.byte ">      "
 	.byte CSR_LEFT,CSR_LEFT,CSR_LEFT,CSR_LEFT,CSR_LEFT,CSR_LEFT,0
-dskdtx	.byte '8 9 101112131415161718192021222324252627282930'
+int2dectab:
+	.byte "8 "	; [XXX potential for optimization ($bdcd]
+	.byte "9 "
+	.byte "10"
+	.byte "11"
+	.byte "12"
+	.byte "13"
+	.byte "14"
+	.byte "15"
+	.byte "16"
+	.byte "17"
+	.byte "18"
+	.byte "19"
+	.byte "20"
+	.byte "21"
+	.byte "22"
+	.byte "23"
+	.byte "24"
+	.byte "25"
+	.byte "26"
+	.byte "27"
+	.byte "28"
+	.byte "29"
+	.byte "30"
 
 ;----------------------------------------------------------------------
 handle_f5_diskcommand:
-	;disk command
 	jsr disablexfer
 	jsr ercopn
-	jsr cosave
+	jsr text_color_save
 dskcmd
 	lda device_disk
 	sec
 	sbc #$08
 	asl a
 	tay
-	lda dskdtx,y
-	sta dsktx2
-	lda dskdtx+1,y
-	sta dsktx2+1
-	lda #<dsktxt
-	ldy #>dsktxt
+	lda int2dectab,y
+	sta txt_diskcommand_devno
+	lda int2dectab+1,y
+	sta txt_diskcommand_devno+1
+	lda #<txt_diskcommand
+	ldy #>txt_diskcommand
 	ldx #36;1 - what does this do? limit length of command?
 	jsr input
-	beq drverr;nothing entered, drive error code?
+	beq drverr	; nothing entered, drive error code?
 	lda inpbuf
-	cmp #$23;# drive
+	cmp #'#'	; drive
 	beq chgdev
 	jsr drvchk
 	bmi drvext
-	lda #$0d;return - exit
+	lda #CR		; exit
 	jsr chrout
 	lda inpbuf
-	cmp #$24;$ directory
+	cmp #'$'	; directory
 	bne drvsnd
 	lda max
 	ldx #<inpbuf
@@ -41,7 +75,7 @@ dskcmd
 	jmp dodir
 drvsnd
 	ldx device_disk
-	stx 612    ;dev# table, log#15
+	stx 612		; dev# table, log#15
 	ldx #LFN_DISK_CMD
 	jsr chkout
 	ldx #0
@@ -51,12 +85,12 @@ drvlop
 	inx
 	cpx max
 	bne drvlop
-	lda #$0d
+	lda #CR
 	jsr chrout
 drvext
 	jsr clrchn
-	jsr coback
-	lda #$0d
+	jsr text_color_restore
+	lda #CR
 	jsr chrout
 	jsr enablexfer
 	jmp term_mainloop
@@ -70,38 +104,40 @@ drver2
 	jsr getin
 drver3
 	jsr chrout
-	cmp #$0d
+	cmp #CR
 	bne drver2
 	beq drvext
-chgdev;modded this for drives over #15
-	ldy #$01
+
+;----------------------------------------------------------------------
+chgdev:
+	ldy #1
 	ldx inpbuf,y
 	txa
 	sec
 	sbc #$30
-	beq chgdv2;if first char is 0 as in 08 or 09
-	cmp #$03;devices 10-29 "1x or 2x"
-	bpl chgdv8;might be 8 or 9.. anything over 3 doesnt count here so lets try and see if it matches 8 or 9.
-	clc;definitely starts with 1 or 2 if it makes it this far
-	adc #$09   ;$0a-$0b for device starting with 1x or 2x, convert to hex
+	beq chgdv2	; if first char is 0 as in 08 or 09
+	cmp #$03	; devices 10-29 "1x or 2x"
+	bpl chgdv8	; might be 8 or 9.. anything over 3 doesnt count here so lets try and see if it matches 8 or 9.
+	clc		; definitely starts with 1 or 2 if it makes it this far
+	adc #$09	; $0a-$0b for device starting with 1x or 2x, convert to hex
 	jmp chgdv2
 chgdv8
 	cmp #$07
-	bpl chgdv9;assume its 8 or 9, which is the only options when it starts with 8 or 9
-	jmp drvext;nope there was nothing in the 00-29 range
-chgdv2	iny;get the second character
+	bpl chgdv9	; assume its 8 or 9, which is the only options when it starts with 8 or 9
+	jmp drvext	; nope there was nothing in the 00-29 range
+chgdv2	iny		; get the second character
 	sta drivetemp
 	lda inpbuf,y
 	sec
-	sbc #$30;decimal petscii to hex, again...
+	sbc #'0'	; decimal petscii to hex, again...
 	clc
 	adc drivetemp
 chgdv9
-	cmp #$08;lowest drive # (8)
+	cmp #8		; lowest drive # (8)
 	bcc drvext
-	cmp #$1e;highest drive # (30)
+	cmp #30		; highest drive # (30)
 	bcs drvext
-	tay;y now holds complete hex of drive #
+	tay		;y now holds complete hex of drive #
 	lda device_disk
 	pha
 	sty device_disk
@@ -117,13 +153,13 @@ chgdv3
 	sta device_disk
 	sta 612
 chgdv4
-	lda #$20
+	lda #' '
 	jsr chrout
-	lda #$2d
+	lda #'-'
 	jsr chrout
-	lda #$20
+	lda #' '
 	jsr chrout
-	ldy #$00
+	ldy #0
 chgdv5
 	lda $a1d0,y  ;device not present
 	php

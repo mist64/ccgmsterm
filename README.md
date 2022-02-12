@@ -5,19 +5,22 @@
 
 * based on 5.5 source by [Craig Smith](https://github.com/spathiwa) 01/1988.
 * 2017/2018/2019/2020/2021 mods by [alwyz](http://1200baud.wordpress.com) (as of 1/1/2021 I am no longer maintaining ccgms. thanks! - alwyz)
-* cleaned up and converted to ca65 by [Michael Steil](https://www.pagetable.com/), 2022
-	* this currently (revision ee6e656) builds the same PRG (regular & EasyFlash) as https://csdb.dk/release/?id=198392
-	* serial driver and XMODEM sources have been cleaned up and commented
-	* PUNTER source has been replaced with original source, with patches applied
+* cleaned up and converted to ca65 by [Michael Steil](https://www.pagetable.com/), 2022 – this currently (revision ee6e656) builds the same PRG (regular & EasyFlash) as https://csdb.dk/release/?id=198392
 * further improvements welcome!
 
 ## Features
 
-* Pretty much anything you could want in a modern C64 Terminal program
-* 40 column Color Graphics Petscii / Ascii / Ansi terminal modes
-* Punter / Multi-Punter / Xmodem / Xmodem-CRC File Transfers
-* Support for User Port / UP9600 / Swiftlink serial devices
+* 40 column Color Graphics PETSCII / ASCII / ANSI terminal modes
+* Serial drivers
+	* User Port (2400)
+	* UP9600
+	* Swiftlink (DE, DF, D7)
 * Baud Rates from 300-38.4k
+* File transfer protocols:
+	* Punter
+	* Multi-Punter
+	* Xmodem
+	* Xmodem-CRC
 * 17XX REU Buffer 64k Support
 * Easyflash Cartridge Phonebook / Configuration load/save
 * Autodialer phonebook to store all of your BBS addresses, user names, and passwords

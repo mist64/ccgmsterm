@@ -1,78 +1,96 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
 ; Phone Book
+;
 
 entcol	.byte WHITE
 hilcol	.byte YELLOW
-phhtxt
-	.byte 19,CR
-	.byte WHITE,18,161
+
+txt_phonebook_menu:
+	.byte HOME,CR
+	.byte WHITE,RVSON,$a1	; $A1: LEFT HALF BLOCK ('▌')
 	.byte "crsr kEYS"
-	.byte 182,146,LTBLUE
+	.byte $b6,RVSOFF,LTBLUE	; $B6: RIGHT THREE EIGHTHS BLOCK
 	.byte " - mOVE"
-	.byte WHITE,18,161
+	.byte WHITE,RVSON,$a1
 	.byte "rETURN"
-	.byte 182,146,LTBLUE
+	.byte $b6,RVSOFF,LTBLUE
 	.byte " - sELECT"
 	.byte CR
-	.byte CYAN,2
+	.byte CYAN,HILITE
 	.byte "DIAL uNLISTED #  "
-	.byte 2
+	.byte HILITE
 	.byte "EDIT cURRENT #"
 	.byte CR
-	.byte 2
+	.byte HILITE
 	.byte "CALL cURRENT #   "
-	.byte 2
+	.byte HILITE
 	.byte "A-dIAL sELECTED"
-	.byte CR,2
+	.byte CR,HILITE
 	.byte "REVERSE cALL     "
-	.byte 2
+	.byte HILITE
 	.byte "X-rETURN tO mENU"
 	.byte CR
-	.byte GRAY,3,WHITE,0,18
+	.byte GRAY,SETCSR,5,0,RVSON
 	.byte "           >>>pHONE bOOK<<<           "
-	.byte 29,20,' ',CSR_LEFT,INST,' ',CR,0
-stattx	.byte GRAY,3,21,0,18
+	.byte CSR_RIGHT,DEL,' ',CSR_LEFT,INST,' ',CR,0
+stattx	.byte GRAY,SETCSR,21,0,RVSON
 	.byte "                                      "
-	.byte 29,20
-	.byte ' ',CSR_LEFT,INST,' ',CR,CSR_UP,18,0
-staptx	.byte GRAY,3,21,0,18,' ',0
+	.byte CSR_RIGHT,DEL
+	.byte ' ',CSR_LEFT,INST,' ',CR,CSR_UP,RVSON,0
+staptx	.byte GRAY,SETCSR,21,0,RVSON,' ',0
 	.byte 0
-toetxt	.byte 3,6,0,0
-curbtx	.byte 3,22,1,CYAN
+toetxt	.byte SETCSR,6,0,0
+
+curbtx:
+	.byte SETCSR,22,1
+tcol28a	.byte CYAN
 	.byte "nAME:"
 	.byte CR
 	.byte "   ip:"
 	.byte CR,' '
 	.byte "pORT: "
-	.byte 29,29,29,29,29
+	.res 5,CSR_RIGHT
 	.byte " id: "
-	.byte 29,29,29,29,29,29,29,29,29,29,29
+	.res 11,CSR_RIGHT
 	.byte " tRY: "
-	.byte 29,29,29,29,20,CSR_UP,CR,0
-curbt3	.byte 3,22,1,CYAN
+	.res 4,CSR_RIGHT
+	.byte DEL,CSR_UP,CR,0
+curbt3	.byte SETCSR,22,1
+tcol28b	.byte CYAN
 	.byte "nAME:"
 	.byte CR
 	.byte " dIAL:"
 	.byte CR,' '
 	.byte "      "
-	.byte 29,29,29,29,29
+	.res 5,CSR_RIGHT
 	.byte "     "
-	.byte 29,29,29,29,29,29,29,29,29,29,29
+	.res 11,CSR_RIGHT
 	.byte " tRY: "
-	.byte 29,29,29,29,20,CSR_UP,CR,0
-curbt2	.byte CYAN," pw:             ",0
-curbt4	.byte CYAN," id: ",0
+	.res 4,CSR_RIGHT
+	.byte DEL,CSR_UP,CR,0
+curbt2:
+tcol28c	.byte CYAN
+	.byte " pw:             ",0
+
+curbt4:
+tcol28d	.byte CYAN
+	.byte " id: ",0
 nontxt	.byte WHITE
 	.byte "(nONE)             "
 	.byte CR,0
-clrlnt	.byte 3,22,7
+clrlnt	.byte SETCSR,22,7
 	.byte "                  "
-	.byte 3,22,7,WHITE,0
+	.byte SETCSR,22,7,WHITE,0
 empbbs	.byte DKGRAY
-	.res 18, UNDERLINE
-curbbs	.byte 146
+	.res RVSON, UNDERLINE
+curbbs	.byte RVSOFF
 colbbs	.byte LTGREEN
 nambbs	.byte "                "
-	.byte 146,WHITE,0
+	.byte RVSOFF,WHITE,0
 curpik	.byte 0
 tmppik	.byte 0
 bautmp	.byte 6
@@ -103,7 +121,7 @@ phnptr
 	jsr multpy
 	jmp phnpt4
 multpy	clc
-	lda #$00
+	lda #0
 	ldx #$08
 phnpt2	ror a
 	ror nlocat
@@ -122,7 +140,7 @@ phnpt4
 	lda nlocat+1
 	adc #>phbmem
 	sta nlocat+1
-	ldy #$00
+	ldy #0
 	rts
 onpent
 	lda hilcol
@@ -130,7 +148,7 @@ onpent
 prtent
 	lda entcol
 prten0	sta colbbs
-prten1	lda #146
+prten1	lda #RVSOFF
 	sta curbbs
 	ldy #0
 	lda (nlocat),y
@@ -141,7 +159,7 @@ prtcur	ldy #2
 prten2	lda (nlocat),y;print bbs name in list
 	sta nambbs-2,y
 	iny
-	cpy #20;length of bbs name
+	cpy #20		; length of bbs name
 	bcc prten2
 	lda nambbs
 	bne prten4
@@ -157,13 +175,13 @@ prten3	lda empbbs,y;print lines in place of empty bbs names
 	lda empbbs
 	sta colbbs
 prten4
-	ldy #$00
+	ldy #0
 prten5	lda curbbs,y
 	beq prten6
 	jsr chrout
 	iny
 	bne prten5
-prten6	lda #$0d
+prten6	lda #CR
 	jmp chrout
 ;
 clrent
@@ -183,11 +201,11 @@ phinit
 	lda #$30
 	sta trycnt
 	sta trycnt+1
-	lda #$00
+	lda #0
 	sta curpik
 	jsr clrchn
-	lda #<phhtxt
-	ldy #>phhtxt
+	lda #<txt_phonebook_menu
+	ldy #>txt_phonebook_menu
 	jsr outstr
 	lda #<toetxt
 	ldy #>toetxt
@@ -221,8 +239,8 @@ phini3	lda #21  ;col 21
 	ldy #>curbtx
 	jsr outstr
 	rts
-phnroc	.byte 3,0,0,0
-arrowt	.byte ' ',93,93,' ',60,125,109,62,' ',' ',0
+phnroc	.byte SETCSR,0,0,0
+arrowt	.byte 32,93,93,32,60,125,109,62,32,32,0
 hilcur
 	ldx curpik
 	inx
@@ -295,7 +313,7 @@ posnam
 	ldx curbtx+1
 	dex
 	stx LINE
-	lda #$0d
+	lda #CR
 	jsr chrout
 	lda #7    ;start at col 7
 	sta COLUMN
@@ -306,7 +324,7 @@ shocur
 	jsr posnam
 	lda #5
 	sta colbbs
-	lda #146
+	lda #RVSOFF
 	sta curbbs
 	ldy #2
 	lda (nlocat),y
@@ -337,7 +355,7 @@ shocr3
 shobau;start display of bottom line
 	lda #23
 	sta LINE
-	lda #$0d
+	lda #CR
 	jsr chrout
 	lda #7
 	sta COLUMN
@@ -371,7 +389,7 @@ shocr6	lda (nlocat),y
 	bcc shocr6
 shocr7	lda #$20
 	ldx COLUMN
-	cpx #29;clear line for next one
+	cpx #29		; clear line for next one
 	bcs shocr8
 	jsr chrout
 	bne shocr7
@@ -396,7 +414,7 @@ shotty3
 	lda #<curbt3
 	ldy #>curbt3
 	jsr outstr
-;	lda #$00
+;	lda #0
 ;	sta unlisted
 	lda #HOME
 	jmp chrout
@@ -421,7 +439,7 @@ xorabt	rts
 xortog
 	ldy #0
 	lda (nlocat),y
-	eor #$01
+	eor #1
 	sta (nlocat),y
 	rts
 ;
@@ -489,7 +507,7 @@ newen6	lda inpbuf,x
 	cpx #18
 	bcc newen6
 newen7;start of ip address
-	lda #$0d
+	lda #CR
 	jsr chrout
 	lda #7
 	sta COLUMN
@@ -533,7 +551,7 @@ dalun2p	sta 1996,y;$079f
 	dey
 	bpl dalun2p
 newen7a
-	lda #$0d
+	lda #CR
 	jsr chrout
 	lda #7;start spot
 	sta COLUMN
@@ -723,7 +741,7 @@ newsl2	cmp #$2d
 	stx tmpopt
 	sec
 	rts
-newsl3	cmp #$0d
+newsl3	cmp #CR
 	bne newsel
 	clc
 	rts
@@ -796,13 +814,13 @@ phb6
 	jmp phloop
 phb7
 	and #$7f
-	cmp #$58;x
+	cmp #'X'
 	bne phb8
 	jmp handle_f7_config
 phb8
-	cmp #$20
+	cmp #' '
 	beq phnsel
-	cmp #$0d
+	cmp #CR
 	bne phb9
 phnsel	ldy #2
 	lda (nlocat),y
@@ -811,39 +829,39 @@ phabrt	jmp phbget
 phntog
 	ldy #0
 	lda (nlocat),y
-	eor #$01
+	eor #1
 	sta (nlocat),y
 	jmp phloop
-phb9	cmp #$52;r
+phb9	cmp #'R'
 	bne phb10
 	jsr xorall
 	jsr phinit
 	jmp phloop
 phb10
-	cmp #$45
+	cmp #'E'
 	bne phb11
 	jsr newent
 	jmp phloop
 phb11
-	cmp #$43
+	cmp #'C'
 	bne phb12
 	jmp dialts
 phb12
-	cmp #$41
+	cmp #'A'
 	bne phb13
 	jmp dalsel
 phb13
-	cmp #$44
+	cmp #'D'
 	bne phb14
 	jmp dalunl
 phb14
 	jmp phbget
 ;
 dialts
-	lda #0
-	sta daltyp
-	lda #<calctx
-	ldy #>calctx
+	lda #DIALTYPE_CURRENT
+	sta dial_type
+	lda #<txt_call
+	ldy #>txt_call
 	jsr prtstt
 ;
 dialcr
@@ -872,33 +890,33 @@ dialc4	lda (nlocat),y
 	cpy #58
 	bcc dialc4
 dialc6
-	lda #$0d
+	lda #CR
 	sta numbuf-20,x
 	lda numbuf
-	cmp #$0d
+	cmp #CR
 	bne dialc3
-	lda #0
-	sta whahap
+	lda #CONSTAT_BUSY_NOCARRIER
+	sta connection_status
 	jmp dalfin
 dialc3;to be deleted - routine to use baud rate and c/g from phonebook entry
-	lda #$00
+	lda #0
 	sta unlisted
 	jmp dial
 ;
 dalfin
-	lda #$00
+	lda #0
 	sta unlisted
-	lda whahap
-	cmp #1
+	lda connection_status
+	cmp #CONSTAT_CONNECT
 	bne dalf2    ;connected
-	lda #<conntx
-	ldy #>conntx
+	lda #<txt_connect
+	ldy #>txt_connect
 dalnv
 	jsr prtstt
-	lda #$e0
+	lda #$100-32
 	sta JIFFIES
-dalfcl	lda JIFFIES
-	bne dalfcl
+:	lda JIFFIES
+	bne :-
 	lda #$0f
 	sta $d418
 ;lda trycnt; this was just to be cute but not neccessary anymore
@@ -917,11 +935,11 @@ dalf2
 dalf3
 	cmp #0
 	bne dalf4
-	lda daltyp  ;no connect
-	cmp #2
+	lda dial_type  ;no connect
+	cmp #DIALTYPE_SELECTED
 	bcs dalslc
 	lda numbuf
-	cmp #$0d
+	cmp #CR
 	bne dalag
 	jmp dlabrt
 dalag
@@ -932,22 +950,22 @@ dalslc
 	jsr outstr
 	jmp dalsl0
 dalsel	;dial selected
-	lda #$30
+	lda #'0'
 	sta trycnt
 	sta trycnt+1
-	lda #<dalstx
-	ldy #>dalstx
+	lda #<txt_dial_selected
+	ldy #>txt_dial_selected
 	jsr prtstt
 dalsl0
-	lda #2
-	sta daltyp
+	lda #DIALTYPE_SELECTED
+	sta dial_type
 	lda curpik
 	sta tmppik
 	lda entcol
 	sta colbbs
 	jsr hilcur
 	lda trycnt+1
-	cmp #$30
+	cmp #'0'
 	beq dalsl3
 dalsl1
 	inc curpik
@@ -978,24 +996,26 @@ dalfab
 	jmp phloop
 ;
 curunl
-	.byte CSR_UP,CR,' ',CYAN
+	.byte CSR_UP,CR," "
+tcol28e	.byte CYAN
 	.byte "pORT: "
 	.byte 05,0
 prtunl
-	.byte CSR_UP,CR,' ',CYAN
+	.byte CSR_UP,CR," "
+tcol28f	.byte CYAN
 	.byte "dIAL: "
 	.byte 05,0
 unlisted
-	.byte $00
-unltemp	.byte $00
+	.byte 0
+unltemp	.byte 0
 dalunl
-	lda #1
-	sta daltyp
+	lda #DIALTYPE_UNLISTED
+	sta dial_type
 	lda entcol
 	sta colbbs
 	jsr hilcur
-	lda #<dulstx
-	ldy #>dulstx
+	lda #<txt_dial_unlisted
+	ldy #>txt_dial_unlisted
 	jsr prtstt
 	lda ascii_mode
 	beq dalun1
@@ -1005,8 +1025,8 @@ dalun1
 	lda #<clrlnt
 	ldy #>clrlnt
 	jsr outstr
-	lda #<unlstx
-	ldy #>unlstx
+	lda #<txt_unlisted
+	ldy #>txt_unlisted
 	jsr outstr
 	ldy #80
 	lda #$20
@@ -1021,7 +1041,7 @@ dalun2	sta 1951,y;$079f
 	bne dalun3
 	jmp dlabrt
 dalun3
-	ldx #$00
+	ldx #0
 dalun6
 	lda inpbuf,x
 	sta numbuf,x
@@ -1049,7 +1069,7 @@ dalun9	sta 1951,y;$079f
 	bne dalun8
 	jmp dlabrt
 dalun8
-	ldx #$00
+	ldx #0
 	ldy unltemp
 dalun4	lda inpbuf,x
 	sta numbuf,y
@@ -1057,12 +1077,12 @@ dalun4	lda inpbuf,x
 	iny
 	lda inpbuf,x
 	bne dalun4
-	lda #$0d
+	lda #CR
 	sta numbuf,y
 	iny
-	lda #$00
+	lda #0
 	sta numbuf,y
-	ldy #$00
+	ldy #0
 	lda #<prtunl
 	ldy #>prtunl
 	jsr outstr
@@ -1071,41 +1091,63 @@ dalun4	lda inpbuf,x
 	jsr outstr
 	lda #$91
 	jsr chrout
-	lda #$01
+	lda #1
 	sta unlisted
 	jmp dial
 ;
-calctx	.byte 'cALL cURRENT nUMBER...',0
-dalstx	.byte 'dIAL sELECTED nUMBERS...',0
-dulstx	.byte 'dIAL uNLISTED nUMBER.',0
-unlstx	.byte 'uNLISTED.',CR,0
-wcrtxt	.byte 'wAITING fOR cARRIER...',0
-pabtxt	.byte 'dIALING...  ',cp,'RESS ',cs,t,o,cp,' TO ABORT.',0
-numptr	.byte 0
-trycnt	.byte 0,0,0 ;how many tries?
-daltyp	.byte 0 ;0=curr, 1=unlisted
-	;2=selected
-whahap	.byte 0 ;status after call
-;0=busy/no carrier, 1=connect
-;2=aborted w/stop , 3=dunno(1660)
-;
+txt_call:
+	.byte "cALL cURRENT nUMBER...",0
+txt_dial_selected:
+	.byte "dIAL sELECTED nUMBERS...",0
+txt_dial_unlisted:
+	.byte "dIAL uNLISTED nUMBER.",0
+txt_unlisted:
+	.byte "uNLISTED.",CR,0
+
+	.byte "wAITING fOR cARRIER...",0	; [XXX unused]
+
+txt_dialing:
+	.byte "dIALING...  ",cp,"RESS ",cs,t,o,cp," TO ABORT.",0
+
+numptr:
+	.byte 0
+
+; 2-digit ASCII retry counter
+trycnt:
+	.byte 0,0
+	.byte 0
+
+dial_type:
+	.byte 0
+DIALTYPE_CURRENT	= 0
+DIALTYPE_UNLISTED	= 1
+DIALTYPE_SELECTED	= 2
+
+; status after call
+connection_status:
+	.byte 0
+CONSTAT_BUSY_NOCARRIER	= 0
+CONSTAT_CONNECT		= 1
+CONSTAT_USERABORT	= 2
+CONSTAT_UNKNOWN		= 3
+
 ;main body of dialer
 dial
 adnum
-	lda #$0d
+	lda #CR
 	jsr chrout
 await0
-	lda unlisted;unlisted gets a pass on the empty entry check;new mods for beta 7
+	lda unlisted	; unlisted gets a pass on the empty entry check
 	bne await01
 	ldy #2;empty entry? don't dial!
 	lda (nlocat),y
 	bne await01
 	jmp dlabrt
 await01
-	lda #$96      ;1.75 sec delay
+	lda #$100-106	; 1.75 sec delay
 	sta JIFFIES
 await1
-	jsr getin    ;check r/s
+	jsr getin	; check r/s
 	cmp #$03
 	bne awaitl
 	jmp dlabrt
@@ -1113,40 +1155,40 @@ awaitl
 	lda JIFFIES
 	bne await1
 adbegn
-	lda #$88       ;2 sec delay
-	sta JIFFIES        ;for dial tone
-await2
-	lda JIFFIES
-	bne await2
+	lda #$100-2*60	; 2 sec delay
+	sta JIFFIES	; for dial tone
+:	lda JIFFIES
+	bne :-
 	inc trycnt+1
 	lda trycnt+1
-	cmp #$3a
+	cmp #'9'+1
 	bcc dialnoinc
 	inc trycnt
 	lda trycnt
-	cmp #$3a
-jeq	dlabrt
-	lda #$30
+	cmp #'9'+1
+	jeq dlabrt
+	lda #'0'
 	sta trycnt+1
 dialnoinc
 	jsr shocr3
 dialin
 	ldy #31
 	lda #1
-dlwhtl	sta 56223,y
+dlwhtl	sta $d800+23*40+7,y
 	dey
 	bpl dlwhtl
 dlinit
-	lda #<pabtxt  ;print stop aborts
-	ldy #>pabtxt  ;
+	lda #<txt_dialing
+	ldy #>txt_dialing
 	jsr prtstt
-smrtdl	;hayes/paradyne dial
+; hayes dial
+smrtdl
 	jsr clear232
 	jsr enablemodem
 	ldx #LFN_MODEM
 	jsr chkout
-	lda #<pr3txt
-	ldy #>pr3txt
+	lda #<txt_atv1
+	ldy #>txt_atv1
 	jsr outmod
 	lda firmware_zimmers
 	bne haydat
@@ -1158,49 +1200,49 @@ haydat
 	ldy #>txt_atd_zimmers
 haydatcont
 	jsr outstr
-	ldx #$00
+	ldx #0
 hayda4	stx numptr
 	ldx numptr
 	lda #14
-	sta 56223,x
+	sta $d800+23*40+7,x
 	ldx numptr
 	lda numbuf,x
 	jsr chrout
 	ldx numptr
 	inx
-	cmp #$0d
+	cmp #CR
 	bne hayda4
 	jsr clrchn
 hayda6
 	jmp haybus
 haynan
-	lda #<nantxt
-	ldy #>nantxt
+	lda #<txt_no_carrier
+	ldy #>txt_no_carrier
 	jsr prtstt
 	jmp haybk2
 haybak
-	lda #<bustxt
-	ldy #>bustxt
+	lda #<txt_busy
+	ldy #>txt_busy
 	jsr prtstt
 haybk2
-	lda #$c8
+	lda #$100-56
 	sta JIFFIES
-haybk3	lda JIFFIES
-	bne haybk3
+:	lda JIFFIES
+	bne :-
 	jsr haydel
 	jmp redial
 haycon
 	jsr haydel
-	lda #1     ;set connect flag
-	sta whahap
+	lda #CONSTAT_CONNECT
+	sta connection_status
 	jmp dalfin
 haydel
-	lda #$e8
+	lda #$100-24
 	sta JIFFIES
 	ldx #LFN_MODEM
 	jsr chkin
 haydll	jsr getin
-	cmp #$0d
+	cmp #CR
 	beq haydlo
 	lda JIFFIES
 	bne haydll
@@ -1208,47 +1250,54 @@ haydlo
 	jsr clrchn
 	rts
 dlabrt
-	lda #$d0
-	sta JIFFIES        ;short delay
-dlablp
-	lda JIFFIES
-	bne dlablp     ;back to phbook
+	lda #$100-48
+	sta JIFFIES	; short delay
+:	lda JIFFIES
+	bne :-		; back to phbook
 dgobak
-	lda #2
-	sta whahap
+	lda #CONSTAT_USERABORT
+	sta connection_status
 	jmp dalfin
+
 redial
-	lda #$80
+	lda #$100-128	; 2 second delay
 	sta JIFFIES
-rddel1	;2 second delay
-	lda JIFFIES        ;before restart
-	bne rddel1
+:	lda JIFFIES	; before restart
+	bne :-
 rgobak
-	lda #0
-	sta whahap     ;set redial flag
+	lda #CONSTAT_BUSY_NOCARRIER
+	sta connection_status     ;set redial flag
 	jmp dalfin     ;back to phbook
 outmod
 	jsr outstr
-outmo1	lda #$e0
+outmo1	lda #$100-32
 	sta JIFFIES
-outmo2	lda JIFFIES
-	bne outmo2
+:	lda JIFFIES
+	bne :-
 	rts
 
-nicktime:
 	.byte 0		; [XXX unused]
 
 txt_atd:
-	.byte 'ATDT',0
+	.byte "ATDT",0
 txt_atd_zimmers:
 	; prepends address with a quote; zimmers firmware needs this
-	.byte 'ATD',34,0
+	.byte "ATD",34,0
 
-athtxt	.byte 'ATH',CR,0
-atplus	.byte '+++',0
-pr3txt	.byte 'ATV1',CR,0
-bustxt	.byte "bUSY",0
-nantxt	.byte "nO cARRIER",0
-conntx	.byte "cONNECT!",0
-tdelay	.byte 00
+	.byte "ATH",CR,0; [XXX unused]
+	.byte "+++",0	; [XXX unused]
+
+txt_atv1:
+	.byte "ATV1",CR,0
+
+txt_busy:
+	.byte "bUSY",0
+
+txt_no_carrier:
+	.byte "nO cARRIER",0
+
+txt_connect:
+	.byte "cONNECT!",0
+
+	.byte 0		; [XXX unused]
 

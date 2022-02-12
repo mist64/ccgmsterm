@@ -1,4 +1,11 @@
-; Configuration
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Configuration data & phone book
+;
+
 ;  This data gets saved to disk/EasyFlash
 config_data:
 
@@ -28,42 +35,42 @@ phbmem:
 	; total: 83 bytes
 
 	;.byte 0,6
-	;.byte 'aFTERLIFE         '
-	;.byte '192.168.0.8     ',0,'               ',0
-	;.byte '6401 ',0
-	;.byte 'myuserid   ',0
-	;.byte 'mypassword1',0
+	;.byte "aFTERLIFE         "
+	;.byte "192.168.0.8     ",0,"               ",0
+	;.byte "6401 ",0
+	;.byte "myuserid   ",0
+	;.byte "mypassword1",0
 
 	;.byte 0,6
-	;.byte 'aFTERLIFE         '
-	;.byte '192.168.0.8:6401                ',0
-	;.byte '6400 ',0
-	;.byte 'anotheruser',0
-	;.byte 'mypassword1',0
+	;.byte "aFTERLIFE         "
+	;.byte "192.168.0.8:6401                ",0
+	;.byte "6400 ",0
+	;.byte "anotheruser",0
+	;.byte "mypassword1",0
 
 	;.byte 0,6
-	;.byte 'aFTERLIFE         '
-	;.byte '192.168.0.8:6401                ',0
-	;.byte '23   ',0
-	;.byte 'myid       ',0
-	;.byte 'mypassword1',0
+	;.byte "aFTERLIFE         "
+	;.byte "192.168.0.8:6401                ",0
+	;.byte "23   ",0
+	;.byte "myid       ",0
+	;.byte "mypassword1",0
 
 	.repeat 29
 	.res 83,0
 	.endrep
 
 	.byte 0,6
-	.byte 'cOMMODORESERVER   '
-	.byte 'COMMODORESERVER.COM',0,CR,0,0,0,0,0,0,0,0,0,0,0,0
-	.byte '1541',0,13
-	.byte 'ID         ',0
-	.byte 'PIN        ',0
+	.byte "cOMMODORESERVER   "
+	.byte "COMMODORESERVER.COM",0,CR,0,0,0,0,0,0,0,0,0,0,0,0
+	.byte "1541",0,13
+	.byte "ID         ",0
+	.byte "PIN        ",0
 	.byte 0,0
 
 ; Macros
 macmem:
 macmm1:
-	.byte 'hELLO wORLD'
+	.byte "hELLO wORLD"
 	.res 64,0	; [XXX too many 0s]
 macmm2:
 	.res 64,0
@@ -87,6 +94,6 @@ theme:
 diskoref:
 	.byte 0;00 = ef - 01=disk
 
-endsav:
+config_data_end:
 	.byte 0		; [XXX not necessary, *symbol* is used as end address]
 

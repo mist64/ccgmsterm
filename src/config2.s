@@ -1,3 +1,11 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Config loading and saving
+;
+
 ;----------------------------------------------------------------------
 losvco:
 	jsr disablexfer
@@ -44,7 +52,7 @@ save_config:
 	inx
 	cpx max
 	bcc :-
-	lda #$0d
+	lda #CR
 	jsr chrout
 	jsr clrchn
 	lda #<config_data
@@ -52,15 +60,15 @@ save_config:
 	lda #>config_data
 	sta nlocat+1
 	lda #nlocat
-	ldx #<endsav
-	ldy #>endsav
+	ldx #<config_data_end
+	ldy #>config_data_end
 	jsr save
 	jsr losver
 losvab	rts
 
 ;----------------------------------------------------------------------
 save_config_easyflash:
-	jmp writeconfigef
+	jmp easyflash_write_config
 
 ;----------------------------------------------------------------------
 load_config:
@@ -85,7 +93,7 @@ load_config_done:
 
 ;----------------------------------------------------------------------
 load_config_easyflash:
-	jsr readconfigef
+	jsr easyflash_read_config
 	jmp load_config_done
 
 ;----------------------------------------------------------------------
@@ -94,6 +102,6 @@ losver:
 	ldx #LFN_DISK_CMD
 	jsr chkin
 :	jsr getin
-	cmp #$0d
+	cmp #CR
 	bne :-
 	jmp clrchn

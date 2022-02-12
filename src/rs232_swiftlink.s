@@ -1,7 +1,11 @@
-;----------------------------------------------------------------------
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
 ; RS232 Swiftlink Driver
 ;  based on Jeff Brown adaptation of Novaterm version
-;----------------------------------------------------------------------
+;
 
 ; calls from outside code:
 ;  sw_setup

@@ -1,4 +1,10 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
 ; CCGMS Main Terminal Code
+;
 
 ; enter here on program start
 term_entry_first:
@@ -89,7 +95,7 @@ term_mainloop:
 ;	eor #1
 ;	sta allcap
 ;	jmp @loop2
-;:	jmp crsrtg
+;:	jmp toggle_cursor
 ;@no2:
 
 ; shift-ctrl-[1..4]: swap screen

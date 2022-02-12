@@ -1,6 +1,11 @@
-; REU ROUTINES
-;  17XX REU
-;  Only uses first bank regardless. 64k is more than enough memory
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; REU Support
+;
+; Only uses first bank; 64 KB is more than enough
 
 ; REU in use
 ;  0: no (RAM buffers)

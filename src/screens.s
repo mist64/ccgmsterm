@@ -1,3 +1,11 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Screen swapping
+;
+
 ;----------------------------------------------------------------------
 ; swap screen with #1-4 (behind KERNAL ROM)
 swap_screen:
@@ -15,7 +23,7 @@ swap_screen:
 	sta locat+1
 	lda #>$0400
 	sta tmp03
-	lda #$00
+	lda #0
 	sta locat
 	sta tmp02
 	sei
@@ -78,7 +86,7 @@ scrnlc	lda (tmp02),y
 	dey
 	bne scrnlc
 	beq scrnl3
-scrnls	ldy #$00
+scrnls	ldy #0
 scrnl2	;swap screen page
 	lda (tmp02),y
 	tax
@@ -125,9 +133,9 @@ finp2
 	adc locat
 	sta locat
 	lda locat+1
-	adc #$00
+	adc #0
 	sta locat+1
-	ldy #$00
+	ldy #0
 	lda (locat),y
 	rts
 fincol	;calculate color ptr
@@ -142,7 +150,7 @@ fincol	;calculate color ptr
 ;----------------------------------------------------------------------
 ; turn off quote mode and insert mode
 quote_insert_off:
-	lda #$00
+	lda #0
 	sta qmode
 	sta imode
 	rts

@@ -1,4 +1,11 @@
+; CCGMS Terminal
 ;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Macro editor
+;
+
 prwcmc
 	lda macxrg
 	and #$c0
@@ -7,19 +14,30 @@ prwcmc
 	rol a
 	asl a
 	clc
-	adc #$31;1
-	sta edfktx
+	adc #'1'
+	sta txt_edit_index
 	rts
-edtmtx	.byte CLR,WHITE,CR,CR,e,'DIT WHICH MACRO?',CR
-	.byte YELLOW,'(ctrl f1 / f3 OR return '
-	.byte 'TO ABORT.) ',WHITE,3,2,18,0
-edtrtx	.byte 19,CR,WHITE,e,'DIT ',f
-edfktx	.byte '1 mACRO...<',c,t,cr,l,'-',cx,'> TO END:',CR,CR,CR,CR,0
-wchmac	.byte 0
-macfull	.byte 0
-edtmac
-	lda #<edtmtx
-	ldy #>edtmtx
+
+txt_edit_which_macro:
+	.byte CLR,WHITE,CR,CR,e,"DIT WHICH MACRO?",CR
+	.byte YELLOW,"(ctrl f1 / f3 OR return "
+	.byte "TO ABORT.) ",WHITE,SETCSR,2,18,0
+
+txt_edit:
+	.byte 19,CR,WHITE,e,"DIT ",f
+txt_edit_index:
+	.byte '1'
+	.byte " mACRO...<",c,t,cr,l,"-",cx,"> TO END:",CR,CR,CR,CR,0
+
+wchmac:
+	.byte 0
+
+macfull:
+	.byte 0
+
+edtmac:
+	lda #<txt_edit_which_macro
+	ldy #>txt_edit_which_macro
 	jsr outstr
 	jsr savech
 edtmlp	lda LSTX
@@ -50,8 +68,8 @@ edtmen
 	sta $d021
 edtstr
 	jsr prwcmc
-	lda #<edtrtx
-	ldy #>edtrtx
+	lda #<txt_edit
+	ldy #>txt_edit
 	jsr outstr
 	lda #1
 	sta macmdm
@@ -62,7 +80,7 @@ edtstr
 	adc #62
 	sta macfull
 	jsr restch
-	lda #$20
+	lda #' '
 	jsr chrout
 	lda #CSR_LEFT
 	jsr chrout
@@ -139,19 +157,26 @@ edtbye	ldx macxrg
 	lda #0
 	sta macmem,x
 	rts
-macrvs	.byte 146
-maccty	.byte 10
-maccol	.byte 5
-maccas	.byte 14
-macbkg	.byte 0
+
+macrvs:
+	.byte RVSOFF
+maccty:
+	.byte 10
+maccol:
+	.byte 5
+maccas:
+	.byte LOCASE
+macbkg:
+	.byte 0
+
 edtdel
-	lda #146
+	lda #RVSOFF
 	sta macrvs
 	lda #10
 	sta maccty
 	lda #5
 	sta maccol
-	lda #14
+	lda #LOCASE
 	sta maccas
 	lda #0
 	sta macbkg
@@ -263,7 +288,7 @@ edtd14	lda macrvs
 edtd15
 	cmp #12
 	beq edtd16
-	cmp #14
+	cmp #LOCASE
 	beq edtd16
 	cmp #21
 	bne edtd19
@@ -274,7 +299,7 @@ edtdlc	dex
 	lda macmem-1,x
 	cmp #12
 	beq edtd17
-	cmp #14
+	cmp #LOCASE
 	beq edtd17
 	cmp #21
 	bne edtdlc
@@ -282,11 +307,11 @@ edtd17	sta maccas
 edtd18	lda maccas
 	jmp edtdln
 edtd19
-	cmp #$0d
+	cmp #CR
 	bne edtdla
 	lda #0
 	sta 199
-	lda #146
+	lda #RVSOFF
 	jsr edprrv
 	dec macxrg
 	ldx macxrg

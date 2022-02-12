@@ -1,4 +1,12 @@
-;pal/ntsc detect
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Initialization
+;
+
+; PAL/NTSC detection
 start
 l1	lda $d012
 l2	cmp $d012
@@ -110,9 +118,9 @@ rsopen:
 	ldx #DEV_MODEM
 	ldy #SA_MODEM
 	jsr setlfs
-	lda protoe
-	ldx #<proto
-	ldy #>proto
+	lda aciaemu_filename_len
+	ldx #<aciaemu_filename
+	ldy #>aciaemu_filename
 	jsr setnam
 	jsr open
 	lda #>ribuf	; move rs232 buffers
@@ -124,9 +132,9 @@ rsopen:
 ercopn:
 	lda drive_present
 	beq :+
-	lda #$02;file length      ;open err chan
-	ldx #<dreset
-	ldy #>dreset
+	lda #2;file length      ;open err chan
+	ldx #<filename_i0
+	ldy #>filename_i0
 	jsr setnam
 	lda #15
 	ldx device_disk

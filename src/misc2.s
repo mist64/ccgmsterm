@@ -1,53 +1,81 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Miscellaneous 2
+;
+
 ;----------------------------------------------------------------------
 txt_newpunter:
-	.byte CR,CR,WHITE,'new pUNTER ',00
+	.byte CR,CR,WHITE,"new pUNTER ",0
 txt_up:
-	.byte 'uP',00
+	.byte "uP",0
 txt_down:
-	.byte 'dOWN',00
+	.byte "dOWN",0
 txt_load:
-	.byte 'LOAD.',CR,00
+	.byte "LOAD.",CR,0
 txt_enter_filename:
-	.byte 'eNTER fILENAME: ',00
+	.byte "eNTER fILENAME: ",0
 txt_yellow:
-	.byte CR,YELLOW,' ',' ',0
+	.byte CR,YELLOW,"  ",0
 txt_loading:
-	.byte 'LOADING: ',CYAN,0
+	.byte "LOADING: ",CYAN,0
 txt_press_c_to_abort:
-	.byte CR,WHITE,'  (pRESS c= TO ABORT.)',CR,CR,00
+	.byte CR,WHITE,"  (pRESS c= TO ABORT.)",CR,CR,0
 txt_aborted:
-	.byte 'aBORTED.',CR,00
+	.byte "aBORTED.",CR,0
 txt_good_bad_blocks:
-	.byte LTGREEN,' ','gOOD bLOCKS: ',WHITE,'000',WHITE,'   -   '
-	.byte LTGREEN,'bAD bLOCKS: ',WHITE,'000',CR,0
+	.byte LTGREEN," ","gOOD bLOCKS: ",WHITE,"000",WHITE,"   -   "
+	.byte LTGREEN,"bAD bLOCKS: ",WHITE,"000",CR,0
 txt_graphics:
-	.byte LTGREEN,'gRAPHICS',00
+	.byte LTGREEN,"gRAPHICS",0
 txt_graphics2:
-	.byte 18,BLUE,'c',LTBLUE,'/',CYAN,'g',146,YELLOW,0
+	.byte RVSON,BLUE,"c",LTBLUE,"/",CYAN,"g",RVSOFF,YELLOW,0
 txt_ascii:
-	.byte CYAN,'aNSCII',00
+	.byte CYAN,"aNSCII",0
 txt_terminal_ready:
-	.byte ' tERMINAL rEADY.',LTGRAY,CR,CR,00
+	.byte " tERMINAL rEADY.",LTGRAY,CR,CR,0
 txt_term_activated:
-	.byte ' tERM aCTIVATED.',LTGRAY,CR,CR,00
+	.byte " tERM aCTIVATED.",LTGRAY,CR,CR,0
 txt_disconnecting:
-	.byte CR,CR,WHITE,'dISCONNECTING...',LTGRAY,CR,CR,0
+	.byte CR,CR,WHITE,"dISCONNECTING...",LTGRAY,CR,CR,0
 
 ;----------------------------------------------------------------------
-drtype	.byte 'D','S','P','U','R'
-drtyp2	.byte 'E','E','R','S','E'
-drtyp3	.byte 'L','Q','G','S','L'
+drtype:	.byte "DSPUR"
+drtyp2:	.byte "EERSE"
+drtyp3:	.byte "LQGSL"
 
 ;----------------------------------------------------------------------
-drform	.byte YELLOW,2,157,157,WHITE,6,' ',CYAN,14,LTGREEN,' ',63,' ',0
+directory_format:
+	.byte YELLOW
+	.byte $02	; ctrl-b: blocks
+	.byte 157
+	.byte 157
+	.byte WHITE
+	.byte $06	; ctrl-f: file type
+	.byte " "
+	.byte CYAN
+	.byte $0e	; ctrl-n: file name
+	.byte LTGREEN
+	.byte " "
+	.byte 63
+	.byte " "
+	.byte 0
+directory_format_end:
 
 ;----------------------------------------------------------------------
-proto	.byte $08   ;start with
-proto1	.byte $00   ;2400 baud setng
-bdoutl	.byte $51
-bdouth	.byte $0d
-protoe	.byte $02 ;length of proto
-dreset	.byte "I0"
+aciaemu_filename:
+	.byte $08	; 2400 baud
+	.byte $00
+
+	.byte $51,$0d	; [XXX unused]
+
+aciaemu_filename_len:
+	.byte 2		; [XXX only read; should be constant]
+
+filename_i0:
+	.byte "I0"
 
 ; device number of the (first) disk drive
 device_disk:
@@ -81,43 +109,43 @@ supercpu:
 txt_supercpu_enabled:
 	.byte "sUPERcpu eNABLED!",CR,CR,0
 
-nicktemp
-	.byte $00
-drivetemp
-	.byte $00
+nicktemp:
+	.byte 0		; [XXX unused]
+
+drivetemp:
+	.byte 0
 
 ;----------------------------------------------------------------------
-;MAKECRCTABLE
-crctable
-	ldx 	#$00
+; pre-calculate CRC16 tables for XMODEM/CRC
+crctable:
+	ldx 	#0
 	txa
-zeroloop
-	sta 	crclo,x
+:	sta 	crclo,x
 	sta 	crchi,x
 	inx
-	bne	zeroloop
-	ldx	#$00
-fetch	txa
+	bne	:-
+	ldx	#0
+@1:	txa
 	eor	crchi,x
 	sta	crchi,x
-	ldy	#$08
-fetch1	asl	crclo,x
+	ldy	#8
+@2:	asl	crclo,x
 	rol	crchi,x
-	bcc	fetch2
+	bcc	@3
 	lda	crchi,x
 	eor	#$10
 	sta	crchi,x
 	lda	crclo,x
 	eor	#$21
 	sta	crclo,x
-fetch2	dey
-	bne	fetch1
+@3:	dey
+	bne	@2
 	inx
-	bne	fetch
+	bne	@1
 	rts
 
 ;----------------------------------------------------------------------
-;SuperCPU ROUTINES
+; SuperCPU
 supercpu_on:
 	lda supercpu
 	beq scpuout
@@ -128,15 +156,15 @@ scpuout	rts
 supercpu_off:
 	lda supercpu
 	beq scpuout
-	lda #$01
+	lda #1
 	sta $d07a
 	rts
 
 ;----------------------------------------------------------------------
-;CLEAR RS232 BUFFER POINTERS
-clear232
+; Clear RS232 buffer
+clear232:
 	pha
-	lda #$00
+	lda #0
 	sta rtail
 	sta rhead
 	sta rfree
@@ -145,14 +173,15 @@ clear232
 
 ;----------------------------------------------------------------------
 ; [XXX this should be closer to the PUNTER code]
-puntdelay; you got a better way to do this? have at it!
+puntdelay:
+; you got a better way to do this? have at it!
 	pha
 	txa
 	pha
 	tya
 	pha
-	ldx #$00
-	ldy #$00
+	ldx #0
+	ldy #0
 :	inx
 	bne :-
 	iny

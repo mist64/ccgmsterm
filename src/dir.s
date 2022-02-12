@@ -1,4 +1,10 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
 ; Show disk directory
+;
 
 dirmdm:
 	.byte 0
@@ -15,8 +21,8 @@ dir:
 	jsr drvchk
 	jmi drexit
 	jsr clrchn
-	jsr cosave
-	lda #$0d
+	jsr text_color_save
+	lda #CR
 	jsr chrout
 	jsr open
 	lda #0
@@ -28,7 +34,7 @@ dir:
 	sta dirmdm
 :	ldx #$0d
 	jsr chkin
-	ldy #03
+	ldy #3
 @loop:	jsr getch
 	dey
 	bpl @loop
@@ -49,7 +55,7 @@ dir:
 @1:	jsr chrout
 	bne @skip
 @2:	jsr drret
-	ldy #01
+	ldy #1
 	bne @loop
 
 getch:
@@ -63,21 +69,21 @@ drlp3
 	pla
 drexit
 	jsr clrchn
-	jsr coback
+	jsr text_color_restore
 	lda #$0d
 	jsr chrout
-	jsr close
+	jsr close	; [XXX ugly: LFN matches code for CR]
 	jmp enablexfer
 
 drret:
-	lda #$0d
+	lda #CR
 	jsr chrout
 	jsr clrchn
 	jsr getin
 	beq @cont
 	cmp #$03
 	beq drlp3
-	lda #$00
+	lda #0
 	sta $c6
 :	jsr getin
 	beq :-
@@ -110,10 +116,10 @@ drcon2
 	iny
 	cpy #27
 	bcc drcon2
-	lda #$0d
+	lda #CR
 	jsr chrout
 	jsr clrchn
-	lda #$0d
+	lda #CR
 	jsr chrout
 	ldx #LFN_MODEM
 	jsr chkin

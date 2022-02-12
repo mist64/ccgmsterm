@@ -1,7 +1,11 @@
-;----------------------------------------------------------------------
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
 ; RS232 Userport Driver, 300-2400 baud
 ;  based on Novaterm 9.6
-;----------------------------------------------------------------------
+;
 
 ; calls from outside code:
 ;  rsuser_setup
@@ -139,7 +143,7 @@ fullhi=*+1
 	sta inbits
 	jmp chktxd
 
-notcia	;ldy #$00
+notcia	;ldy #0
 	;jmp rstkey	; or jmp norest
 
 nmion	lda ENABL	; receive a bit
@@ -252,7 +256,7 @@ rsuser_disable:
 	bne :-
 	lda #$10
 	sta $dd0d
-	lda #$02
+	lda #2
 	and ENABL
 	bne :-
 	sta ENABL

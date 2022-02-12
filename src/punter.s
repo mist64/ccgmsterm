@@ -1,5 +1,9 @@
+; CCGMS Terminal
 ;
-; PUNTER
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; PUNTER transfer protocol
 ;
 ; The original CCGMS Term contained a re-assembled version of the PUNTER
 ; protocol. It has been replaced by the original source and its comments from
@@ -17,27 +21,28 @@ pnta	= $62
 pntb	= $64
 stat	= $96
 
-;codebuf	              ;buffer for incoming 3 chr codes
-bitpnt	= codebuf+$03 ;bit pointer for allowable matches
-bitcnt	= codebuf+$04 ;bit counter (0 to 4)
-bitpat	= codebuf+$05 ;bit pattern for searches
-timer1	= codebuf+$06 ;timer for non-received characters (2)
-gbsave	= codebuf+$08 ;location to save good bad signal needed
-bufcount	= codebuf+$09 ;number of chrs to buffer into block
-delay	= codebuf+$0b ;delay for wait period
-skpdelay	= codebuf+$0c ;delay skip counter
-endflag	= codebuf+$0d ;flag to indicate last block
-check	= codebuf+$0e ;save place for checksum (4)
-check1	= codebuf+$12 ;secondary checksum holding place (4)
-bufpnt	= codebuf+$16 ;pointer to current buffer
-recsize	= codebuf+$17 ;size of received buffer
-maxsize	= codebuf+$18 ;maximum block size
-blocknum	= codebuf+$19 ;block number (2)
-filetype	= codebuf+$1b ;file type (from basic)
-stack	= codebuf+$1c ;stack pointer at entry
-dontdash	= codebuf+$1d ;flag to suppress dashes and colons
-specmode	= codebuf+$1e ;flag to send special start code
-buffer	= $0400       ;buffer for block
+;codebuf	             	; buffer for incoming 3 chr codes
+bitpnt		= codebuf+$03	; bit pointer for allowable matches
+bitcnt		= codebuf+$04	; bit counter (0 to 4)
+bitpat		= codebuf+$05	; bit pattern for searches
+timer1		= codebuf+$06	; timer for non-received characters (2)
+gbsave		= codebuf+$08	; location to save good bad signal needed
+bufcount	= codebuf+$09	; number of chrs to buffer into block
+delay		= codebuf+$0b	; delay for wait period
+skpdelay	= codebuf+$0c	; delay skip counter
+endflag		= codebuf+$0d	; flag to indicate last block
+check		= codebuf+$0e	; save place for checksum (4)
+check1		= codebuf+$12	; secondary checksum holding place (4)
+bufpnt		= codebuf+$16	; pointer to current buffer
+recsize		= codebuf+$17	; size of received buffer
+maxsize		= codebuf+$18	; maximum block size
+blocknum	= codebuf+$19	; block number (2)
+filetype	= codebuf+$1b	; file type (from basic)
+stack		= codebuf+$1c	; stack pointer at entry
+dontdash	= codebuf+$1d	; flag to suppress dashes and colons
+specmode	= codebuf+$1e	; flag to send special start code
+buffer		= $0400      	; buffer for block
+
 ;
 ;buffer positions
 ;
@@ -70,7 +75,7 @@ over	sta pnta
 	adc pnta
 	sta jmppoint+1
 	lda #>table
-	adc #$00
+	adc #0
 	sta jmppoint+2
 jmppoint	jmp table
 ;
@@ -81,20 +86,20 @@ table	jmp accept
 	jmp trantype
 	jmp terminal
 ;
-codes	.byte 'GOO'
-	.byte 'BAD'
-	.byte 'ACK'
-	.byte 'S/B'
-	.byte 'SYN'
+codes	.byte "GOO"
+	.byte "BAD"
+	.byte "ACK"
+	.byte "S/B"
+	.byte "SYN"
 ;
 ;accept characters and check for codes
 ;
 accept	sta bitpat    ;save required bit pattern
-	lda #$00
+	lda #0
 	sta codebuf
 	sta codebuf+1
 	sta codebuf+2
-cd1	lda #$00
+cd1	lda #0
 	sta timer1 ;clear timer
 	sta timer1+1
 cd2	jsr exit
@@ -107,15 +112,15 @@ cd2	jsr exit
 	sta codebuf+1
 	lda lastch
 	sta codebuf+2
-	lda #$00
+	lda #0
 	sta bitcnt ;clear bit counter
-	lda #$01
+	lda #1
 	sta bitpnt ;initialize bit pointer
 cd4	lda bitpat    ;look at bit pattern
 	bit bitpnt ;is bit set
 	beq cd5   ;no, don't check this code word
 	ldy bitcnt
-	ldx #$00
+	ldx #0
 cd6	lda codebuf,x
 	cmp codes,y
 	bne cd5
@@ -150,11 +155,11 @@ cd9	lda timer1+1
 	lda timer1+1
 	cmp #20
 	jcc cd2
-	lda #$01
+	lda #1
 	sta stat
 	jmp dodelay
 ;
-cd8	lda #$00
+cd8	lda #0
 	sta stat
 	rts
 ;
@@ -166,7 +171,7 @@ getnum	tya
 	jsr modget
 	bcs get1
 	sta lastch
-	lda #$00
+	lda #0
 	sta stat
 	pla
 	tay
@@ -174,7 +179,7 @@ getnum	tya
 ;
 get1	lda #$02
 	sta stat
-	lda #$00
+	lda #0
 	sta lastch
 	pla
 	tay
@@ -205,7 +210,7 @@ sn1	lda codes,y
 ;
 rechand	sta gbsave    ;save good or bad signal as needed
 	jsr puntdelay;modded this;modded this. handshaking delay
-	lda #$00;delay 0 on 1 off. originally was off
+	lda #0;delay 0 on 1 off. originally was off
 	sta delay
 rc1	lda #$02
 	sta pnta
@@ -259,22 +264,23 @@ rc7	rts
 ;
 ;do handshaking for transmission end
 ;
-tranhand	lda #$00;add delay back in
+tranhand
+	lda #0;add delay back in
 	sta delay
 tx2	jsr puntdelay;modded this. handshaking delay
 	lda specmode
 	beq tx20
-	ldy #$00
+	ldy #0
 	jsr sendcode ;send a "goo" signal
 	jsr puntdelay;modded this. handshaking delay
 tx20	lda #%01011   ;allow "goo", "bad", and "s/b"
 	jsr accept ;wait for codes
 	lda stat
 	bne tx2   ;if no signal, wait again
-	lda #$00
+	lda #0
 	sta specmode
 	lda bitcnt
-	cmp #$00  ;"good" signal
+	cmp #0  ;"good" signal
 	bne tx10  ;no, resend old block
 	lda endflag
 	bne tx4
@@ -287,19 +293,19 @@ tx7	jsr thisbuf
 	lda (pntb),y
 	cmp #255
 	bne tx3
-	lda #$01
+	lda #1
 	sta endflag
 	lda bufpnt
-	eor #$01
+	eor #1
 	sta bufpnt
 	jsr thisbuf
 	jsr dummybl1
 	jmp tx1
 ;
 tx3	jsr dummyblk  ;yes, get new block
-tx1	lda #"-"
+tx1	lda #'-'
 	.byte $2c
-tx10	lda #":"
+tx10	lda #':'
 	jsr prtdash
 	ldy #$06
 	jsr sendcode ;send "ack" code
@@ -323,10 +329,10 @@ tx6	lda (pntb),y  ;transmit alternate buffer
 	cpy bufcount
 	bne tx6
 	jsr clrchn
-	lda #$00
+	lda #0
 	rts
 ;
-tx4	lda #"*"
+tx4	lda #'*'
 	jsr prtdash
 	ldy #$06
 	jsr sendcode ;send "ack" signal
@@ -348,11 +354,11 @@ tx8	lda #$03
 	sta bufcount
 tx9	ldy #$09
 	jsr sendcode ;send "s/b" signal
-	lda #$00000
+	lda #0
 	jsr accept ;just wait
 	dec bufcount
 	bne tx9
-	lda #$01
+	lda #1
 	rts
 ;
 ;receive a block from the modem
@@ -364,8 +370,9 @@ tx9	ldy #$09
 ;  bit 2 - insufficient characters received
 ;  bit 3 - "ack" signal received
 ;
-recmodem	ldy #$00      ;start index
-rcm5	lda #$00      ;clear timers
+recmodem
+	ldy #0      ;start index
+rcm5	lda #0      ;clear timers
 	sta timer1
 	sta timer1+1
 rcm1	jsr exit
@@ -380,13 +387,13 @@ rcm1	jsr exit
 	cpy #$02  ;on the 3rd chr
 	bne rcm3  ;no, don't look at chrs yet
 	lda codebuf ;check for a "ack" signal
-	cmp #"A"
+	cmp #'A'
 	bne rcm3
 	lda codebuf+1
-	cmp #"C"
+	cmp #'C'
 	bne rcm3
 	lda codebuf+2
-	cmp #"K"
+	cmp #'K'
 	beq rcm4  ;"ack" found
 rcm3	iny           ;inc index
 	cpy bufcount ;buffered all chrs
@@ -413,7 +420,7 @@ rcm6	lda timer1
 	bne rcm1  ;no, get next chr
 	lda #%0010 ;yes, set bit 1
 	sta stat
-	cpy #$00
+	cpy #0
 	beq rcm9
 	lda #%0100 ;but if chrs received, set bit 2
 	sta stat
@@ -426,17 +433,17 @@ rcm7	lda #%1000    ;"ack" found, set bit 2
 ;create dummy block for transmission
 ;
 dummyblk	lda bufpnt
-	eor #$01
+	eor #1
 	sta bufpnt
 	jsr thisbuf ;read block into "this" buffer
 	ldy #numpos ;block number
 	lda blocknum
 	clc
-	adc #$01
+	adc #1
 	sta (pntb),y ;set block number low part
 	iny
 	lda blocknum+1
-	adc #$00
+	adc #0
 	sta (pntb),y ;set block number high part
 	jsr disablexfer
 	ldx #LFN_FILE
@@ -491,7 +498,7 @@ thisbuf	lda #<buffer
 altbuf	lda #<buffer
 	sta pntb
 	lda bufpnt
-	eor #$01
+	eor #1
 	clc
 	adc #>buffer
 	sta pntb+1
@@ -499,7 +506,8 @@ altbuf	lda #<buffer
 ;
 ;calculate checksum
 ;
-checksum	lda #$00
+checksum
+	lda #0
 	sta check1
 	sta check1+1
 	sta check1+2
@@ -521,7 +529,7 @@ cks2	lda check1+2
 	iny
 	cpy bufcount
 	bne cks1
-	ldy #$00
+	ldy #0
 	lda check1
 	sta (pntb),y
 	iny
@@ -537,11 +545,12 @@ cks2	lda check1+2
 ;
 ;transmit a program
 ;
-transmit	lda #$00
+transmit
+	lda #0
 	sta endflag
 	sta skpdelay
 	sta dontdash
-	lda #$01
+	lda #1
 	sta bufpnt
 	lda #$ff
 	sta blocknum
@@ -552,21 +561,21 @@ transmit	lda #$00
 	sta (pntb),y
 	jsr thisbuf
 	ldy #numpos ;block number
-	lda #$00
+	lda #0
 	sta (pntb),y
 	iny
 	sta (pntb),y
 trm1	jsr tranhand
 	beq trm1
-rec3	lda #$00
+rec3	lda #0
 	sta lastch
 	rts
 ;
 ;receive a file
 ;
-receive	lda #$01
+receive	lda #1
 	sta blocknum
-	lda #$00
+	lda #0
 	sta blocknum+1
 	sta endflag
 	sta bufpnt
@@ -575,7 +584,7 @@ receive	lda #$01
 	sta skpdelay
 	lda #datapos
 	sta buffer+sizepos ;block size
-	lda #$00
+	lda #0
 rec1	jsr rechand
 	lda endflag
 	bne rec3
@@ -598,18 +607,18 @@ rec6	lda buffer,y
 rec7	lda buffer+numpos+1 ;block number high order part
 	cmp #$ff
 	bne rec4
-	lda #$01
+	lda #1
 	sta endflag
-	lda #"*"
+	lda #'*'
 	.byte $2c
-rec4	lda #"-"
+rec4	lda #'-'
 	jsr goobad
 	jsr reset
-	lda #$00
+	lda #0
 	jmp rec1
 ;
 rec2	jsr clrchn
-	lda #":"
+	lda #':'
 	jsr goobad
 	lda recsize
 	sta buffer+sizepos
@@ -642,15 +651,15 @@ match	lda buffer
 	lda buffer+3
 	cmp check+3
 	bne mtc1
-	lda #$00
+	lda #0
 	rts
 ;
-mtc1	lda #$01
+mtc1	lda #1
 	rts
 ;
 ;receive file type block
 ;
-rectype	lda #$00
+rectype	lda #0
 	sta blocknum
 	sta blocknum+1
 	sta endflag
@@ -658,9 +667,9 @@ rectype	lda #$00
 	sta skpdelay
 	lda #datapos
 	clc
-	adc #$01
+	adc #1
 	sta buffer+sizepos
-	lda #$00
+	lda #0
 rct3	jsr rechand
 	lda endflag
 	bne rct1
@@ -668,26 +677,26 @@ rct3	jsr rechand
 	bne rct2
 	lda buffer+datapos
 	sta filetype
-	lda #$01
+	lda #1
 	sta endflag
-	lda #$00
+	lda #0
 	jmp rct3
 ;
 rct2	lda recsize
 	sta buffer+sizepos
-	lda #$03
+	lda #3
 	jmp rct3
 ;
-rct1	lda #$00
+rct1	lda #0
 	sta lastch
 	rts
 ;
 ;transmit file type
 ;
-trantype	lda #$00
+trantype	lda #0
 	sta endflag
 	sta skpdelay
-	lda #$01
+	lda #1
 	sta bufpnt
 	sta dontdash
 	lda #255
@@ -697,7 +706,7 @@ trantype	lda #$00
 	ldy #sizepos ;block size
 	lda #datapos
 	clc
-	adc #$01
+	adc #1
 	sta (pntb),y
 	jsr thisbuf
 	ldy #numpos ;block number
@@ -708,11 +717,11 @@ trantype	lda #$00
 	ldy #datapos
 	lda filetype
 	sta (pntb),y
-	lda #$01
+	lda #1
 	sta specmode
 trf1	jsr tranhand
 	beq trf1
-	lda #$00
+	lda #0
 	sta lastch
 	rts
 ;
@@ -722,15 +731,15 @@ dodelay	inc skpdelay
 	lda skpdelay
 	cmp #$03
 	bcc dod1
-	lda #$00
+	lda #0
 	sta skpdelay
 dod1
 	;lda delay;delay is always forced on no matter what now
 	;beq dod2
 	;bne dod3
 	nop
-dod2	ldx #$00
-lp1	ldy #$00
+dod2	ldx #0
+lp1	ldy #0
 lp2	iny
 	bne lp2
 	inx
@@ -762,7 +771,7 @@ reset
 terminal	rts
 ;
 ;----------------------------------------------------------------------
-cd1b	ldx #$00
+cd1b	ldx #0
 pnt112	lda buffer,x
 	cmp #$0d
 	bne pnt113
@@ -782,7 +791,7 @@ exit2	pla
 	tsx
 	cpx stack
 	bne exit2
-exit1	lda #$01
+exit1	lda #1
 	sta lastch
 	rts
 ;----------------------------------------------------------------------

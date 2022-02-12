@@ -1,11 +1,19 @@
+; CCGMS Terminal
 ;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Screen to Buffer
+;
+
 stbrvs	.byte 0
 stbcol	.byte 0
 stbxps	.byte 0
 stbyps	.byte 0
 stbmax	.byte 0
 stbmay	.byte 0
-cf7	;screen to buffer
+
+cf7_screen_to_buffer:
 	lda #0
 	sta 198
 	lda #$f1
@@ -38,7 +46,7 @@ scnbf2	jsr finscp
 	bpl scnbf1
 	jmp scnbr4
 scnbf3
-	lda #$0d
+	lda #CR
 	jsr buffer_put
 	lda #CLR
 	jsr buffer_put
@@ -133,7 +141,7 @@ scnbrt
 	lda stbxps
 	cmp #40
 	bcs scnbr2
-	lda #$0d
+	lda #CR
 	jsr buffer_put
 	lda #0
 	sta stbrvs

@@ -1,133 +1,140 @@
-;CARRIER / BUSY / NO ANSWER DETECT
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Hayes CARRIER/BUSY/NO ANSWER detection
+;
 
 bustemp	.byte 0
 
+; [XXX this is all very verbose]
 haybus
 	ldy #0
 	sty bustemp
 haybus2
-	jsr newgethayes
+	jsr gethayes
 haybus3
 	jsr puthayes
 	cpy #$ff
-jeq	hayout;get out of routine. send data to terminal, and set connect!
-	jsr newgethayes
-	cmp #$62  ;b
-	bne haynocarr;move to check for no carrier
+	jeq hayout	; get out of routine. send data to terminal, and set connect!
+	jsr gethayes
+	cmp #'B'+$20
+	bne haynocarr	; move to check for no carrier
 	jsr puthayes
-	jsr newgethayes
-	cmp #$75  ;u
+	jsr gethayes
+	cmp #'U'+$20
 	bne haybus3
 	jsr puthayes
-	jsr newgethayes
-	cmp #$73  ;s
+	jsr gethayes
+	cmp #'S'+$20
 	bne haybus3
 	jsr puthayes
-	jsr newgethayes
-	cmp #$79  ;y
+	jsr gethayes
+	cmp #'Y'+$20
 	bne haybus3
 	ldy #0
 	sty bustemp
 	jmp haybak ; busy!
 ;
 haynocarr
-	cmp #$6e  ;n
+	cmp #'N'+$20
 	bne haybusand;move to next char
 	jsr puthayes
-	jsr newgethayes
-	cmp #$6f  ;o
+	jsr gethayes
+	cmp #'O'+$20
 	bne haybus3
 	jsr puthayes
-	jsr newgethayes
-	cmp #$20  ;' '
+	jsr gethayes
+	cmp #' '
 	bne haybus3
 	jsr puthayes
-	jsr newgethayes
-	cmp #$63  ;c
-jne	haynoanswer
+	jsr gethayes
+	cmp #'C'+$20
+	jne haynoanswer
 	jsr puthayes
-	jsr newgethayes
-	cmp #$61  ;a
+	jsr gethayes
+	cmp #'A'+$20
 	bne haybus3
 	jsr puthayes
-	jsr newgethayes
-	cmp #$72  ;r
+	jsr gethayes
+	cmp #'R'+$20
 	bne haybus3
 	jsr puthayes
-	jsr newgethayes
-	cmp #$72  ;r
+	jsr gethayes
+	cmp #'R'+$20
 	bne haybus3
 	ldy #0
 	sty bustemp
 	jmp haynan ; no carrier!
 ;
 haybusand
-	cmp #$42  ;b
+	cmp #'B'
 	bne haynocarrand;move to check for no carrier
 	jsr puthayes
-	jsr newgethayes
-	cmp #$55  ;u
+	jsr gethayes
+	cmp #'U'
 	beq :+
 haybus3b:
 	jmp haybus3
 :
 	jsr puthayes
-	jsr newgethayes
-	cmp #$53  ;s
+	jsr gethayes
+	cmp #'S'
 	bne haybus3b
 	jsr puthayes
-	jsr newgethayes
-	cmp #$59  ;y
+	jsr gethayes
+	cmp #'Y'
 	bne haybus3b
 	ldy #0
 	sty bustemp
 	jmp haybak ; busy!
 ;
 haynocarrand
-	cmp #$4e  ;n
+	cmp #'N'
 	bne haybus3b
 	jsr puthayes
-	jsr newgethayes
-	cmp #$4f  ;o
+	jsr gethayes
+	cmp #'O'
 	bne haybus3b
 	jsr puthayes
-	jsr newgethayes
-	cmp #$20  ;' '
+	jsr gethayes
+	cmp #' '
 	bne haybus3b
 	jsr puthayes
-	jsr newgethayes
-	cmp #$43  ;c
+	jsr gethayes
+	cmp #'C'
 	bne haynoanswerand
 	jsr puthayes
-	jsr newgethayes
-	cmp #$41  ;a
+	jsr gethayes
+	cmp #'A'
 	bne haybus3b
 	jsr puthayes
-	jsr newgethayes
-	cmp #$52  ;r
+	jsr gethayes
+	cmp #'R'
 	bne haybus3b
 	jsr puthayes
-	jsr newgethayes
-	cmp #$52  ;r
+	jsr gethayes
+	cmp #'R'
 	bne haybus3b
 	ldy #0
 	sty bustemp
 	jmp haynan ; no carrier!
 
 haynoanswerand
-	cmp #$41  ;a
+	cmp #'A'
 	bne haybus3b
 	jsr puthayes
-	jsr newgethayes
-	cmp #$4e  ;n
+	jsr gethayes
+	cmp #'N'
 	bne haybus3b
 	jsr puthayes
-	jsr newgethayes
-	cmp #$53  ;s
+	jsr gethayes
+	cmp #'S'
 	bne haybus3b
 	jsr puthayes
-	jsr newgethayes
-	cmp #$57  ;w
+	jsr gethayes
+	cmp #'W'
 	beq :+
 haybus3c
 	jmp haybus3
@@ -137,50 +144,50 @@ haybus3c
 	jmp haynan ; no carrier!
 
 haynoanswer
-	cmp #$61  ;a
+	cmp #'A'+$20
 	bne haybus3c
 	jsr puthayes
-	jsr newgethayes
-	cmp #$6e  ;n
+	jsr gethayes
+	cmp #'N'+$20
 	bne haybus3c
 	jsr puthayes
-	jsr newgethayes
-	cmp #$73  ;s
+	jsr gethayes
+	cmp #'S'+$20
 	bne haybus3c
 	jsr puthayes
-	jsr newgethayes
-	cmp #$77  ;w
+	jsr gethayes
+	cmp #'W'+$20
 	bne haybus3c
 	ldy #0
 	sty bustemp
-	jmp haynan ; no carrier!
+	jmp haynan	; no carrier!
 
 ;
 hayout
 	sty bustemp
 	jmp haycon
-;
-newgethayes
-	inc waittemp;timeout for no character loop so
-	ldx waittemp;so it doesn't lock up
-	cpx #$90;maybe change for various baud rates
-	beq newget2
+
+;----------------------------------------------------------------------
+gethayes:
+	inc waittemp	; timeout for no character loop so
+	ldx waittemp	; so it doesn't lock up
+	cpx #144	; maybe change for various baud rates
+	beq :+
 	ldx #LFN_MODEM
 	jsr chkin
 	jsr getin
-	beq newgethayes
-
-newget2
-	ldx #$00
+	beq gethayes
+:	ldx #0
 	stx waittemp
 	rts
 
-puthayes
+;----------------------------------------------------------------------
+puthayes:
 	ldy bustemp
 	iny
 	sty bustemp
 	sta tempbuf,y
 	rts
 
-waittemp
-	.byte $00
+waittemp:
+	.byte 0

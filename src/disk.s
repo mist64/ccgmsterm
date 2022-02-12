@@ -1,12 +1,20 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Disk
+;
+
 ;
 ;disk output routine
-dskout
+dskout:
 	jsr clrchn
 	jsr cursor_show
-	lda bufflg  ;bufflg 00=disk
-	bpl dskmo   ;$40=disk w. delay
-	jsr memget  ;$80=memory get
-	bit bufflg  ;$ff=mem w. delay
+	lda bufflg	; bufflg 00=disk
+	bpl dskmo	; $40=disk w. delay
+	jsr get_memory_byte;$80=memory get
+	bit bufflg	; $ff=mem w. delay
 	bvs timdel
 	ldx #$ff
 mrloop
@@ -53,9 +61,9 @@ dskmo1
 :	jsr chrout
 dxmmget;this timeout failsafe makes sure the byte is received back from modem
 	;before accessing disk for another byte otherwise we can have
-	   ;all sorts of nmi related issues.... this solves everything.
-	   ;uses the 'fake' rtc / jiffy counter function / same as xmmget...
-	lda #70;timeout failsafe
+	;all sorts of nmi related issues.... this solves everything.
+	;uses the 'fake' rtc / jiffy counter function / same as xmmget...
+	lda #70		; timeout failsafe
 	sta xmodel
 	lda #0
 	sta rtca1
@@ -72,7 +80,7 @@ dxmmgt2
 	bcc dxmogt1
 chkkey
 	jsr keyprs
-jeq	dskout
+	jeq dskout
 	cmp #3;run stop
 	beq dskex2
 	jsr enablexfer

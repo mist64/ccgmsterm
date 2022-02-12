@@ -1,3 +1,11 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Configuration editor
+;
+
 ;----------------------------------------------------------------------
 ; change terminal params/dial
 handle_f7_config:
@@ -196,11 +204,11 @@ f7chgk
 ; V: view message
 	cmp #'V'
 	bne @no12
-	jsr viewmg
+	jsr show_instructions
 	jmp handle_f7_config
 @no12:
 
-	cmp #$0d
+	cmp #CR
 	jne f7chos
 
 ; return to terminal
@@ -226,11 +234,11 @@ op1txt:
 	.byte "hALF"
 
 op2txt:
-	.byte 'uSER pORT 300-2400'
-	.byte 'up9600 / ez232    '
-	.byte 'sWIFT / tURBO de  '
-	.byte 'sWIFT / tURBO df  '
-	.byte 'sWIFT / tURBO d7  '
+	.byte "uSER pORT 300-2400"
+	.byte "up9600 / ez232    "
+	.byte "sWIFT / tURBO de  "
+	.byte "sWIFT / tURBO df  "
+	.byte "sWIFT / tURBO d7  "
 
 op6txt:
 	.byte "sTANDARD"
@@ -254,7 +262,7 @@ op5txt:
 	.byte "dISK"
 
 prmtab:
-	lda #$0d
+	lda #CR
 	jsr chrout
 	jsr chrout
 	ldx #17
@@ -358,37 +366,36 @@ f7thob:
 	.byte 2
 
 txt_settings_menu:
-	.byte CLR,16,14,WHITE
+	.byte CLR,16,LOCASE,WHITE
 	.byte "   dIALER/pARAMETERS",CR
-	.byte BLUE,"   ",163,163,163,163,163,163,163,163,163,163,163,163,163,163
-	.byte 163,163,163,CR,WHITE,16
-f7mtx1:
-	.byte WHITE; overwritten by theme
-	.byte 32,2,"AUTO-dIALER/pHONEBOOK",CR,CR
-	.byte 32,2,"BAUD rATE   -",CR,CR
-	.byte 32,2,"DUPLEX      -",CR,CR
-	.byte 32,2,"MODEM tYPE  -",CR,CR
-	.byte 32,2,"F"
-f7mtxpre:
-	.byte ' '; overwritten by theme
+	.byte BLUE,"   "
+	.res 17,$a3	; $A3: UPPER ONE EIGHTH BLOCK ('▔')
+	.byte CR,WHITE,16
+tcol27a	.byte WHITE
+	.byte " ",HILITE,"AUTO-dIALER/pHONEBOOK",CR,CR
+	.byte " ",HILITE,"BAUD rATE   -",CR,CR
+	.byte " ",HILITE,"DUPLEX      -",CR,CR
+	.byte " ",HILITE,"MODEM tYPE  -",CR,CR
+	.byte " ",HILITE,"F"
+tcol27b	.byte " "
 	.byte "IRMWARE    -",CR,CR
-	.byte 32,2,"PROTOCOL    -",CR,CR
-	.byte 32,2,"THEME       -",CR,CR,0
+	.byte " ",HILITE,"PROTOCOL    -",CR,CR
+	.byte " ",HILITE,"THEME       -",CR,CR,0
 
 txt_edit_macros:
-	.byte 32,2,"EDIT mACROS",CR,CR,0
+	.byte " ",HILITE,"EDIT mACROS",CR,CR,0
 txt_edit_macros_cfg_device:
-	.byte 32,2,"EDIT mACROS  ",32,2,"CFG dEVICE -",CR,CR,0
+	.byte " ",HILITE,"EDIT mACROS   ",HILITE,"CFG dEVICE -",CR,CR,0
 
 txt_load_save_config:
-	.byte 32,2,"LOAD/",2,"SAVE pHONE bOOK AND cONFIG.",CR,CR
-	.byte 32,2,"VIEW aUTHOR'S mESSAGE",CR,CR,0
+	.byte " ",HILITE,"LOAD/",HILITE,"SAVE pHONE bOOK AND cONFIG.",CR,CR
+	.byte " ",HILITE,"VIEW aUTHOR'S mESSAGE",CR,CR,0
 
 txt_press_return_to_abort:
-	.byte 3,22,0,WHITE,cp,"RESS <",YELLOW,18,"r",e,t,u,cr,n,146,WHITE,"> TO ABORT.",CR,0
+	.byte SETCSR,22,0,WHITE,cp,"RESS <",YELLOW,RVSON,"r",e,t,u,cr,n,RVSOFF,WHITE,"> TO ABORT.",CR,0
 
 txt_return:
-	.byte 3,22,7,CYAN,"return",CR,0
+	.byte SETCSR,22,7,CYAN,"return",CR,0
 
 bpsspd:
 	.word 300

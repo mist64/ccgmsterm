@@ -1,4 +1,13 @@
-	.feature labels_without_colons, loose_char_term, loose_string_term
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Main .s file
+;
+
+	.feature labels_without_colons
+	.feature string_escapes
 	.macpack longbranch
 
 	.include "declare.s"
@@ -9,15 +18,16 @@
 
 .segment "S0801"
 
-	.word $080d
+	.word entry
 	.word 10
-	.byte $9e,'4096'
+	.byte $9e,"4096"
 	.word 0
 	.byte 0
 
+entry:
 	jmp start
 
-.segment "S0812"  ;pxxxxx
+.segment "S0812"
 
 	.include "punter.s"
 	.include "misc2.s"
@@ -52,9 +62,9 @@ easyflash_support:
 	.include "phonebook.s"
 	.include "hayes.s"
 	.include "config2.s"
-	.include "viewmg.s"
+	.include "showinstr.s"
 	.include "macro.s"
-	.include "params.s"
+	.include "configedit.s"
 	.include "rs232_userport.s"
 	.include "rs232_swiftlink.s"
 	.include "rs232_up9600.s"
@@ -69,6 +79,6 @@ easyflash_support:
 
 .segment "S5C00"
 
-	.include "credits.s"
+	.include "instructions.s"
 
 endprg	.byte 0

@@ -1,91 +1,103 @@
-;----------------------------------------------------------------------
-txt_multixfer:
-	.byte CR,WHITE,'mULTI-TRANSFER - pUNTER ONLY.',CR,0
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Punter Multi-Transfer
+;
 
 ;----------------------------------------------------------------------
-cf1	;multi-send
-	jsr cosave
+txt_multixfer:
+	.byte CR,WHITE,"mULTI-TRANSFER - pUNTER ONLY.",CR,0
+
+;----------------------------------------------------------------------
+cf1_multi_send:
+	jsr text_color_save
 	lda protoc
 	beq mulsav	; PROTOCOL_PUNTER
-mulnop
+mulnop:
 	lda #<txt_multixfer
 	ldy #>txt_multixfer
 	jsr outstr
 	jmp ui_abort
-mulsav
+
+mulsav:
 	jsr supercpu_off
 	lda #CLR
 	jsr chrout
-;lda buffer_ptr+1;old references comparing buffer area and making sure theres enough
-;cmp #>mulfil;room for punter files to be stored, but since we're now
-;bcc mulsok;reserving #$ff space for punter, its not neccessary
-;lda buffer_ptr
-;cmp #<mulfil
-;bcc mulsok
-;lda #<mlswrn
-;ldy #>mlswrn
-;jsr outstr
-;jmp ui_abort
-mulsok	lda #<msntxt
-	ldy #>msntxt
+
+;	lda buffer_ptr+1; old references comparing buffer area and making sure theres enough
+;	cmp #>mulfil	; room for punter files to be stored, but since we're now
+;	bcc mulsok	; reserving #$ff space for punter, its not neccessary
+;	lda buffer_ptr
+;	cmp #<mulfil
+;	bcc mulsok
+;	lda #<mlswrn
+;	ldy #>mlswrn
+;	jsr outstr
+;	jmp ui_abort
+;mulsok
+
+	lda #<txt_multisend_select
+	ldy #>txt_multisend_select
 	jsr outstr
-	lda #<moptxt
-	ldy #>moptxt
+	lda #<txt_yesnoquit
+	ldy #>txt_yesnoquit
 	jsr outstr
-	jsr mltdir;grab files from directory listing
-	lda mulcnt;some files to send?
-	bne mlss1;yes
-mlss0	jmp mlssab;nope, we are done
+	jsr select_files_from_disk
+	lda mulcnt	; some files to send?
+	bne mlss1	; yes
+mlss0	jmp mlssab	; nope, we are done
 mlss1
 	lda mulfln
-	sta mulcnt;how many files to send. decrement until none left
+	sta mulcnt	; how many files to send. decrement until none left
 	beq mlss0
 	lda #0
 	sta mulfln
 	lda #<mulfil
-	sta $fd
+	sta tmpfd
 	lda #>mulfil
-	sta $fe
+	sta tmpfd+1
 mlslop
 	ldy #19
-	lda ($fd),y
+	lda (tmpfd),y
 	bne mlssen
 mlsinc
-	lda $fd
+	lda tmpfd
 	clc
 	adc #20
-	sta $fd
-	lda $fe
+	sta tmpfd
+	lda tmpfd+1
 	adc #0
-	sta $fe
-	lda $fe
+	sta tmpfd+1
+	lda tmpfd+1
 	cmp #>endmulfil
 	bcc mlslop
 	jmp mulab2
 mlssen
 	ldy #17
-mlss2	lda ($fd),y
-	cmp #160
+mlss2	lda (tmpfd),y
+	cmp #$a0
 	bne mlss3
 	dey
-	cpy #01
+	cpy #1
 	bne mlss2
 	jmp mulab2
 mlss3	dey
 	sty max
 	iny
-mlss4	lda ($fd),y
+mlss4	lda (tmpfd),y
 	sta inpbuf-2,y
 	dey
-	cpy #01
+	cpy #1
 	bne mlss4
 	ldx max
 	lda #','
 	sta inpbuf,x
 	ldy #18
-	lda ($fd),y
-	and #07
-	cmp #04
+	lda (tmpfd),y
+	and #7
+	cmp #4
 	bne mlsg
 	jmp mulabt
 mlsg
@@ -104,10 +116,10 @@ mlsgo1	lda inpbuf,y
 	jsr chrout
 	lda inpbuf+1,y
 	jsr chrout
-	lda #$0d
+	lda #CR
 	jsr chrout
 	jsr clrchn
-	jsr uplmen;disk setup
+	jsr uplmen	; disk setup
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	beq mulab2
@@ -117,7 +129,7 @@ mlsgo1	lda inpbuf,y
 	lda mulfln
 	cmp mulcnt
 	beq mlss5
-	ldx #00
+	ldx #0
 	stx JIFFIES
 mlstim	lda JIFFIES
 	cmp #110
@@ -126,14 +138,14 @@ mlstim	lda JIFFIES
 mlss5
 	jsr mlshdr
 	ldx #16
-	lda #04   ;ctrl-d
+	lda #4		; ctrl-d
 mlss6	jsr chrout
 	dex
 	bne mlss6
-	lda #$0d
+	lda #CR
 	jsr chrout
 mlssab	jsr clrchn
-	jsr coback
+	jsr text_color_restore
 	jsr gong
 	jmp term_entry
 mlshdr
@@ -142,7 +154,7 @@ mlshdr
 	ldx #LFN_MODEM
 	jsr chkout
 	ldx #16
-	lda #09   ;ctrl-i
+	lda #9		; ctrl-i
 mlscri	jsr chrout
 	dex
 	bne mlscri
@@ -151,9 +163,9 @@ mulabt
 	jsr gong
 mulab2
 	jsr clrchn
-	lda #$0d
+	lda #CR
 	jsr chrout
-	lda #02
+	lda #2
 	jsr close
 	lda modem_type
 	cmp #MODEM_TYPE_SWIFTLINK_DE
@@ -161,21 +173,22 @@ mulab2
 mulab3
 	jsr enablexfer
 	jmp term_entry
-;
-cf3	;multi-receive
+
+;----------------------------------------------------------------------
+cf3_multi_receive:
 	jsr disablexfer
-	jsr cosave
+	jsr text_color_save
 	lda protoc
 	beq mulrav	; PROTOCOL_PUNTER
 	jmp mulnop
 mulrav
 	jsr supercpu_off
-	lda #$01
+	lda #1
 	sta mulcnt
 	lda #CLR
 	jsr chrout
-	lda #<mrctxt
-	ldy #>mrctxt
+	lda #<txt_multirecv
+	ldy #>txt_multirecv
 	jsr outstr
 mrllgc
 	ldx SHFLAG
@@ -191,7 +204,7 @@ mlrwat
 	ldx #LFN_MODEM
 	jsr chkin
 	jsr getin
-	cmp #09
+	cmp #9		; ctrl-i
 	bne mlrwat
 mlrwt2
 	ldx SHFLAG
@@ -200,7 +213,7 @@ mlrwt2
 	jsr getin
 	cmp #0
 	beq mlrwt2
-	cmp #9    ;ctrl-i
+	cmp #9		; ctrl-i
 	beq mlrwt2
 	bne mlrfl1
 mlrflp
@@ -213,7 +226,7 @@ mlrflp
 	cmp #0
 	beq mlrflp
 mlrfl1
-	cmp #$0d
+	cmp #CR
 	beq mlrfl2
 	ldy max
 	sta inpbuf,y
@@ -223,7 +236,7 @@ mlrfl1
 	bcc mlrflp
 mlrfl2
 	ldy max
-	cpy #03
+	cpy #3
 	bcc mlfext
 	dey
 	dey
@@ -232,7 +245,7 @@ mlrfl2
 	bne mlfext
 	sty max
 	lda inpbuf
-	cmp #04   ;ctrl-d
+	cmp #4		; ctrl-d
 	bne mlffl2
 mlfext	jmp mulabt
 mlffl2
@@ -240,40 +253,45 @@ mlffl2
 	lda inpbuf
 	beq mlrnew
 	bne mlfext
-;
-goobad
-	sta 1844
-	cmp #'/'
-	beq goober
-	cmp #'*'
-	bne goob2
-goober	rts
-goob2	cmp #':'
-	beq goob3
+
+;----------------------------------------------------------------------
+; count bad blocks
+goobad:
+	sta $0400+20*40+20
+	cmp #'/'	; duplicate block?
+	beq @1		; ignore in statistics
+	cmp #'*'	; good?
+	bne @2		; no
+@1:	rts
+@2:	cmp #'9'+1
+	beq @3
 	ldx #3
-	bne goob4
-goob3	ldx #25
-goob4	inc 1837,x
-	lda 1837,x
-	cmp #':'
-	bcc goober
+	bne @4
+@3:	ldx #25
+@4:	inc $0400+20*40+38-25,x
+	lda $0400+20*40+38-25,x
+	cmp #'9'+1
+	bcc @1
 	lda #'0'
-	sta 1837,x
+	sta $0400+20*40+38-25,x
 	dex
-	bpl goob4
+	bpl @4
 	rts
 
 ;----------------------------------------------------------------------
-msntxt	.byte CR,14,WHITE,18,32,'mULTI-sEND ',146,32,45,32
-	.byte 'sELECT FILES:',CR,CR,0
-moptxt	.byte LTBLUE,' yES/nO/qUIT/sKIP8/dONE/'
-	.byte 'aLL',CR,0
-mrctxt	.byte CR,14,WHITE,18,32,'mULTI-rECEIVE ',CR,CR
-	.byte CYAN,'wAITING FOR HEADER...c= ABORTS.',CR,0
+txt_multisend_select:
+	.byte CR,LOCASE,WHITE,RVSON," mULTI-sEND ",RVSOFF," - "
+	.byte "sELECT FILES:",CR,CR,0
+
+txt_yesnoquit:
+	.byte LTBLUE," yES/nO/qUIT/sKIP8/dONE/aLL",CR,0
+
+txt_multirecv:
+	.byte CR,LOCASE,WHITE,RVSON," mULTI-rECEIVE ",CR,CR
+	.byte CYAN,"wAITING FOR HEADER...c= ABORTS.",CR,0
 
 ;----------------------------------------------------------------------
-;multi - choose files
-mltdir
+select_files_from_disk:
 	jsr disablexfer
 	lda device_disk
 	jsr listen
@@ -289,15 +307,15 @@ mltdir
 	jsr ciout
 	jsr unlsn
 	lda #<mulfil
-	sta $fd
+	sta tmpfd
 	lda #>mulfil
-	sta $fe
+	sta tmpfd+1
 	lda device_disk
 	jsr talk
 	lda #$60
 	jsr tksa
 	ldy #0
-	sty mulcnt ;count entries
+	sty mulcnt	; count entries
 	sty mulfln
 	sty mlsall
 	sty mulskp
@@ -306,22 +324,22 @@ mdrlp0
 	jsr mgetch
 	dey
 	bpl mdrlp0
-	ldy #$01
+	ldy #1
 mdrlp1	jsr mgetch
 	dey
 	bpl mdrlp1
 	ldy #0
 	jsr mgetch
-	sta ($fd),y
-	sta $07e8,y
+	sta (tmpfd),y
+	sta tmp07e8,y
 	iny
 	jsr mgetch
-	sta ($fd),y
-	sta $07e8,y
+	sta (tmpfd),y
+	sta tmp07e8,y
 	lda #0
-	sta $06
+	sta tmp06
 mdrlp2	jsr mgetch
-	inc $06
+	inc tmp06
 	cmp #'"'
 	bne mdrlp2
 mdrlpf
@@ -331,34 +349,34 @@ mdrlpf
 	jsr mgetch
 	cmp #'"'
 	bne drlpnq
-	lda #160
+	lda #$a0
 drlpnq
-	sta ($fd),y
-	sta $07e8,y
+	sta (tmpfd),y
+	sta tmp07e8,y
 	jmp mdrlpf
 drlpfn
 	dey
-	cpy #01
+	cpy #1
 	beq drlptc
-	lda $07e8,y
+	lda tmp07e8,y
 	cmp #' '
 	bne drlptc
-	lda #160
-	sta ($fd),y
-	sta $07e8,y
+	lda #$a0
+	sta (tmpfd),y
+	sta tmp07e8,y
 	bne drlpfn
 drlptc
 	jsr mgetch
-	lda #00
-	sta $05
+	lda #0
+	sta tmp05
 	jsr mgetch
 	cmp #'*'
 	bne drlpsp
 	lda #$80
-	sta $05
+	sta tmp05
 drlpsp
 	jsr mgetch
-	ldx #04
+	ldx #4
 drlptl
 	cmp drtype,x
 	beq drlptp
@@ -366,23 +384,23 @@ drlptl
 	bne drlptl
 drlptp
 	txa
-	ora $05
-	sta $05
+	ora tmp05
+	sta tmp05
 	jsr mgetch
 	jsr mgetch
 	jsr mgetch
 	cmp #'<'
 	bne drlpte
-	lda $05
+	lda tmp05
 	ora #$40
-	sta $05
-drlpte	lda $05
+	sta tmp05
+drlpte	lda tmp05
 	ldy #18
-	sta ($fd),y
-	sta $07e8,y
-	lda #00
+	sta (tmpfd),y
+	sta tmp07e8,y
+	lda #0
 	iny
-	sta ($fd),y
+	sta (tmpfd),y
 dirgrb
 	jsr mgetch
 	bne dirgrb
@@ -398,12 +416,12 @@ mulnen
 	jsr talk
 	lda #$60
 	jsr tksa
-	ldy #01
+	ldy #1
 	jmp mdrlp1
 mgetch	jsr acptr
 	ldx status
 	bne mdrlp3
-	cmp #00
+	cmp #0
 	rts
 mdrlp3	pla
 	pla
@@ -416,53 +434,61 @@ mdrext	lda device_disk
 	jsr clrchn
 	jsr ercopn ; possible fix for multi upload crash on up9600 - 2018 fix
 	jmp enablexfer
-mdrret
+
+;----------------------------------------------------------------------
+mdrret:
 	ldy #0
 drpol0
 	sty tmp02
-	lda drform,y
+	lda directory_format,y
 	cmp #2		; ctrl-b
-	bne drpol1
-	ldy #00
-	lda $07e8,y
+	bne @no1
+
+; print blocks
+	ldy #0
+	lda tmp07e8,y
 	tax
 	iny
-	lda $07e8,y
-	jsr $bdcd
-	ldy $06
-drprbl
-	lda #' '
+	lda tmp07e8,y
+	jsr $bdcd	; print 16 bit decimal
+	ldy tmp06
+:	lda #' '
 	jsr chrout
 	dey
-	bne drprbl
+	bne :-
 	beq drpol4
-drpol1
-	cmp #$0e  ;ctrl-n
-	bne drpol2
-	ldy #02
-drprnm
-	lda $07e8,y
+@no1:
+
+	cmp #$0e	; ctrl-n
+	bne @no2
+
+; print file name
+	ldy #2
+:	lda tmp07e8,y
 	jsr chrout
 	iny
-	cpy #18
-	bne drprnm
+	cpy #18		; print 16 chars
+	bne :-
 	beq drpol4
-drpol2
-	cmp #$06  ;ctrl-f
-	bne drpol3
+@no2:
+
+	cmp #$06	; ctrl-f
+	bne @no3
+
+; print file type
 	ldy #18
-	lda $07e8,y
+	lda tmp07e8,y
 	tay
-	and #07
+	and #7
 	tax
 	tya
 	and #$80
-	bne drprf1
+	bne @1
 	lda #' '
-	bne drprf2
-drprf1	lda #'*'
-drprf2	jsr chrout
-	lda drtype,x
+	bne @2
+@1:	lda #'*'	; splat
+@2:	jsr chrout
+	lda drtype,x	; file type
 	jsr chrout
 	lda drtyp2,x
 	jsr chrout
@@ -470,39 +496,41 @@ drprf2	jsr chrout
 	jsr chrout
 	tya
 	and #$40
-	bne drprf3
+	bne @3
 	lda #' '
-	bne drprf4
-drprf3	lda #'<'
-drprf4	jsr chrout
+	bne @4
+@3:	lda #'<'	; write protect
+@4:	jsr chrout
 	bne drpol4
-drpol3
+@no3:
+
 	jsr chrout
 drpol4
 	ldy tmp02
 	iny
-	cpy #14
-	beq drpol5
-	jmp drpol0
-drpol5
+	cpy #directory_format_end-directory_format
+	beq :+
+	jmp drpol0	; [XXX drpol0 is reachable]
+:
 	lda mlsall
 	beq mlsf0
 	lda #'Y'
 	jsr chrout
 	bne mlsyes
+
 mlsf0
 	lda #' '
 	jsr chrout
 	lda #CSR_LEFT
 	jsr chrout
 	jsr cursor_show
-mlswlp	jsr getin
-	beq mlswlp
-	and #127
+:	jsr getin
+	beq :-
+	and #$7f
 	cmp #'A'
-	bcc mlswlp
+	bcc :-
 	cmp #'['
-	bcs mlswlp
+	bcs :-
 	pha
 	jsr cursor_off
 	pla
@@ -511,29 +539,43 @@ mlswlp	jsr getin
 	lda #CSR_LEFT
 	jsr chrout
 	pla
-	cmp #'Y'
+
+	cmp #'Y'	; YES
 	bne mlsf1
+
+; yes
 mlsyes	ldy #19
 	inc mulfln
 	lda #$80
-	sta ($fd),y
+	sta (tmpfd),y
 	bne mlsnpr2
-mlsf1	cmp #'N'
+mlsf1
+
+	cmp #'N'	; NO
 	beq mlsnpr
-	cmp #'A'
+
+	cmp #'A'	; ALL
 	bne mlsf2
-	lda #01
+
+; all
+	lda #1
 	sta mlsall
 	bne mlsyes
 mlsf2
-	cmp #'D'
+
+	cmp #'D'	; DONE
 	bne mlsf3
-	lda #$0d
+
+; done
+	lda #CR
 	jsr chrout
 	jmp mdrlp3
 mlsf3
-	cmp #'Q'
+
+	cmp #'Q'	; QUIT
 	bne mlsf4
+
+; quit
 	jsr mdrext
 	pla
 	pla
@@ -542,29 +584,32 @@ mlsf3
 	jsr clrchn
 	jmp term_entry
 mlsf4
-	cmp #'S'
+
+	cmp #'S'	; SKIP8
 	bne mlsf0
-	lda #07
+
+; skip8
+	lda #7
 	sta mulskp
-mlsnpr	lda #$0d
+mlsnpr	lda #CR
 	jsr chrout
 drpol7
-	lda $fd
+	lda tmpfd
 	clc
+	adc #0		; [XXX ???]
+	sta tmpfd
+	lda tmpfd+1
 	adc #0
-	sta $fd
-	lda $fe
-	adc #0
-	sta $fe
+	sta tmpfd+1
 	rts
-mlsnpr2	lda #$0d
+mlsnpr2	lda #CR
 	jsr chrout
 drpol72
-	lda $fd
+	lda tmpfd
 	clc
 	adc #20
-	sta $fd
-	lda $fe
+	sta tmpfd
+	lda tmpfd+1
 	adc #0
-	sta $fe
+	sta tmpfd+1
 	rts

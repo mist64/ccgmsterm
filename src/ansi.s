@@ -1,4 +1,10 @@
-; ASCII/ANSI Support
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; ASCII/PETSCII conversion and ANSI control code emulation
+;
 
 ansi:
 	.byte 0
@@ -89,10 +95,10 @@ leftbracketansi		; ansi is on and got the left bracket
 	jmp cexit
 
 coloron
-	lda #$02
+	lda #2
 	sta ansi
 outtahere
-	lda #$00
+	lda #0
 	jmp cexit
 
 coloron2
@@ -105,7 +111,7 @@ ansionecolors
 	sec
 	sbc #48
 	tay
-	lda #$01
+	lda #1
 	sta ansi
 	lda ansi1colors,y
 	jmp cexit
@@ -121,13 +127,13 @@ ansizerocolors
 	jmp cexit
 
 semion
-	lda #$01
+	lda #1
 	sta ansi
-	lda #$00
+	lda #0
 	jmp cexit
 
 ansimend
-	lda #$00
+	lda #0
 	sta ansi
 	jmp cexit
 
@@ -148,7 +154,7 @@ satoca1
 	bne @0
 	lda #UNDERLINE
 	bne cexit
-@0:	and #127
+@0:	and #$7f
 	cmp #124
 	bcs cexit
 	cmp #96
@@ -202,7 +208,7 @@ petscii_to_ascii:
 	bne @3
 	lda #' '    ;shift to space
 	bne @exit
-@3:	and #127
+@3:	and #$7f
 	cmp #65
 	bcc cerrc
 	cmp #96    ;upper a...z
@@ -232,6 +238,7 @@ restch:
 	lda tempcl
 	sta (locat),y
 	rts
+
 ;----------------------------------------------------------------------
 ;output space, crsrleft
 spleft:

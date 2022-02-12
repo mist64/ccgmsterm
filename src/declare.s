@@ -1,3 +1,10 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; Global constants
+;
 
 ; CIA#2 I/O (user port RS232)
 cia2pb		= $dd01
@@ -40,6 +47,7 @@ ribuf	= $ce00 ; rs232 receive input buffer (we don't use an output buffer)
 inpbuf	= $cf00
 SCREENS_BASE	= $e000	; 4 saved screens
 
+tmp07e8	= $07e8	; temp. filename storage for file selection from directory
 mulskp	= $07fc
 mlsall	= $07fd
 mulfln	= $07fe
@@ -86,7 +94,9 @@ max	= $02
 tmp03	= $03
 tmp04	= $04
 tempch	= $05
+tmp05	= $05
 tempcl	= $06
+tmp06	= $06
 begpos	= $07
 bufflg	= $0b
 buffl2	= $0c
@@ -98,6 +108,7 @@ tmp9f	= $9f
 endpos	= $ac
 buffst	= $b2
 buffer_ptr	= $b0 ; 2 bytes
+tmpfd	= $fd
 cursor_flag	= $fe
 
 ; BASIC symbols
@@ -169,7 +180,11 @@ LFN_DISK_CMD    = 15
 DEV_MODEM	= $02	; modem device
 SA_MODEM	= $03	; modem secondary address
 
-CR			= $0d
+HILITE		= $02	; extension: draw next char reverse
+SETCSR		= $03
+CR		= $0d
+LCKCASE		= $08
+LOCASE		= $0e
 CSR_DOWN	= $11
 RVSON		= $12
 HOME		= $13

@@ -1,3 +1,11 @@
+; CCGMS Terminal
+;
+; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; This project is licensed under the BSD 3-Clause License.
+;
+; String output
+;
+
 ;----------------------------------------------------------------------
 outstr:
 	sty zpoutstr+1
@@ -5,16 +13,18 @@ outstr:
 	ldy #0
 @loop:	lda (zpoutstr),y
 	beq @rts
-	cmp #2
+	cmp #HILITE
 	beq @hilite
 	cmp #3
 	bne @skip
+
+	; set cursor pos
 	iny
-	lda (zpoutstr),y
+	lda (zpoutstr),y	; [XXX should use PLOT]
 	sta LINE
-	lda #$0d
+	lda #CR
 	jsr chrout
-	lda #$91	; CSR UP
+	lda #CSR_UP
 	jsr chrout
 	iny
 	lda (zpoutstr),y
@@ -59,11 +69,11 @@ outstr:
 	beq :+
 	ora #$80
 :	jsr chrout
-	lda #182
+	lda #$B6	; $B6: RIGHT THREE EIGHTHS BLOCK
 	jsr chrout
 	pla
 	sta textcl
-	lda #146
+	lda #RVSOFF
 	bne @outst3
 ;----------------------------------------------------------------------
 outcap:
