@@ -5,11 +5,6 @@ all:
 	ca65 -g src/ccgmsterm.s -o build/ccgmsterm.o -DEASYFLASH=$(EASYFLASH)
 	cl65 -g -C src/ccgmsterm.cfg build/ccgmsterm.o -o build/ccgmsterm.prg -Ln build/ccgmsterm.sym -m build/ccgmsterm.map
 
-# use this to *quickly* compare the binary with the original "2021" release binary
-md5:
-	@which md5 > /dev/null && md5 -r build/ccgmsterm.prg || true
-	@which md5sum > /dev/null && md5sum build/ccgmsterm.prg || true
-
 # use this to compare the binary with the original "2021" release binary
 compare:
 	mkdir -p build
