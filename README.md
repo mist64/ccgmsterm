@@ -6,7 +6,7 @@
 * based on 5.5 source by [Craig Smith](https://github.com/spathiwa) 01/1988.
 * 2017/2018/2019/2020/2021 mods by [alwyz](http://1200baud.wordpress.com) (as of 1/1/2021 I am no longer maintaining ccgms. thanks! - alwyz)
 * cleaned up and converted to ca65 by [Michael Steil](https://www.pagetable.com/), 2022
-	* with the symbol `BIN_2021` defined (use `make compare`), this currently (revision 5a7736b) builds the same PRG (regular & EasyFlash) as https://csdb.dk/release/?id=198392
+	* with the symbol `BIN_2021` defined (use `make compare`), this currently (revision 9690fd4) builds the same PRG (regular & EasyFlash) as https://csdb.dk/release/?id=198392
 	* a default build (`make`) builds the same, except for using more consistent PETSCII encoding
 * further improvements welcome!
 
