@@ -493,17 +493,9 @@ SET_PETSCII
 txt_device:
 	.byte CR,CR,"Device",0
 txt_sec_addr:
-.ifdef BIN_2021
-	.byte CR,cs,"EC.",ca,".: ",0
-.else
 	.byte CR,"SEC.A.: ",0
-.endif
 txt_printing:
-.ifdef BIN_2021
-	.byte CLR,CR,cp,"RINTING...",CR,0
-.else
 	.byte CLR,CR,"PRINTING...",CR,0
-.endif
 SET_ASCII
 
 ;----------------------------------------------------------------------

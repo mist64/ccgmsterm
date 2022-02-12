@@ -218,6 +218,7 @@ f7chgk
 	jsr enablemodem
 	jmp term_entry
 
+;----------------------------------------------------------------------
 prmopt:
 	.word op1txt
 	.word op2txt
@@ -229,6 +230,7 @@ prmopt:
 prmlen:
 	.byte 4,18,8,10,20,19
 
+;----------------------------------------------------------------------
 SET_PETSCII
 op1txt:
 	.byte "Full"
@@ -399,11 +401,7 @@ txt_load_save_config:
 	.byte " ",HILITE,"view Author's Message",CR,CR,0
 
 txt_press_return_to_abort:
-.ifdef BIN_2021
-	.byte SETCSR,22,0,WHITE,cp,"ress <",YELLOW,RVSON,"R",e,t,u,cr,n,RVSOFF,WHITE,"> to abort.",CR,0
-.else
 	.byte SETCSR,22,0,WHITE,"Press <",YELLOW,RVSON,"RETURN",RVSOFF,WHITE,"> to abort.",CR,0
-.endif
 
 txt_return:
 	.byte SETCSR,22,7,CYAN,"RETURN",CR,0

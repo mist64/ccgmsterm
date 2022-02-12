@@ -9,17 +9,9 @@
 ;----------------------------------------------------------------------
 SET_PETSCII
 txt_xmodem:
-.ifdef BIN_2021
-	.byte CR,CR,WHITE,cx,m,"odem ",0
-.else
 	.byte CR,CR,WHITE,"XModem ",0
-.endif
 txt_xmodem_crc:
-.ifdef BIN_2021
-	.byte CR,CR,WHITE,cx,m,"odem-CRC ",0
-.else
 	.byte CR,CR,WHITE,"XModem-CRC ",0
-.endif
 SET_ASCII
 
 ;----------------------------------------------------------------------

@@ -1115,11 +1115,7 @@ txt_unlisted:
 	.byte "Waiting For Carrier...",0	; [XXX unused]
 
 txt_dialing:
-.ifdef BIN_2021
-	.byte "Dialing...  ",cp,"ress ",cs,t,o,cp," to abort.",0
-.else
 	.byte "Dialing...  Press STOP to abort.",0
-.endif
 SET_ASCII
 
 numptr:

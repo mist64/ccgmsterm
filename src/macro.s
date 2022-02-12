@@ -21,26 +21,14 @@ prwcmc
 ;----------------------------------------------------------------------
 SET_PETSCII
 txt_edit_which_macro:
-.ifdef BIN_2021
-	.byte CLR,WHITE,CR,CR,e,"dit which macro?",CR
-.else
 	.byte CLR,WHITE,CR,CR,"Edit which macro?",CR
-.endif
 	.byte YELLOW,"(CTRL F1 / F3 or RETURN to abort.) ",WHITE,SETCSR,2,RVSON,0
 
 txt_edit:
-.ifdef BIN_2021
-	.byte 19,CR,WHITE,e,"dit ",f
-.else
 	.byte 19,CR,WHITE,"Edit F"
-.endif
 txt_edit_index:
 	.byte '1'
-.ifdef BIN_2021
-	.byte " Macro...<",c,t,cr,l,"-",cx,"> to end:",CR,CR,CR,CR,0
-.else
 	.byte " Macro...<CTRL-X> to end:",CR,CR,CR,CR,0
-.endif
 SET_ASCII
 
 ;----------------------------------------------------------------------
