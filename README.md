@@ -37,10 +37,6 @@
 * Support for devices other than a 17XX REU, Easyflash, and Swiftlink which use the cartridge port (Lt. Kernal I’m looking at you)
 * 100% support for hardware acceleration devices (SuperCPU etc). Certain conditions may affect file transfer handshake timing.
 
-## Known Bugs
-
-* Regular (non-UP9600) user port timings are broken for PAL, see ".if 0" in rs232_userport.s.
-
 ## Build
 
 Build with make & [ca65](https://github.com/cc65/cc65).
