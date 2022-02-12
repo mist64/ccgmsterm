@@ -11,13 +11,6 @@ print_banner:
 	lda #<txt_banner
 	ldy #>txt_banner
 	jsr outstr
-	lda #' '
-	jsr chrout	; [XXX fold into code below]
-	ldx #2		; 2nd line start char
-	;lda #163	; UPPER ONE EIGHTH BLOCK
-:	jsr chrout
-	dex
-	bne :-
 	lda #<txt_author
 	ldy #>txt_author
 	jsr outstr
@@ -75,11 +68,11 @@ txt_banner:
 	.byte PURPLE
 	.byte " ! "
 	.byte WHITE
-	.byte "     Terminal 2021   "
+	.byte " Terminal FUTURE ",VERSION," "
 	.byte 0
 
 txt_author:
-	.byte "by Craig Smith       Mods by Alwyz   "
+	.byte "  by Craig Smith, Alwyz, Michael Steil  "
 	.byte RVSOFF,DKGRAY,0
 
 txt_banner1:

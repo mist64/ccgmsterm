@@ -10,6 +10,8 @@
 	.feature string_escapes
 	.macpack longbranch
 
+.define VERSION "0.1"
+
 	.include "declare.s"
 	.include "encoding.s"
 

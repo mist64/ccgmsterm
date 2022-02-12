@@ -8,7 +8,7 @@
 
 SET_PETSCII
 txt_instructions1:
-	.byte CLR,10,LTGRAY,15,LOCASE,RED,"   C",ORANGE,"C",YELLOW,"G",GREEN,"M",BLUE,"S",PURPLE,"! ",WHITE,"Term v2021 modded by Alwyz",CR,CR
+	.byte CLR,10,LTGRAY,15,LOCASE,RED,"   C",ORANGE,"C",YELLOW,"G",GREEN,"M",BLUE,"S",PURPLE,"! ",WHITE,"Term FUTURE ",VERSION,CR,CR
 	.byte RVSON,YELLOW,"Commands:",RVSOFF,CR,CR
 	.byte BLUE,"C",RED,"=   ",WHITE,"STOP      ",CYAN,"Disconnect.",LTBLUE," (Drop DTR)",CR
 	.byte WHITE,"CTRL J/K       ",LTGREEN,"Dest/Non Dest Cursor",CR
@@ -41,14 +41,12 @@ txt_instructions2:
 	.byte "cation, are permitted under the terms",CR
 	.byte "of the BSD 3-clause license.",CR
 	.byte "For details, or to contribute, visit:",CR
-	.byte YELLOW," https://github.com/spathiwa/ccgmsterm",CR,CR
+	.byte YELLOW," https://github.com/mist64/ccgmsterm",CR,CR
 	.byte PURPLE,"A",LTBLUE,"l",CYAN,"w",LTGREEN,"y",YELLOW,"z",GRAY," would like to thank ",LTGREEN,"the CBM",CR
 	.byte "Hackers Mailing List,",YELLOW," IRC #c64friends,",CR
 	.byte ORANGE,"pcollins/excess, larry/role, xlar54,",CR
 	.byte ORANGE,"and the users of AFTERLIFE BBS who",CR
 	.byte "helped with ",LTRED,"testing, tips, and bugfixes.",CR,CR
-	.byte LTBLUE,"It has been my pleasure to maintain",CR
-	.byte "this program from 2017-2020 - ",PURPLE,"A",LTBLUE,"l",CYAN,"w",LTGREEN,"y",YELLOW,"z",GRAY,CR,CR,CR
 	.byte LTGREEN,WHITE,"Press a key...",0
 SET_ASCII
 
