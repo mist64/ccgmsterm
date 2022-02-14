@@ -192,7 +192,7 @@ ihitab:
 ;----------------------------------------------------------------------
 setbaudup:
 	lda baud_rate
-b7e56	asl
+	asl
 	ora is_pal_system
 	tax
 	lda rcvtab_lo,x
@@ -206,51 +206,17 @@ b7e56	asl
 	rts
 
 ;----------------------------------------------------------------------
-rcvtab_lo:
-	.byte $b0	; 300  NTSC
-	.byte $70	; 300  PAL
-	.byte $a8	; 1200 NTSC
-	.byte $98	; 1200 PAL
-	.byte $d4	; 2400 NTSC
-	.byte $cc	; 2400 PAL
-	.byte $6a	; 4800 NTSC
-	.byte $66	; 4800 PAL
-	.byte $35	; 9600 NTSC
-	.byte $33	; 9600 PAL
-rcvtab_hi:
-	.byte $06	; 300  NTSC
-	.byte $06	; 300  PAL
-	.byte $01	; 1200 NTSC
-	.byte $01	; 1200 PAL
-	.byte $00	; 2400 NTSC
-	.byte $00	; 2400 PAL
-	.byte $00	; 4800 NTSC
-	.byte $00	; 4800 PAL
-	.byte $00	; 9600 NTSC
-	.byte $00	; 9600 PAL
 
-sndtab_lo: ; (x2 of receive)
-	.byte $50	; 300  NTSC
-	.byte $d0	; 300  PAL
-	.byte $50	; 1200 NTSC
-	.byte $30	; 1200 PAL
-	.byte $a8	; 2400 NTSC
-	.byte $98	; 2400 PAL
-	.byte $d4	; 4800 NTSC
-	.byte $cc	; 4800 PAL
-	.byte $6a	; 9600 NTSC
-	.byte $66	; 9600 PAL
-sndtab_hi:
-	.byte $0d	; 300  NTSC
-	.byte $0c	; 300  PAL
-	.byte $03	; 1200 NTSC
-	.byte $03	; 1200 PAL
-	.byte $01	; 2400 NTSC
-	.byte $01	; 2400 PAL
-	.byte $00	; 4800 NTSC
-	.byte $00	; 4800 PAL
-	.byte $00	; 9600 NTSC
-	.byte $00	; 9600 PAL
+.define rcvtab 1712, 1648,  424,  408,  212,  204,  106,  102,   53,   51
+;              300N  300P  1200N 1200P 2400N 2400P 4800N 4800P 9600N 9600P
+rcvtab_lo: .lobytes rcvtab
+rcvtab_hi: .hibytes rcvtab
+
+.define sndtab 3408, 3280,  848,  816,  424,  408,  212,  204,  106,  102
+;              300N  300P  1200N 1200P 2400N 2400P 4800N 4800P 9600N 9600P
+sndtab_lo: .lobytes sndtab
+sndtab_hi: .hibytes sndtab
+; (x2 of receive)
 
 ;----------------------------------------------------------------------
 ; new GETIN
