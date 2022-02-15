@@ -17,27 +17,19 @@
 outstat	= $a9	; re-used KERNAL symbol RER/RINONE
 
 ;----------------------------------------------------------------------
+up9600_nmi:
+	bit $dd0d	; check bit 7 (startbit ?)
+nmi_bmi=*+1
+	bmi nmi_startbit; IRQ caused by CIA
+	rti		; ignore if NMI was triggered by RESTORE-key
+
 nmi_startbit:
 	pha
-	txa		; [XXX X and Y don't have to be saved]
-	pha
-	tya
-	pha
-	bit $dd0d	; check bit 7 (startbit ?)
-	bpl nv1		; no startbit received, then skip
-
 	lda #$13
 	sta $dd0f	; start timer B (forced reload, signal at PB7)
 	sta $dd0d	; disable timer and FLAG interrupts
-	lda #<nmi_bytrdy; on next NMI call nmi_bytrdy
-	sta $0318	; (triggered by SDR full)
-	lda #>nmi_bytrdy
-	sta $0319	; [XXX race?]
-
-nv1	pla		; ignore, if NMI was triggered by RESTORE-key
-	tay
-	pla
-	tax
+	lda #nmi_bytrdy-nmi_bmi-1; on next NMI call nmi_bytrdy
+	sta nmi_bmi	; (triggered by SDR full)
 	pla
 	rti
 
@@ -45,20 +37,11 @@ nmi_bytrdy:
 	pha
 	txa
 	pha
-	tya
-	pha
-	bit $dd0d	; check bit 7 (SDR full ?)
-	bpl nv1		; SDR not full, then skip (eg. RESTORE-key)
-
 	lda #$92
 	sta $dd0f	; stop timer B (keep signalling at PB7!)
 	sta $dd0d	; enable FLAG (and timer) interrupts
-	lda #<nmi_startbit ; on next NMI call nmi_startbit
-	sta $0318	; (triggered by a startbit)
-	lda #>nmi_startbit
-	sta $0319	; [XXX race?]
-	txa
-	pha
+	lda #nmi_startbit-nmi_bmi-1; on next NMI call nmi_startbit
+	sta nmi_bmi	; (triggered by a startbit)
 	lda $dd0c	; read SDR (bit0=databit7,...,bit7=databit0)
 	cmp #$80	; move bit7 into carry-flag
 	and #$7f
@@ -79,7 +62,8 @@ nmi_bytrdy:
 	sta $dd01
 :	pla
 	tax
-	jmp nv1
+	pla
+	rti
 
 ;----------------------------------------------------------------------
 up9600_setup:
@@ -119,8 +103,10 @@ up9600_enable:
 	stx $0314
 	sty $0315
 
-	ldx #<nmi_startbit; install new NMI-handler
-	ldy #>nmi_startbit
+	lda #nmi_startbit-nmi_bmi-1
+	sta nmi_bmi
+	ldx #<up9600_nmi; install new NMI-handler
+	ldy #>up9600_nmi
 	stx $0318
 	sty $0319
 
