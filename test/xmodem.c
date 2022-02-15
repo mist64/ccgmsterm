@@ -25,15 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* this code needs standard functions memcpy() and memset()
-   and input/output functions _inbyte() and _outbyte().
-
-   the prototypes of the input/output functions are:
-     int _inbyte(unsigned short timeout); // msec timeout
-     void _outbyte(int c);
-
- */
-
+extern int _inbyte(unsigned short timeout); // msec timeout
+extern void _outbyte(int c);
+#include <string.h>
+#include <stdio.h>
 #include "crc16.h"
 
 #define SOH  0x01
@@ -46,15 +41,18 @@
 
 #define DLY_1S 1000
 #define MAXRETRANS 25
-#define TRANSMIT_XMODEM_1K
 
 static int check(int crc, const unsigned char *buf, int sz)
 {
 	if (crc) {
 		unsigned short crc = crc16_ccitt(buf, sz);
 		unsigned short tcrc = (buf[sz]<<8)+buf[sz+1];
-		if (crc == tcrc)
+		if (crc == tcrc) {
+			fprintf(stderr, "***** SERVER: CRC GOOD\n");
 			return 1;
+		} else {
+			fprintf(stderr, "***** SERVER: CRC BAD, %02x!=%02x\n", crc, tcrc);
+		}
 	}
 	else {
 		int i;
@@ -62,8 +60,12 @@ static int check(int crc, const unsigned char *buf, int sz)
 		for (i = 0; i < sz; ++i) {
 			cks += buf[i];
 		}
-		if (cks == buf[sz])
-		return 1;
+		if (cks == buf[sz]) {
+			fprintf(stderr, "***** SERVER: CHKSUM GOOD\n");
+			return 1;
+		} else {
+			fprintf(stderr, "***** SERVER: CHKSUM BAD, %02x!=%02x\n", cks, buf[sz]);
+		}
 	}
 
 	return 0;
@@ -71,16 +73,16 @@ static int check(int crc, const unsigned char *buf, int sz)
 
 static void flushinput(void)
 {
-	while (_inbyte(((DLY_1S)*3)>>1) >= 0)
-		;
+//	while (_inbyte(((DLY_1S)*3)>>1) >= 0)
+//		;
 }
 
-int xmodemReceive(unsigned char *dest, int destsz)
+int xmodemReceive(unsigned char *dest, int destsz, int use_crc)
 {
 	unsigned char xbuff[1030]; /* 1024 for XModem 1k + 3 head chars + 2 crc + nul */
 	unsigned char *p;
 	int bufsz, crc = 0;
-	unsigned char trychar = 'C';
+	unsigned char trychar = use_crc ? 'C' : NAK;
 	unsigned char packetno = 1;
 	int i, c, len = 0;
 	int retry, retrans = MAXRETRANS;
@@ -91,16 +93,21 @@ int xmodemReceive(unsigned char *dest, int destsz)
 			if ((c = _inbyte((DLY_1S)<<1)) >= 0) {
 				switch (c) {
 				case SOH:
+					fprintf(stderr, "***** SERVER: SOH\n");
 					bufsz = 128;
 					goto start_recv;
 				case STX:
+					fprintf(stderr, "***** SERVER: STX\n");
 					bufsz = 1024;
 					goto start_recv;
 				case EOT:
+					fprintf(stderr, "***** SERVER: EOT\n");
 					flushinput();
+					fprintf(stderr, "***** SERVER: EOT->ACK\n");
 					_outbyte(ACK);
 					return len; /* normal end */
 				case CAN:
+					fprintf(stderr, "***** SERVER: CAN\n");
 					if ((c = _inbyte(DLY_1S)) == CAN) {
 						flushinput();
 						_outbyte(ACK);
@@ -126,8 +133,10 @@ int xmodemReceive(unsigned char *dest, int destsz)
 		*p++ = c;
 		for (i = 0;  i < (bufsz+(crc?1:0)+3); ++i) {
 			if ((c = _inbyte(DLY_1S)) < 0) goto reject;
+			fprintf(stderr, "***** SERVER: DATA(%d) %02x\n", i, c);
 			*p++ = c;
 		}
+		fprintf(stderr, "***** SERVER: DATA DONE\n");
 
 		if (xbuff[1] == (unsigned char)(~xbuff[2]) && 
 			(xbuff[1] == packetno || xbuff[1] == (unsigned char)packetno-1) &&
@@ -143,22 +152,25 @@ int xmodemReceive(unsigned char *dest, int destsz)
 				retrans = MAXRETRANS+1;
 			}
 			if (--retrans <= 0) {
+				fprintf(stderr, "***** SERVER: CAN\n");
 				flushinput();
 				_outbyte(CAN);
 				_outbyte(CAN);
 				_outbyte(CAN);
 				return -3; /* too many retry error */
 			}
+			fprintf(stderr, "***** SERVER: ACK\n");
 			_outbyte(ACK);
 			continue;
 		}
 	reject:
+		fprintf(stderr, "***** SERVER: NAK\n");
 		flushinput();
 		_outbyte(NAK);
 	}
 }
 
-int xmodemTransmit(unsigned char *src, int srcsz)
+int xmodemTransmit(unsigned char *src, int srcsz, int use_1k)
 {
 	unsigned char xbuff[1030]; /* 1024 for XModem 1k + 3 head chars + 2 crc + nul */
 	int bufsz, crc = -1;
@@ -196,11 +208,11 @@ int xmodemTransmit(unsigned char *src, int srcsz)
 
 		for(;;) {
 		start_trans:
-#ifdef TRANSMIT_XMODEM_1K
-			xbuff[0] = STX; bufsz = 1024;
-#else
-			xbuff[0] = SOH; bufsz = 128;
-#endif
+			if (use_1k) {
+				xbuff[0] = STX; bufsz = 1024;
+			} else {
+				xbuff[0] = SOH; bufsz = 128;
+			}
 			xbuff[1] = packetno;
 			xbuff[2] = ~packetno;
 			c = srcsz - len;
@@ -261,46 +273,3 @@ int xmodemTransmit(unsigned char *src, int srcsz)
 		}
 	}
 }
-
-#ifdef TEST_XMODEM_RECEIVE
-int main(void)
-{
-	int st;
-
-	printf ("Send data using the xmodem protocol from your terminal emulator now...\n");
-	/* the following should be changed for your environment:
-	   0x30000 is the download address,
-	   65536 is the maximum size to be written at this address
-	 */
-	st = xmodemReceive((char *)0x30000, 65536);
-	if (st < 0) {
-		printf ("Xmodem receive error: status: %d\n", st);
-	}
-	else  {
-		printf ("Xmodem successfully received %d bytes\n", st);
-	}
-
-	return 0;
-}
-#endif
-#ifdef TEST_XMODEM_SEND
-int main(void)
-{
-	int st;
-
-	printf ("Prepare your terminal emulator to receive data now...\n");
-	/* the following should be changed for your environment:
-	   0x30000 is the download address,
-	   12000 is the maximum size to be send from this address
-	 */
-	st = xmodemTransmit((char *)0x30000, 12000);
-	if (st < 0) {
-		printf ("Xmodem transmit error: status: %d\n", st);
-	}
-	else  {
-		printf ("Xmodem successfully transmitted %d bytes\n", st);
-	}
-
-	return 0;
-}
-#endif

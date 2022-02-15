@@ -9,7 +9,7 @@
 ;----------------------------------------------------------------------
 SET_PETSCII
 txt_newpunter:
-	.byte CR,CR,WHITE,"NEW Punter ",0
+	.byte CR,CR,WHITE,"NEW Punter",0
 txt_up:
 	.byte "Up",0
 txt_down:
@@ -120,7 +120,7 @@ drivetemp:
 	.byte 0
 
 ;----------------------------------------------------------------------
-; pre-calculate CRC16 tables for XMODEM/CRC
+; pre-calculate CRC16 tables for XMODEM-CRC
 crctable:
 	ldx 	#0
 	txa

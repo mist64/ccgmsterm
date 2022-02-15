@@ -1,7 +1,7 @@
 # CCGMS Term *Future*
 
 *Commodore Color Graphics Manipulation System Terminal*<br/>
-*by Craig Smith (1985-1988), alwyz (2017-2020), Michael Steil (2022-)*
+*by Craig Smith (1985-1988), alwyz (2017-2020), Michael Steil (2022)*
 
 * based on 5.5 source by [Craig Smith](https://github.com/spathiwa) 01/1988.
 * 2017/2018/2019/2020/2021 mods by [alwyz](http://1200baud.wordpress.com)
@@ -19,8 +19,9 @@
 * File transfer protocols:
 	* Punter
 	* Multi-Punter
-	* Xmodem
-	* Xmodem-CRC
+	* XMODEM
+	* XMODEM-CRC
+	* XMODEM-1K
 * 17XX REU Buffer 64k Support
 * Easyflash Cartridge Phonebook / Configuration load/save
 * Autodialer phonebook to store all of your BBS addresses, user names, and passwords
@@ -33,7 +34,7 @@
 * RR-Net Support.
 * IDE64 Compatibility.
 * 80 Column Emulation.
-* Protocols for XModem-1k / YModem / ZModem / HModem
+* YMODEM/ZMODEM/HMODEM Protocols
 * Support for devices other than a 17XX REU, Easyflash, and Swiftlink which use the cartridge port (Lt. Kernal I’m looking at you)
 * 100% support for hardware acceleration devices (SuperCPU etc). Certain conditions may affect file transfer handshake timing.
 
@@ -41,6 +42,12 @@
 
 * Fixed User Port timing for PAL
 * Fixed UP9600 timing for PAL
+* Implemented XMODEM-1K
+	* protocol XMODEM-1K forces 1K on upload
+	* any XMODEM protocol will accept 1K blocks on download
+* XMODEM-CRC autodetect on upload
+	* protocols XMODEM-CRC/-1K will force CRC on download
+	* any XMODEM protocol will accept CRC on upload
 
 ## Build
 

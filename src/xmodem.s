@@ -1,15 +1,14 @@
 ; CCGMS Terminal
 ;
-; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; Copyright (c) 2016,2020, Craig Smith, alwyz, Michael Steil. All rights reserved.
 ; This project is licensed under the BSD 3-Clause License.
 ;
-; XMODEM and XMODEM/CRC Send and Receive
+; XMODEM, XMODEM-CRC and XMODEM-1K Send and Receive
 ;
 
-MAX_RETRIES	= 10
-PAYLOAD_SIZE	= 128
-BLOCK_SIZE_XMODEM	= PAYLOAD_SIZE+4
-BLOCK_SIZE_XMODEM_CRC	= PAYLOAD_SIZE+5
+MAX_RETRIES		= 10
+PAYLOAD_SIZE_128	= 128
+PAYLOAD_SIZE_1K		= 1024
 
 ; KERNAL
 STATUS	= $90	; channel I/O error/EOF indicator
@@ -20,6 +19,7 @@ RODBE = $029e
 
 ; protocol constants
 SOH	= $01	; Start of Heading
+STX_	= $02	; Start of Heading (1K blocks)
 EOT	= $04	; End of Transmission
 ACK	= $06	; Acknowledge
 NAK	= $15	; Negative Acknowledge
@@ -37,8 +37,6 @@ STAT_USER_ABORTED	= 5 ; the user aborted the transfer
 
 ; memory
 xmobuf	= $fd	; zero page pointer to access the buffer
-xmoscn	= buffer; 3 send and receiver buffers
-crcz	= $cb00	; used for temprarily storing the two CRC bytes
 
 ; uses the following KERNAL calls:
 ;  chkin
@@ -71,7 +69,7 @@ crcz	= $cb00	; used for temprarily storing the two CRC bytes
 ;  enablexfer	enable serial driver
 ;  disablexfer	disable serial driver
 ;  reset	same as "enablexfer" (no punter dep)
-;  protoc	protocol flag: 0: XMODEM, 1: XMODEM/CRC
+;  protoc	protocol (XMODEM, -CRC, -1K)
 ;  buffer	contains 3 XMODEM buffers
 
 _enablexfer = reset
@@ -80,7 +78,6 @@ xmstat	.byte 0		; final error code
 xmoblk	.byte 0		; current block index
 xmochk	.byte 0		; checksum
 xmobad	.byte 0		; error counter
-xmowbf	.byte 0		; buffer 0-3
 xmodel	.byte 0		; receive timeout
 xmoend	.byte 0		; send: EOT flag (and EOT send counter), receive: protocol error counter
 xmostk	.byte $ff	; stack pointer
@@ -88,6 +85,28 @@ xmostk	.byte $ff	; stack pointer
 
 ;----------------------------------------------------------------------
 ; SEND
+; * The sender picks the block size - we use the "protoc" setting.
+; * The receiver picks checksum vs. CRC, we support both.
+;----------------------------------------------------------------------
+;
+;                     | Receiver: checksum | Receiver: CRC  |
+;---------------------|--------------------|----------------|
+; Setting: XMODEM     | 128 checksum       | 128 CRC16      |\sa
+; Setting: XMODEM-CRC | 128 checksum       | 128 CRC16      |/me
+; Setting: XMODEM-1K  | 1K checksum        | 1K CRC16       |
+;
+; If the receiver does not support 1K, we *could* fall back to 128B, but
+; this would be tricky:
+; * A receiver that understands the "STX" code for 1K doesn't ACK it; it
+;   just keeps receiving the block and ACKs at the end.
+; * A receiver that does not understand the "STX" code just ignores it,
+;   receiving more bytes and hoping for a SOH, EOT or CAN.
+; Therefore, it's tricky to detect whether a receiver supports 1K blocks.
+; The common way of doing a fallback is to do a full retry with a 128B
+; after sending the 1K block, but:
+; * this is slow
+; * would require lots of extra logic to send the 1 KB worth of buffer
+;   contents as eight 128B blocks, since we can't rewind the source file.
 ;----------------------------------------------------------------------
 xmodem_send:
 	; save stack pointer
@@ -97,19 +116,19 @@ xmodem_send:
 	jsr init_transfer
 	jsr _enablexfer
 
-	; set code & block size based on protocol
 	lda protoc
-	cmp #PROTOCOL_XMODEM
-	beq @1
-	lda #CRC
-	ldx #BLOCK_SIZE_XMODEM_CRC
-	jmp @2
-@1:	lda #NAK
-	ldx #BLOCK_SIZE_XMODEM
-@2:	sta @send_nak_code
-	stx send_block_size
+	cmp #PROTOCOL_XMODEM_1K
+	bne @b128
+	lda #0
+	ldx #>PAYLOAD_SIZE_1K
+	bne @contsz
+@b128:	lda #PAYLOAD_SIZE_128
+	ldx #1
+@contsz:
+	sta firstpagebytes
+	stx pagectr
 
-; expect NAK
+; expect NAK (chksum) or 'C' (CRC)
 @loop:
 	lda #6		; 60 secs
 	jsr modem_get
@@ -117,24 +136,17 @@ xmodem_send:
 @abort:	jmp xmabrt	; timeout -> cancelled
 :	cmp #CAN
 	beq @abort	; CAN -> cancelled
-@send_nak_code = *+1
 	cmp #NAK
+	beq @nakok
+	cmp #CRC
 	bne @loop
+@nakok:	sta xprotoc
 
-send_loop:
+@block_loop:
 	jsr setup_buffer
+	ldy #0
+	sty xmoend	; reset EOT flag
 	sty xmobad	; init error counter
-
-; generate block header
-	lda #SOH
-	sta (xmobuf),y	; 0: SOH
-	iny
-	lda xmoblk
-	sta (xmobuf),y	; 1: block index
-	iny
-	eor #$ff
-	sta (xmobuf),y	; 2: block index ^ $FF
-	iny
 
 	jsr disablexfer
 
@@ -142,47 +154,72 @@ send_loop:
 	ldx #LFN_FILE
 	jsr chkin
 
+	lda pagectr
+	sta tmppagectr
+	jsr crcinit
+
+	ldy #0
 @snd2:	jsr getin	; read from file
 	ldx STATUS
 	stx xmoend	; set EOT flag if end of file (or error)
-@snd3:	sta (xmobuf),y
-	clc
-	adc xmochk
-	sta xmochk	; calc checksum
-	iny
-	cpy #BLOCK_SIZE_XMODEM-1
-	bcs @snd5
-	ldx xmoend	; end of file?
+@snd3:	jsr store_byte
+	bne :+
+	inc xmobuf+1
+	dec tmppagectr
+	beq @snd5
+:	ldx xmoend	; end of file?
 	beq @snd2	; no, next byte
 
 	lda #CPMEOF	; EOF (or error)
 	bne @snd3	; -> fill with end of file code
 
-@snd5:	sta (xmobuf),y	; store checksum as last byte
-
+@snd5:
 	jsr clrchn
 
-xmsnd6	jsr clear_buffers
+@send_again:
+	jsr clear_buffers
 	jsr enablexfer
 	ldx #LFN_MODEM
 	jsr chkout
 
-	; checksum calculation patch for XMODEM-CRC
-	; [XXX the should be done *before* xmsnd6, otherwise CRC]
-	; [XXX gets calculated again for a re-send              ]
-	lda protoc
-	cmp #PROTOCOL_XMODEM_CRC
-	beq send_crc_patch
+; send block header
+	lda #SOH
+	ldx protoc
+	cpx #PROTOCOL_XMODEM_1K
+	bne :+
+	lda #STX_
+:	jsr chrout	; 0: SOH/STX (128/1K)
+	lda xmoblk
+	jsr chrout	; 1: block index
+	eor #$ff
+	jsr chrout	; 2: block index ^ $FF
 
-; send all block bytes to modem
-send_crc_cont:
+	jsr setup_buffer
+
+	ldx pagectr
 	ldy #0
 :	lda (xmobuf),y
 	jsr chrout
 	iny
-send_block_size = *+1
-	cpy #BLOCK_SIZE_XMODEM	; *will be overwritten*
-	bcc :-
+	cpy firstpagebytes
+	bne :-
+	inc xmobuf+1
+	dex
+	bne :-
+
+	lda xprotoc
+	cmp #CRC
+	bne @ncrc
+
+; send CRC
+	lda crcz+1
+	jsr chrout
+	lda crcz
+	jmp @send_crc_cont
+@ncrc:
+	lda xmochk
+@send_crc_cont:
+	jsr chrout
 
 	jsr clrchn
 	jsr clear_input_buffer
@@ -190,56 +227,22 @@ send_block_size = *+1
 ; expect CAN
 	lda #3		; timeout
 	jsr modem_get
-	bne xmsnbd	; error
+	bne @snbd	; error
 	cmp #CAN
-	bne xmsnd8
+	bne @snd8
 	jmp xmabrt	; CAN -> cancelled
 
-; [XXX this code is at a very awkward location, could be integrated better]
-;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-; put CRC into block
-send_crc_patch:
-	jsr calccrc
-	ldy #BLOCK_SIZE_XMODEM-1
-	lda crcz+1
-	sta (xmobuf),y
-	iny
-	lda crcz
-	sta (xmobuf),y
-	jmp send_crc_cont
+@snd8:	cmp #NAK
+	bne @snd9
 
-; calculate CRC using tables
-calccrc:
-	lda #0		; yes, calculate the crc for the 128 bytes
-	sta crcz
-	sta crcz+1
-	ldy #3		; start offset in block
-:	lda (xmobuf),y
-	eor crcz+1 	; quick crc computation with lookup tables
-	tax 	 	; updates the two bytes at crc & crc+1
-	lda crcz	; with the byte send in the "a" register
-	eor crchi,x
-	sta crcz+1
-	lda crclo,x
-	sta crcz
-	iny
-	cpy #PAYLOAD_SIZE+3
-	bne :-
-	rts
-;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-xmsnd8	cmp #NAK
-	bne xmsnd9
-
-xmsnbd
+@snbd:
 	jsr chrout	; ??? send to screen?
-	jmp xmsnd6	; NAK -> send again
+	jmp @send_again	; NAK -> send again
 
-xmsnd9	cmp #ACK
-	bne xmsnbd	; error
+@snd9:	cmp #ACK
+	bne @snbd	; error
 
 ; receiver ACK'ed the block
-xmsnnx
 	lda #'-'
 	jsr goobad
 
@@ -247,8 +250,7 @@ xmsnnx
 	bne :+		; yes
 
 	inc xmoblk	; next block index
-	inc xmowbf	; next buffer
-	jmp send_loop
+	jmp @block_loop
 
 :	lda #0
 	sta xmoend	; reset EOT flag
@@ -275,37 +277,75 @@ xmsnnx
 
 
 ;----------------------------------------------------------------------
+crcinit:
+	; init checksum
+	lda #0
+	sta xmochk
+	; init crc
+	sta crcz
+	sta crcz+1
+	rts
+
+;----------------------------------------------------------------------
+init_effect:
+	; init screen effect
+	lda #<$0400
+	sta scrptr
+	lda #>$0400
+	sta scrptr+1
+	rts
+
+; store and checksum/CRC
+store_byte:
+	; store
+	sta (xmobuf),y
+	; screen effect
+scrptr=*+1
+	sta $ffff
+	; calc checksum
+	pha
+	clc
+	adc xmochk
+	sta xmochk
+	pla
+	; quick crc computation with lookup tables
+	eor crcz+1
+	tax
+	lda crcz
+	eor crchi,x
+	sta crcz+1
+	lda crclo,x
+	sta crcz
+	; update screen effect
+	inc scrptr
+	bne :+
+	inc scrptr+1
+:	lda scrptr
+	cmp #<($0400+14*40)
+	bne :+
+	lda scrptr+1
+	cmp #>($0400+14*40)
+	bne :+
+	jsr init_effect
+:	; increment and compare
+	iny
+firstpagebytes=*+1
+	cpy #$00
+	rts
+
+;----------------------------------------------------------------------
 init_transfer:
+	jsr init_effect
 	lda #1
 	sta xmoblk	; start block index
 	lda #0
-	sta xmowbf	; start buffer
 	sta xmobad
 ;----------------------------------------------------------------------
 setup_buffer:
-	lda xmowbf	; buffer mod 3
-	and #3
-	sta xmowbf
-	lda #<xmoscn	; set buffer
+	lda #<xmodem_buffer
 	sta xmobuf
-	lda #>xmoscn
+	lda #>xmodem_buffer
 	sta xmobuf+1
-	ldx xmowbf
-	beq @skip
-
-@loop:	lda xmobuf	; calc buffer start address: xmowbf * BLOCK_SIZE_XMODEM_CRC
-	clc
-	adc #BLOCK_SIZE_XMODEM_CRC
-	sta xmobuf
-	lda xmobuf+1
-	adc #0
-	sta xmobuf+1
-	dex
-	bne @loop
-
-@skip:	ldy #0
-	sty xmochk	; init checksum
-	sty xmoend	; reset EOT flag
 	rts
 
 ;----------------------------------------------------------------------
@@ -319,6 +359,8 @@ clear_input_buffer:
 	rts
 
 ;----------------------------------------------------------------------
+modem_get_1:
+	lda #1
 ; get modem byte with timeout
 modem_get:
 	sta xmodel
@@ -406,13 +448,9 @@ xmsync	lda #STAT_SYNC_LOST
 xmcmab	lda #STAT_USER_ABORTED
 	sta xmstat
 
-; clear garbage off stack [XXX just assign S; this is copied from punter]
-:	tsx
-	cpx xmostk
-	beq :+
-	pla
-	clc
-	bcc :-
+; clear garbage off stack
+	ldx xmostk
+	txs
 
 :	jsr clear_buffers
 
@@ -440,34 +478,41 @@ xmcmab	lda #STAT_USER_ABORTED
 ;----------------------------------------------------------------------
 ; RECEIVE
 ;----------------------------------------------------------------------
+; * The sender picks the block size, we support 128 and 1K.
+; * The receiver picks checksum vs. CRC.
+;
+;                     | Sender: 128  | Sender: 1K  |
+;---------------------|--------------|-------------|
+; Setting: XMODEM     | 128 checksum | 1K checksum |
+; Setting: XMODEM-CRC | 128 CRC16    | 1K CRC16    |\sa
+; Setting: XMODEM-1K  | 128 CRC16    | 1K CRC16    |/me
+;
+;----------------------------------------------------------------------
 xmodem_receive:
 	tsx
 	stx xmostk
+
+	; set block size & checksum based on protocol
+	lda #NAK	; XMODEM: send NAK before first block
+	ldx protoc
+	cpx #PROTOCOL_XMODEM
+	beq :+
+	lda #CRC	; XMODEM-CRC and -1K: send 'C' before first block
+:	sta @receive_nak_code
+
 	jsr _enablexfer
 	jsr init_transfer
-	beq :+	; always
-retry1	; receive error
+	jmp :+
+@retry1:	; receive error
 	jsr count_bad
 :	lda #0
 	sta xmoend	; reset EOT counter
 
-retry2:	jsr clear232
+@retry2:
+	jsr clear232
 	jsr enablexfer
 	ldx #LFN_MODEM
 	jsr chkout
-
-	; set block size & code based on protocol
-	; [XXX this should be done before the block loop]
-	lda protoc
-	cmp #PROTOCOL_XMODEM
-	beq @1
-	lda #CRC	; XMODEM/CRC: send 'C' insteaf of NAK before first block
-	ldx #BLOCK_SIZE_XMODEM_CRC
-	jmp @2
-@1:	lda #NAK
-	ldx #BLOCK_SIZE_XMODEM
-@2:	sta @receive_nak_code
-	stx @receive_block_size
 
 @receive_nak_code = *+1
 	lda #NAK
@@ -475,14 +520,13 @@ retry2:	jsr clear232
 	jsr clrchn
 
 ; block loop
-@bloop:	lda #1		; no timeout!
-	jsr modem_get
+@bloop:	jsr modem_get_1
 	beq @3		; ok
 
 @error:	inc xmoend	; count protocol errors
 	lda xmoend
 	cmp #MAX_RETRIES
-	bcc retry2	; loop
+	bcc @retry2	; loop
 @abort:	jmp xmabrt	; cancelled
 
 @3:	cmp #CAN	; cancel?
@@ -495,58 +539,87 @@ retry2:	jsr clear232
 	jmp @ackblk	; send ACK, end
 
 @neot:	cmp #SOH
+	bne @nsoh
+
+	lda #PAYLOAD_SIZE_128
+	ldx #1
+	bne @contsz
+
+@nsoh:	cmp #STX_
 	bne @error	; no -> protocol error
 
+	lda #0
+	ldx #>PAYLOAD_SIZE_1K
+
+@contsz:
+	sta firstpagebytes
+	stx pagectr
+	stx tmppagectr
+
+; get block index and duplicate
+	jsr modem_get_1
+	bne @retry1
+	sta block_index
+	jsr modem_get_1
+	bne @retry1
+	sta nblock_index
+
+	jsr crcinit
 	jsr setup_buffer
-	beq :+		; always - skip writing first byte
-	; y is 0 now
-@rloop:	lda #1
-	jsr modem_get
-	bne retry1	; error
-:	sta (xmobuf),y
-	iny
-@receive_block_size = *+1
-	cpy #BLOCK_SIZE_XMODEM	; *will be overwritten*
-	bcc @rloop
+	ldy #0
+	sty xmoend	; reset EOT flag
+
+@rloop:	jsr modem_get_1
+	jne @retry1	; error
+	jsr store_byte
+	bne @rloop
+
+	inc xmobuf+1
+	dec tmppagectr
+	bne @rloop
 
 ; validate block index from duplicate
-	ldy #1
-	lda (xmobuf),y	; block index
-	iny
-	eor (xmobuf),y	; block index ^ $FF
+	lda block_index
+	eor nblock_index; block index ^ $FF
 	cmp #$ff
-	bne retry1	; incorrect
+	jne @retry1	; incorrect
 
-	jsr disablexfer
+	jsr modem_get_1	; checksum byte or first CRC byte
+	jne @retry1
 
-	lda protoc
-	cmp #PROTOCOL_XMODEM_CRC
-	jeq @receive_crc_patch
+	ldx protoc
+	cpx #PROTOCOL_XMODEM
+	beq @old_chksum
 
-; calculate & compare old XMODEM checksum
-	lda #0
-:	iny
-	cpy #BLOCK_SIZE_XMODEM-1
-	bcs :+
-	adc (xmobuf),y
-	clc
-	bcc :-
+; CRC check for XMODEM-CRC or -1K receive
+	pha
+	jsr modem_get_1	; second CRC byte
+	jne @retry1
 
-:	sta xmochk	; save chacksum
-	cmp (xmobuf),y	; compare with transmitted checksum
-	jne retry1	; incorrect
+	cmp crcz
+	bne @bad
+	pla
+	cmp crcz+1
+	beq @chksum_cont
+@bad:	jmp @retry1
+
+; compare old XMODEM checksum
+@old_chksum:
+	cmp xmochk	; compare with transmitted checksum
+	jne @retry1	; incorrect
 
 ; check whether it's the expected block, a re-send, or the wrong block
-@receive_crc_cont:
-	ldy #1		; offset of
-	lda (xmobuf),y	; block index
+@chksum_cont:
+	jsr disablexfer
+
+	lda block_index
 	cmp xmoblk	; expected block?
 	beq @okblk	; yes
 
 	ldx xmoblk
 	dex
 	txa
-	cmp (xmobuf),y	; is it the preceding block again?
+	cmp block_index	; is it the preceding block again?
 	bne @xmorsa	; no, sync error
 
 	; sender misunderstood our ACK, did a re-send;
@@ -562,14 +635,19 @@ retry2:	jsr clear232
 	jsr disablexfer
 
 ; write payload to disk
+	jsr setup_buffer
 	ldx #LFN_FILE
 	jsr chkout
-	ldy #3
+	ldx pagectr
+	ldy #0
 :	lda (xmobuf),y
 	jsr chrout
 	iny
-	cpy #PAYLOAD_SIZE+3
-	bcc :-
+	cpy firstpagebytes
+	bne :-
+	inc xmobuf+1
+	dex
+	bne :-
 
 @next:	lda #0
 	sta xmoend	; reset error counter
@@ -578,7 +656,7 @@ retry2:	jsr clear232
 	lda #'-'	; good block
 	jsr goobad
 
-@ackblk	inc xmowbf	; next buffer
+@ackblk:
 	jsr clear232
 
 ; send ACK
@@ -597,23 +675,6 @@ retry2:	jsr clear232
 
 :	jmp xmfnok	; end of file, send * key
 
-; [XXX this code is at an awkward location, could be integrated better]
-;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-; CRC check for XMODEM/CRC receive
-@receive_crc_patch:
-	jsr calccrc
-	ldy #BLOCK_SIZE_XMODEM-1
-	lda crcz+1		; save hi byte of crc to buffer
-	cmp (xmobuf),y		;
-	bne @badcrc
-	iny			;
-	lda crcz		; save lo byte of crc to buffer
-	cmp (xmobuf),y
-	bne @badcrc
-	jmp @receive_crc_cont
-@badcrc	jmp retry1
-;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
 ; does not belong to XMODEM source
 .include "filetype.s"
 
@@ -627,9 +688,7 @@ msg_no_eto_ack:
 msg_max_retries:
 	.byte CR,"Too Many Bad Blocks!",0
 msg_sync_lost:
-	.byte CR
-	.byte 'c'+128 ; [XXX this should not be here]
-	.byte "Sync Lost!",0
+	.byte CR,"Sync Lost!",0
 SET_ASCII
 
 ;----------------------------------------------------------------------
@@ -677,3 +736,17 @@ xmodnp
 	jsr chrout
 xmodna
 	jmp ui_abort
+
+xprotoc:
+	.res 1
+pagectr:
+	.res 1
+tmppagectr:
+	.res 1
+block_index:
+	.res 1
+nblock_index:
+	.res 1
+; used for temprarily storing the two CRC bytes
+crcz:
+	.res 2

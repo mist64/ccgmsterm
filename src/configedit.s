@@ -173,7 +173,7 @@ f7chgk
 
 	inc protoc
 	lda protoc
-	cmp #3
+	cmp #4
 	bcc :+
 	lda #0
 	sta protoc
@@ -249,8 +249,9 @@ op6txt:
 
 op3txt:
 	.byte "Punter    "
-	.byte "Xmodem    "
-	.byte "Xmodem-CRC"
+	.byte "XMODEM    "
+	.byte "XMODEM-CRC"
+	.byte "XMODEM-1K "
 
 op4txt:
 	.byte "Classic CCGMS v5.5  "

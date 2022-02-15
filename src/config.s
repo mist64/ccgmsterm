@@ -87,7 +87,7 @@ macmm4:
 ;----------------------------------------------------------------------
 ; file transmission protocol
 protoc:
-	.byte 0
+	.byte PROTOCOL_PUNTER
 
 ; current theme; see theme.s
 theme:

@@ -33,9 +33,10 @@ ascii_mode	= $0313	; PETSCII or ASCII
 
 revtabup = $0380
 
-buftop	= $cafd
-bufptrreu = $cafe
-buffstreu = $caff
+buftop	= $c7fd
+bufptrreu = $c7fe
+buffstreu = $c7ff
+xmodem_buffer	= $c800; 1 KB, overlaps with mulfil
 mulfil	= $cb00	; punter only
 endmulfil = $cc00 ;end area for multipunter
 crclo	= $cc00	; temp for runtime tables;use tempbuf and numbuf
@@ -207,3 +208,4 @@ BAUD_38400	= 6
 PROTOCOL_PUNTER		= 0
 PROTOCOL_XMODEM		= 1
 PROTOCOL_XMODEM_CRC	= 2
+PROTOCOL_XMODEM_1K	= 3

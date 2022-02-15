@@ -9,31 +9,70 @@
 ;----------------------------------------------------------------------
 SET_PETSCII
 txt_xmodem:
-	.byte CR,CR,WHITE,"XModem ",0
+	.byte "XMODEM",0
 txt_xmodem_crc:
-	.byte CR,CR,WHITE,"XModem-CRC ",0
+	.byte "XMODEM-CRC",0
+txt_xmodem_1k:
+	.byte "XMODEM-1K",0
 SET_ASCII
 
 ;----------------------------------------------------------------------
 ; display "[protocol], enter name" and input string
+; A=0: upload, 1:download
 ui_prompt_filename:
 	pha
 	lda protoc
 	beq @2		; PROTOCOL_PUNTER
-	cmp #PROTOCOL_XMODEM_CRC
-	beq @1
+	lda #CR
+	jsr chrout
+	jsr chrout
+	lda #WHITE
+	jsr chrout
+	pla
+	pha
+	bne @download
+; upload
+	lda protoc
+	cmp #PROTOCOL_XMODEM_1K
+	beq @download_1k
 	lda #<txt_xmodem
 	ldy #>txt_xmodem
 	jsr outstr
-	jmp @3
-@1:	lda #<txt_xmodem_crc
+	lda #'/'
+	jsr chrout
+	lda #<txt_xmodem_crc
 	ldy #>txt_xmodem_crc
+	jsr outstr
+	jmp @3
+@download_1k:
+	lda #<txt_xmodem_1k
+	ldy #>txt_xmodem_1k
+	jsr outstr
+	jmp @3
+@download:
+	lda protoc
+	cmp #PROTOCOL_XMODEM
+	beq @download_old
+	lda #<txt_xmodem_crc
+	ldy #>txt_xmodem_crc
+	jsr outstr
+	lda #'/'
+	jsr chrout
+	lda #<txt_xmodem_1k
+	ldy #>txt_xmodem_1k
+	jsr outstr
+	jmp @3
+@download_old:
+	lda #<txt_xmodem
+	ldy #>txt_xmodem
 	jsr outstr
 	jmp @3
 @2:	lda #<txt_newpunter
 	ldy #>txt_newpunter
 	jsr outstr
-@3:	pla
+@3:	lda #' '
+	jsr chrout
+	pla
 	bne @4
 	lda #<txt_up
 	ldy #>txt_up
