@@ -1,6 +1,6 @@
 ; CCGMS Terminal
 ;
-; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; Copyright (c) 2016,2020, Craig Smith, alwyz, Michael Steil. All rights reserved.
 ; This project is licensed under the BSD 3-Clause License.
 ;
 ; RS232 UP9600 Driver
@@ -129,19 +129,13 @@ up9600_enable:
 	sta $dc06	; (sorry this will break code, that uses
 	lda ihitab,x	; the ti$ - variable)
 	sta $dc07	; start value for timer B (of CIA1)
-	txa
-	asl a		; [XXX NTSC: 0, PAL: 2]
 
-rcvlo=*+1
-	eor #$00	; ** time constant for sender **
-			; [XXX this is a leftover of the original]
-			; [XXX UP9600 code to pick different numbers]
-			; [XXX based on PAL/NTSC, but this is breaking]
-			; [XXX the PAL numbers!]
-rvchi=*+1
-	ldx #$00
+	lda sndlo	; ** time constant for sender **
+	lsr
 	sta $dc04	; start value for timerA (of CIA1)
-	stx $dc05	; (time is around 1/(2*baudrate) )
+	lda sndhi
+	ror
+	sta $dc05	; (time is around 1/(2*baudrate) )
 
 sndlo=*+1
 	lda #$00	; ** time constant for receiver **
@@ -197,33 +191,32 @@ ihitab:
 	.byte $40
 
 ;----------------------------------------------------------------------
+CLOCK_PAL	= 4433619 * 4 / 18	;   985,249 Hz
+CLOCK_NTSC	= 3579545 * 4 / 14	; 1,022,727 Hz
+MIN_BAUD	= 300
+TIMER_PAL	= CLOCK_PAL / MIN_BAUD
+TIMER_NTSC	= CLOCK_NTSC / MIN_BAUD
+
 setbaudup:
-	lda baud_rate
-	asl
-	ora is_pal_system
-	tax
-	lda rcvtab_lo,x
-	sta rcvlo
-	lda rcvtab_hi,x
-	sta rvchi
-	lda sndtab_lo,x
-	sta sndlo
-	lda sndtab_hi,x
-	sta sndhi
-	rts
+	lda #<TIMER_NTSC	; NTSC
+	ldx #>TIMER_NTSC
+	ldy is_pal_system
+	beq :+
+	lda #<TIMER_PAL
+	ldx #>TIMER_PAL
+:	sta sndlo
+	stx sndhi
 
-;----------------------------------------------------------------------
-
-.define rcvtab 1712, 1648,  424,  408,  212,  204,  106,  102,   53,   51
-;              300N  300P  1200N 1200P 2400N 2400P 4800N 4800P 9600N 9600P
-rcvtab_lo: .lobytes rcvtab
-rcvtab_hi: .hibytes rcvtab
-
-.define sndtab 3408, 3280,  848,  816,  424,  408,  212,  204,  106,  102
-;              300N  300P  1200N 1200P 2400N 2400P 4800N 4800P 9600N 9600P
-sndtab_lo: .lobytes sndtab
-sndtab_hi: .hibytes sndtab
-; (x2 of receive)
+	ldx baud_rate	; 0=300, 1=2400, 2=4800 etc.
+	beq :+
+	inx		; -> 0=300, 2=400, 3=4800 etc.
+:	txa
+	beq @skip
+@loop:	lsr sndhi	; divide by 2 repeatedly
+	ror sndlo
+	dex
+	bne @loop
+@skip:	rts
 
 ;----------------------------------------------------------------------
 ; new GETIN
