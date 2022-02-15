@@ -4,6 +4,8 @@
 ; This project is licensed under the BSD 3-Clause License.
 ;
 ; RS232 UP9600 Driver
+;  based on source from "the UP9600 email", Nov 23 1997 by Daniel Dallmann
+;  Message-Id: <199711301621.RAA01078@dosbuster.home.dd>
 ;
 
 ; calls from outside code:
@@ -17,7 +19,7 @@ outstat	= $a9	; re-used KERNAL symbol RER/RINONE
 ;----------------------------------------------------------------------
 nmi_startbit:
 	pha
-	txa
+	txa		; [XXX X and Y don't have to be saved]
 	pha
 	tya
 	pha
@@ -29,8 +31,8 @@ nmi_startbit:
 	sta $dd0d	; disable timer and FLAG interrupts
 	lda #<nmi_bytrdy; on next NMI call nmi_bytrdy
 	sta $0318	; (triggered by SDR full)
-	lda #>nmi_bytrdy; on next NMI call nmi_bytrdy
-	sta $0319	; (triggered by SDR full)
+	lda #>nmi_bytrdy
+	sta $0319	; [XXX race?]
 
 nv1	pla		; ignore, if NMI was triggered by RESTORE-key
 	tay
@@ -53,8 +55,8 @@ nmi_bytrdy:
 	sta $dd0d	; enable FLAG (and timer) interrupts
 	lda #<nmi_startbit ; on next NMI call nmi_startbit
 	sta $0318	; (triggered by a startbit)
-	lda #>nmi_startbit ; on next NMI call nmi_startbit
-	sta $0319	; (triggered by a startbit)
+	lda #>nmi_startbit
+	sta $0319	; [XXX race?]
 	txa
 	pha
 	lda $dd0c	; read SDR (bit0=databit7,...,bit7=databit0)
@@ -81,6 +83,7 @@ nmi_bytrdy:
 
 ;----------------------------------------------------------------------
 up9600_setup:
+; generate lookup table
 	ldx #0
 @1:	stx outstat	; outstat used as temporary variable
 	ldy #8
@@ -127,17 +130,21 @@ up9600_enable:
 	lda ihitab,x	; the ti$ - variable)
 	sta $dc07	; start value for timer B (of CIA1)
 	txa
-	asl a
+	asl a		; [XXX NTSC: 0, PAL: 2]
 
 rcvlo=*+1
 	eor #$00	; ** time constant for sender **
+			; [XXX this is a leftover of the original]
+			; [XXX UP9600 code to pick different numbers]
+			; [XXX based on PAL/NTSC, but this is breaking]
+			; [XXX the PAL numbers!]
 rvchi=*+1
 	ldx #$00
 	sta $dc04	; start value for timerA (of CIA1)
 	stx $dc05	; (time is around 1/(2*baudrate) )
 
 sndlo=*+1
-	lda #$00
+	lda #$00	; ** time constant for receiver **
 	sta $dd06	; start value for timerB (of CIA2)
 sndhi=*+1
 	lda #$00
@@ -167,16 +174,16 @@ sndhi=*+1
 ;----------------------------------------------------------------------
 ; new IRQ handler
 new_irq:
-	lda $dc0d	; cia1: cia interrupt control register
+	lda $dc0d	; read IRQ-mask
 	lsr
-	lsr
-	and #$02
-	beq @2
+	lsr		; move bit1 into carry-flag (timer B - flag)
+	and #2		; test bit3 (SDR - flag)
+	beq @2		; SDR not empty, then skip the first part
 	ldx outstat
-	beq @1
+	beq @1		; skip, if we're not waiting for an empty SDR
 	dex
 	stx outstat
-@1:	bcc @end
+@1:	bcc @end	; skip if there was no timer-B-underflow
 @2:	cli
 	jsr $ffea	; update jiffy clock
 	jsr $ea87	; (jmp) - scan keyboard
@@ -272,8 +279,8 @@ newoutup:
 	stx rsotx
 	sty rsoty
 	pha
-	cmp #$80
-	and #$7f
+	cmp #$80	; move bit7 into carry-flag
+	and #$7f	; get bits 1-7 from lookup table
 	tax
 	cli
 	lda #$100-3
@@ -285,20 +292,20 @@ newoutup:
 :	lda #$04
 	ora $dd00
 	sta $dd00
-:	lda $dd01	; cia2: data port register b
+:	lda $dd01	; check DTR/CTS line from RS232 interface
 	and #$44
 	eor #$04
 	beq :-
 	lda revtabup,x
-	adc #0
+	adc #0		; add bit0
 	lsr
-	sta $dc0c	; cia1: synchronous serial i/o data buffer
-	lda #2
+	sta $dc0c	; send startbit (=0) and the first 7 databits
+	lda #2		; (2 IRQs per byte sent)
 	sta outstat
 	ror
-	ora #$7f
-	sta $dc0c	; cia1: synchronous serial i/o data buffer
-	clc
+	ora #$7f	; then send databit7 and 7 stopbits (=1)
+	sta $dc0c	; (and wait for 2 SDR-empty IRQs or a timeout
+	clc		; before sending the next databyte)
 	lda rsotm
 	ldx rsotx
 	ldy rsoty
