@@ -189,12 +189,16 @@ new_irq:
 	jsr $ea87	; (jmp) - scan keyboard
 @end:	jmp $ea81
 
-ilotab:
-	.byte $95
-	.byte $25
-ihitab:
-	.byte $42
-	.byte $40
+;----------------------------------------------------------------------
+CLOCK_PAL	= 4433619 * 4 / 18	;   985,249 Hz
+CLOCK_NTSC	= 3579545 * 4 / 14	; 1,022,727 Hz
+TIMER_FREQ	= 60
+ITIMER_NTSC	= (CLOCK_NTSC * 10 / TIMER_FREQ + 5) / 10	; $4295
+ITIMER_PAL	= (CLOCK_PAL * 10 / TIMER_FREQ + 5) / 10	; $4025
+
+.define itab ITIMER_NTSC, ITIMER_PAL
+ilotab:	.lobytes itab
+ihitab:	.hibytes itab
 
 ;----------------------------------------------------------------------
 setbaudup:
