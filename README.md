@@ -37,6 +37,11 @@
 * Support for devices other than a 17XX REU, Easyflash, and Swiftlink which use the cartridge port (Lt. Kernal I’m looking at you)
 * 100% support for hardware acceleration devices (SuperCPU etc). Certain conditions may affect file transfer handshake timing.
 
+## Changes since CCGMS 2021
+
+* Fixed User Port timing for PAL
+* Fixed UP9600 timing for PAL
+
 ## Build
 
 Build with make & [ca65](https://github.com/cc65/cc65).
