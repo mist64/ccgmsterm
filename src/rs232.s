@@ -13,6 +13,8 @@ enablemodem:
 	beq @2		; MODEM_TYPE_USERPORT
 	cmp #MODEM_TYPE_UP9600
 	beq @1
+	cmp #MODEM_TYPE_WIC64
+	beq @0
 	cmp #MODEM_TYPE_SWIFTLINK_DE
 	beq @3
 	cmp #MODEM_TYPE_SWIFTLINK_DF
@@ -20,6 +22,7 @@ enablemodem:
 	cmp #MODEM_TYPE_SWIFTLINK_D7
 	beq @5
 	rts
+@0:	jmp wic64_setup
 @1:	jmp up9600_setup
 @2:	jmp rsuser_setup
 @3:	lda #$de
@@ -68,11 +71,15 @@ enablexfer:
 	beq @1		; MODEM_TYPE_USERPORT
 	cmp #MODEM_TYPE_UP9600
 	beq @2
+	cmp #MODEM_TYPE_WIC64
+	beq @3
 	jsr sw_enable
 	jmp xferout
 @1:	jsr rsuser_enable
 	jmp xferout
 @2:	jsr up9600_enable
+	jmp xferout
+@3:	jsr wic64_enable
 	jmp xferout
 
 ;----------------------------------------------------------------------
@@ -88,12 +95,15 @@ disablemodem:
 	beq @2		; MODEM_TYPE_USERPORT
 	cmp #MODEM_TYPE_UP9600
 	beq @1
+	cmp #MODEM_TYPE_WIC64
+	beq @3
 	jsr sw_disable
 	jmp xferout
 @1:	jsr up9600_disable
 	jmp xferout
 @2:	jsr rsuser_disable
-	jmp xferout		; [XXX redundant]
+	jmp xferout
+@3:	jsr wic64_disable
 xferout:
 	pla
 	tay
@@ -109,7 +119,11 @@ modget:
 	beq @2			; MODEM_TYPE_USERPORT
 	cmp #MODEM_TYPE_UP9600
 	beq @1
+	cmp #MODEM_TYPE_WIC64
+	beq @3
 	jsr sw_getxfer		; swiftlink
+	jmp @cont
+@3:	jsr wic64_getxfer	; wic64
 	jmp @cont
 @1:	jsr up9600_getxfer	; up9600
 	jmp @cont
@@ -134,8 +148,12 @@ modput:
 	beq @2			; MODEM_TYPE_USERPORT
 	cmp #MODEM_TYPE_UP9600
 	beq @1
+	cmp #MODEM_TYPE_WIC64
+	beq @3
 	pla
 	jmp sw_putxfer		; swiftlink
+@3:	pla
+	jmp wic64_putxfer	; wic64
 @1:	pla
 	jmp up9600_putxfer	; up9600
 @2:	;jsr $EFE3		; XXX maybe necessary for User Port driver
@@ -149,4 +167,6 @@ dropdtr:
 	jeq rsuser_dropdtr	; MODEM_TYPE_USERPORT
 	cmp #MODEM_TYPE_UP9600
 	jeq up9600_dropdtr
+	cmp #MODEM_TYPE_WIC64
+	jeq wic64_dropdtr
 	jmp sw_dropdtr

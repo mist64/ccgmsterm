@@ -141,6 +141,7 @@ ercopn:
 
 ;----------------------------------------------------------------------
 init
+; BAD
 	lda #1
 	sta cursor_flag	; non-destructive
 	lda #0
@@ -172,3 +173,67 @@ init
 	jmp term_entry_first
 
 @noload=term_entry_first	; [XXX]
+
+
+
+LDTND	= $98
+LA	= $B8
+SA	= $B9
+LAT	= $0259
+FAT	= $0263
+SAT	= $026D
+LOOKUP	= $F30F
+ERROR1	= $F6FB
+ERROR2	= $F6FE
+ERROR6	= $F70A
+
+XOPEN:
+NOPEN	LDX LA          ;CHECK FILE #
+	BNE OP98        ;IS NOT THE KEYBOARD
+;
+	JMP ERROR6      ;NOT INPUT FILE...
+;
+OP98	JSR LOOKUP      ;SEE IF IN TABLE
+	BNE OP100       ;NOT FOUND...O.K.
+;
+	JMP ERROR2      ;FILE OPEN
+;
+OP100	LDX LDTND       ;LOGICAL DEVICE TABLE END
+	CPX #10         ;MAXIMUM # OF OPEN FILES
+	BCC OP110       ;LESS THAN 10...O.K.
+;
+	JMP ERROR1      ;TOO MANY FILES
+;
+OP110	INC LDTND       ;NEW FILE
+	LDA LA
+	STA LAT,X       ;STORE LOGICAL FILE #
+	LDA SA
+	ORA #$60        ;MAKE SA AN SERIAL COMMAND
+	STA SA
+	STA SAT,X       ;STORE COMMAND #
+	LDA FA
+	STA FAT,X       ;STORE DEVICE #
+;
+;PERFORM DEVICE SPECIFIC OPEN TASKS
+;
+OP150
+;
+	; skip JSR CLN232
+	LDY #0
+	JMP $F40C	; remainder of RS-232 OPEN code
+
+
+ERROR3	= $F701
+JZ100	= $F31F
+XCHKIN:
+	JSR LOOKUP      ;SEE IF FILE KNOWN
+	BEQ JX310       ;YUP...
+;
+	JMP ERROR3      ;NO...FILE NOT OPEN
+;
+JX310	JSR JZ100       ;EXTRACT FILE INFO
+;
+	;JMP CKI232
+	STA DFLTN       ;SET DEFAULT INPUT
+	RTS
+;

@@ -17,6 +17,20 @@ term_entry:
 	jsr print_banner; title screen/CCGMS!
 	jsr print_instr	; display commands f1 etc to terminal ready
 
+	jsr wic64_connect
+
+:
+;	ldx #0
+;@1:	dex
+;	bne @1
+
+;	jsr wic64_getxfer
+;	jsr $ffd2
+;	jsr $ffe4
+;	beq :-
+;	jsr wic64_send
+;	jmp :-
+
 ; enter here to just return into terminal mode
 term_mainloop:
 	lda supercpu

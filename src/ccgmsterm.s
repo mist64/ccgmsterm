@@ -81,5 +81,6 @@ easyflash_support:
 
 	.include "easyflash.s"
 	.include "instr.s"
+	.include "wic64.s"
 
 endprg	.byte 0
