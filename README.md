@@ -1,4 +1,4 @@
-# CCGMS Term *Future*
+# CCGMS *Future*
 
 *Commodore Color Graphics Manipulation System Terminal*<br/>
 *by Craig Smith (1985-1988), alwyz (2017-2020), Michael Steil (2022)*
@@ -10,32 +10,39 @@
 
 ## Features
 
-* 40 column Color Graphics PETSCII / ASCII / ANSI terminal modes
+* 40 column color PETSCII and ASCII/ANSI terminal modes
 * Serial drivers
-	* User Port (2400)
-	* UP9600
-	* Swiftlink (DE, DF, D7)
-* Baud Rates from 300-38.4k
+	* user port (300-2400 baud)
+	* UP9600 (300-9600 baud)
+	* SwiftLink $DE00/$DF00/$D700/NMI (300-38400 baud)
 * File transfer protocols:
 	* Punter
 	* Multi-Punter
 	* XMODEM
 	* XMODEM-CRC
-	* XMODEM-1K
-* 17XX REU Buffer 64k Support
-* Easyflash Cartridge Phonebook / Configuration load/save
-* Autodialer phonebook to store all of your BBS addresses, user names, and passwords
-* DOS Wedge with support for drives #8-30
-* Macros, Screenshots, Themes, and lots of little extras
-* NTSC and PAL compatible for proper user port timing.
+	* XMODEM-1K 🔴
+
+* Correct timing for NTSC and PAL 🔴
+* Phone book
+	* stores BBS addresses, user names, and passwords
+	* autodialer
+* Configuration and phone book load/save
+	* disk
+	* EasyFlash Cartridge
+* DOS command and directory function (drives #8-30)
+* Macros
+* Screenshots
+* Themes
+* REU buffer (64 KB)
 
 ## Missing Features
 
-* RR-Net Support.
-* IDE64 Compatibility.
-* 80 Column Emulation.
-* YMODEM/ZMODEM/HMODEM Protocols
-* Support for devices other than a 17XX REU, Easyflash, and Swiftlink which use the cartridge port (Lt. Kernal I’m looking at you)
+* RR-Net support
+* WiC64 support
+* 80 column support
+* YMODEM/ZMODEM/HMODEM protocols
+* IDE64 compatibility
+* Additional cartridges (e.g. Lt. Kernal)
 * 100% support for hardware acceleration devices (SuperCPU etc). Certain conditions may affect file transfer handshake timing.
 
 ## Changes since CCGMS 2021
