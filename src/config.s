@@ -24,7 +24,8 @@ mopo2:
 modem_type:
 ;	.byte MODEM_TYPE_USERPORT
 ;	.byte MODEM_TYPE_UP9600
-	.byte MODEM_TYPE_SWIFTLINK_DE
+	.byte MODEM_TYPE_WIC64
+;	.byte MODEM_TYPE_SWIFTLINK_DE
 
 ;----------------------------------------------------------------------
 ; Phone book

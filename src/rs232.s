@@ -53,6 +53,7 @@ func_dropdtr:
 modem_drivers:
 	.word rsuser_funcs	; MODEM_TYPE_USERPORT
 	.word up9600_funcs	; MODEM_TYPE_UP9600
+	.word wic64_funcs	; MODEM_TYPE_WIC64
 	.word sw_funcs		; MODEM_TYPE_SWIFTLINK_DE, ...
 
 ;----------------------------------------------------------------------
