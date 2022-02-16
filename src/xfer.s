@@ -34,7 +34,10 @@ ui_prompt_filename:
 ; upload
 	lda protoc
 	cmp #PROTOCOL_XMODEM_1K
-	beq @download_1k
+	beq @upload_1k
+	; XMODEM or XMODEM-CRC setting:
+	; * we will enforce 128B block sizes,
+	; * checksum vs. CRC is up to the receiver
 	lda #<txt_xmodem
 	ldy #>txt_xmodem
 	jsr outstr
@@ -44,7 +47,10 @@ ui_prompt_filename:
 	ldy #>txt_xmodem_crc
 	jsr outstr
 	jmp @3
-@download_1k:
+@upload_1k:
+	; XMODEM-1K setting:
+	; * we will enforce 128B block sizes,
+	; * checksum vs. CRC is up to the receiver
 	lda #<txt_xmodem_1k
 	ldy #>txt_xmodem_1k
 	jsr outstr
@@ -53,6 +59,9 @@ ui_prompt_filename:
 	lda protoc
 	cmp #PROTOCOL_XMODEM
 	beq @download_old
+	; XMODEM-CRC or XMODEM-1K setting:
+	; * we will enforce CRC
+	; * 128 vs. 1K is up to the sender
 	lda #<txt_xmodem_crc
 	ldy #>txt_xmodem_crc
 	jsr outstr
@@ -63,6 +72,9 @@ ui_prompt_filename:
 	jsr outstr
 	jmp @3
 @download_old:
+	; XMODEM setting:
+	; * we will enforce checkums
+	; * 128 vs. 1K is up to the sender
 	lda #<txt_xmodem
 	ldy #>txt_xmodem
 	jsr outstr
