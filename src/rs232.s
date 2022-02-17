@@ -3,12 +3,12 @@
 ; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
 ; This project is licensed under the BSD 3-Clause License.
 ;
-; Generic RS232 Code
+; RS232 Driver Dispatch
 ;
 
 ;----------------------------------------------------------------------
-; RS232 driver dispatch: enable modem
-enablemodem
+; Dispatch: Enable modem
+enablemodem:
 	lda modem_type
 	beq @2		; MODEM_TYPE_USERPORT
 	cmp #MODEM_TYPE_UP9600
@@ -57,7 +57,7 @@ enablemodem
 	jmp sw_setup
 
 ;----------------------------------------------------------------------
-; RS232 driver dispatch: enable transfer
+; Dispatch: Enable transfer
 enablexfer:
 	pha
 	txa
@@ -76,7 +76,7 @@ enablexfer:
 	jmp xferout
 
 ;----------------------------------------------------------------------
-; RS232 driver dispatch: disable transfer
+; Dispatch: Disable transfer
 disablexfer:
 disablemodem:
 	pha
@@ -103,7 +103,7 @@ xferout:
 	rts
 
 ;----------------------------------------------------------------------
-; RS232 driver dispatch: get byte from modem
+; Dispatch: Get byte from modem
 modget:
 	lda modem_type
 	beq @2			; MODEM_TYPE_USERPORT
@@ -125,7 +125,7 @@ modget:
 	rts
 
 ;----------------------------------------------------------------------
-; RS232 driver dispatch: send byte to modem
+; Dispatch: Send byte to modem
 modput:
 	pha
 	lda #0
@@ -142,3 +142,11 @@ modput:
 	pla
 	jmp rsuser_putxfer	; regular
 
+;----------------------------------------------------------------------
+; Dispatch: Hang up
+dropdtr:
+	lda modem_type
+	jeq rsuser_dropdtr	; MODEM_TYPE_USERPORT
+	cmp #MODEM_TYPE_UP9600
+	jeq up9600_dropdtr
+	jmp sw_dropdtr
