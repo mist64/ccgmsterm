@@ -454,11 +454,11 @@ send:
 @loop:	jsr getin
 	cmp #'S'
 	bne @1
-	ldx #$40
+	ldx #$40	; flags: disk to modem, with delay
 	bne @3
 @1:	cmp #'R'
 	bne @2
-	ldx #0
+	ldx #0		; flags: disk screen, no delay
 	beq @3
 @2:	cmp #CR
 	bne @loop
@@ -471,8 +471,8 @@ send:
 	jsr outcap
 	lda #CR
 	jsr chrout
-	stx bufflg
-	stx buffl2
+	stx bufflg	; flags: disk/mem, delay/no delay
+	stx buffl2	; flags: send to modem
 	jsr ui_get_filename
 	beq @abt
 	lda #CR
@@ -490,7 +490,7 @@ send:
 	jsr setlfs
 	jsr open
 	ldx #LFN_MODEM
-	jsr chkout
+	jsr chkout	; [XXX unused because of commented out lines below]
 	;lda #15
 	;jsr chrout
 	jsr dskout
@@ -507,13 +507,13 @@ send:
 	.byte 0	; [XXX unused]
 
 ;----------------------------------------------------------------------
-tmsetl:
+sleep_50ms:
 	ldx #0
 	stx JIFFIES
 :	ldx JIFFIES
-	cpx #$03  ;***time del
+	cpx #3		; delay 1/20 sec
 	bcc :-
-	ldx #255
-:	dex
+	ldx #$ff
+:	dex		; [XXX this delay is insignificant in comparison]
 	bne :-
 	rts

@@ -208,7 +208,7 @@ no2
 	jsr chrout
 	lda #$80
 	sta bufflg
-	and #0
+	and #0		; [XXX lda #0]
 	sta buffl2
 	jsr prtbuf
 	jmp term_mainloop
@@ -234,14 +234,14 @@ prtbuf:
 	rts
 
 ;----------------------------------------------------------------------
-get_memory_byte:
+buffer_get_byte:
 	ldx buffst
 	cpx buffer_ptr
 	bcc memok
 	ldx buffst+1
 	cpx buffer_ptr+1
 	bcc memok
-memgab	ldx #$40
+memgab	ldx #$40	; EOI
 	stx status
 	rts
 
@@ -262,19 +262,19 @@ memext
 	rts
 
 ;----------------------------------------------------------------------
-skpbuf
+buffer_skip_256:
 	lda buffst+1
 	cmp buffer_ptr+1
-	bcs memgab
+	bcs memgab	; EOI
 	inc buffst+1
 skpbf2
 	lda buffst+1
 	cmp buffer_ptr+1
-	bcc memext
+	bcc memext	; OK
 	lda buffst
 	cmp buffer_ptr
-	bcs memgab
-	bcc memext
+	bcs memgab	; EOI
+	bcc memext	; OK
 no5
 
 ; S: save
@@ -572,7 +572,7 @@ print_buffer:
 
 ;----------------------------------------------------------------------
 print_buffer_bytes:
-	jsr get_memory_byte
+	jsr buffer_get_byte
 	bne @3
 	pha
 	and #$7f
