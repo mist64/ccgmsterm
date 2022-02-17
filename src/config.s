@@ -12,7 +12,7 @@
 config_data:
 
 baud_rate:
-	.byte BAUD_2400
+	.byte BAUD_9600
 
 ; indicates whether dialing should use ATD, followed by a quote
 firmware_zimmers:
@@ -22,7 +22,9 @@ mopo2:
 	.byte $20	; unused, but needs to stay for bin compat
 
 modem_type:
-	.byte MODEM_TYPE_USERPORT
+;	.byte MODEM_TYPE_USERPORT
+;	.byte MODEM_TYPE_UP9600
+	.byte MODEM_TYPE_SWIFTLINK_DE
 
 ;----------------------------------------------------------------------
 ; Phone book
@@ -87,7 +89,7 @@ macmm4:
 ;----------------------------------------------------------------------
 ; file transmission protocol
 protoc:
-	.byte PROTOCOL_PUNTER
+	.byte PROTOCOL_XMODEM
 
 ; current theme; see theme.s
 theme:

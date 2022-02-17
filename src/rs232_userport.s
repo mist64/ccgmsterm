@@ -196,6 +196,8 @@ rsuser_bsout:
 	cmp #2
 	bne notmod
 	pla
+
+rsuser_putxfer:
 	sta rsotm
 	stx rsotx
 	sty rsoty
@@ -233,6 +235,7 @@ ret1	clc
 	ldy rsoty
 	lda rsotm
 	rts
+
 notmod	pla
 	jmp  oldout
 

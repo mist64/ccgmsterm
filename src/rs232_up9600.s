@@ -232,8 +232,6 @@ up9600_getin:
 
 ;----------------------------------------------------------------------
 ; get byte from serial interface
-;  refer to this routine only if you wanna use it for
-;  protocols (xmodem, punter etc)
 up9600_getxfer:
 	ldx rhead
 	cpx rtail
@@ -263,8 +261,9 @@ up9600_bsout:
 	beq :+
 	pla		;if so, go back to original rom routines
 	jmp oldout
-:
-	pla
+:	pla
+
+up9600_putxfer:
 	sta rsotm
 	stx rsotx
 	sty rsoty
