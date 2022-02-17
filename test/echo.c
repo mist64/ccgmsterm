@@ -32,7 +32,7 @@ announce(char *s) {
 
 int
 main(int argc, char **argv) {
-	for (;;) {
+	while (!feof(stdin)) {
 		int c = _inbyte(0);
 		_outbyte(c);
 	}
