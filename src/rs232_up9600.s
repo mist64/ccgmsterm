@@ -84,16 +84,6 @@ up9600_setup:
 
 	jsr setbaudup
 
-	lda #<up9600_bsout
-	ldx #>up9600_bsout
-	sta $0326
-	stx $0327
-
-	lda #<up9600_getin
-	ldx #>up9600_getin
-	sta $032a
-	stx $032b
-
 ;----------------------------------------------------------------------
 ; enable serial interface (IRQ+NMI)
 up9600_enable:
@@ -217,20 +207,6 @@ setbaudup:
 	rts
 
 ;----------------------------------------------------------------------
-; new GETIN
-up9600_getin:
-	lda DFLTN
-	cmp #2		; see if default input is modem
-	jne ogetin	; nope, go back to original
-
-	jsr up9600_getxfer
-	bcs :+		; if no character, then return 0 in a
-	rts
-:	clc
-	lda #0
-	rts
-
-;----------------------------------------------------------------------
 ; get byte from serial interface
 up9600_getxfer:
 	ldx rhead
@@ -253,16 +229,6 @@ up9600_getxfer:
 @skip:	rts
 
 ;----------------------------------------------------------------------
-; new BSOUT
-up9600_bsout:
-	pha		;dupliciaton of original kernal routines
-	lda DFLTO	;test dfault output device for
-	cmp #2		;screen, and...
-	beq :+
-	pla		;if so, go back to original rom routines
-	jmp oldout
-:	pla
-
 up9600_putxfer:
 	sta rsotm
 	stx rsotx

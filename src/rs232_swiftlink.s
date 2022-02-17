@@ -137,16 +137,6 @@ sm18	lda sw_ctrl
 	ora swbaud,x
 sm19	sta sw_ctrl
 
-	lda #<swiftlink_bsout
-	ldx #>swiftlink_bsout
-	sta $0326 ; IBSOUT
-	stx $0327
-
-	lda #<swiftlink_getin
-	ldx #>swiftlink_getin
-	sta $032a ; IGETIN
-	stx $032b
-
 	lda #<nmisw
 	ldx #>nmisw
 	sta $0318 ; NMINV
@@ -157,16 +147,6 @@ sm19	sta sw_ctrl
 	rts
 
 ;----------------------------------------------------------------------
-; new BSOUT
-swiftlink_bsout:
-	pha		; dupliciaton of original kernal routines
-	lda DFLTO	; test dfault output device for
-	cmp #2		; screen, and...
-	beq :+
-	pla		; if so, go back to original rom routines
-	jmp oldout
-:    	pla
-
 sw_putxfer:
 	sta rsotm
 	stx rsotx
@@ -196,20 +176,6 @@ sm24	sta sw_cmd
 	bmi :-
 	ora #%00000001
 sm25	sta sw_cmd
-	rts
-
-;----------------------------------------------------------------------
-; new GETIN
-swiftlink_getin:
-	lda DFLTN
-	cmp #2		; see if default input is modem
-	jne ogetin	; nope, go back to original
-
-	jsr sw_getxfer
-	bcs :+		; if no character, then return 0 in a
-	rts
-:	clc
-	lda #0
 	rts
 
 ;----------------------------------------------------------------------

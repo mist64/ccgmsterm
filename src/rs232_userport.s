@@ -24,16 +24,6 @@ rsuser_setup:
 	sta $0318 ; NMINV
 	sty $0319
 
-	lda #<rsuser_bsout
-	ldx #>rsuser_bsout
-	sta $0326 ; IBSOUT
-	stx $0327
-
-	lda #<rsuser_getin
-	ldx #>rsuser_getin
-	sta $032a ; IGETIN
-	stx $032b
-
 	cli
 
 	jmp clear232
@@ -53,20 +43,6 @@ isbyte:
 	.byte 0
 lastring:		; [XXX unused]
 	.byte 0
-
-;----------------------------------------------------------------------
-; new GETIN
-rsuser_getin:
-	lda DFLTN
-	cmp #2		; see if default input is modem
-	jne ogetin	; nope, go back to original
-
-	jsr rsuser_getxfer
-	bcs :+		; if no character, then return 0 in a
-	rts
-:	clc
-	lda #0
-	rts
 
 ;----------------------------------------------------------------------
 ; get byte from serial interface
@@ -189,14 +165,6 @@ endbyte	lda #0
 	jmp rsuser_disable
 
 ;----------------------------------------------------------------------
-; new BSOUT
-rsuser_bsout:
-	pha
-	lda DFLTO
-	cmp #2
-	bne notmod
-	pla
-
 rsuser_putxfer:
 	sta rsotm
 	stx rsotx
@@ -235,9 +203,6 @@ ret1	clc
 	ldy rsoty
 	lda rsotm
 	rts
-
-notmod	pla
-	jmp  oldout
 
 ;----------------------------------------------------------------------
 ; disable rs232 input
