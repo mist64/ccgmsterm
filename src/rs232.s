@@ -9,13 +9,51 @@
 ;----------------------------------------------------------------------
 ; Dispatch: Enable modem
 enablemodem:
+	ldx #MODEM_TYPE_SWIFTLINK_DE
 	lda modem_type
-	beq @2		; MODEM_TYPE_USERPORT
-	cmp #MODEM_TYPE_UP9600
-	beq @1
-	jmp sw_setup
-@1:	jmp up9600_setup
-@2:	jmp rsuser_setup
+	cmp #MODEM_TYPE_SWIFTLINK_DE
+	bcc :+
+	txa
+:	asl
+	tax
+	lda modem_drivers,x
+	sta tmp02
+	lda modem_drivers+1,x
+	sta tmp02+1
+	ldx #1
+	ldy #0
+:	lda (tmp02),y
+	sta rs232_funcs,x
+	iny
+	inx
+	lda (tmp02),y
+	sta rs232_funcs,x
+	iny
+	inx
+	inx
+	cpy #2*6
+	bne :-
+
+rs232_funcs:
+; setup
+	jmp $ffff
+func_enable:
+	jmp $ffff
+func_disable:
+	jmp $ffff
+func_getxfer:
+	jmp $ffff
+func_putxfer:
+	jmp $ffff
+func_dropdtr:
+	jmp $ffff
+
+	.res 6*2
+
+modem_drivers:
+	.word rsuser_funcs	; MODEM_TYPE_USERPORT
+	.word up9600_funcs	; MODEM_TYPE_UP9600
+	.word sw_funcs		; MODEM_TYPE_SWIFTLINK_DE, ...
 
 ;----------------------------------------------------------------------
 ; Dispatch: Enable transfer
@@ -25,15 +63,7 @@ enablexfer:
 	pha
 	tya
 	pha
-	lda modem_type
-	beq @1		; MODEM_TYPE_USERPORT
-	cmp #MODEM_TYPE_UP9600
-	beq @2
-	jsr sw_enable
-	jmp xferout
-@1:	jsr rsuser_enable
-	jmp xferout
-@2:	jsr up9600_enable
+	jsr func_enable
 	jmp xferout
 
 ;----------------------------------------------------------------------
@@ -45,16 +75,7 @@ disablemodem:
 	pha
 	tya
 	pha
-	lda modem_type
-	beq @2		; MODEM_TYPE_USERPORT
-	cmp #MODEM_TYPE_UP9600
-	beq @1
-	jsr sw_disable
-	jmp xferout
-@1:	jsr up9600_disable
-	jmp xferout
-@2:	jsr rsuser_disable
-	jmp xferout		; [XXX redundant]
+	jsr func_disable
 xferout:
 	pla
 	tay
@@ -66,17 +87,8 @@ xferout:
 ;----------------------------------------------------------------------
 ; Dispatch: Get byte from modem
 modget:
-	lda modem_type
-	beq @2			; MODEM_TYPE_USERPORT
-	cmp #MODEM_TYPE_UP9600
-	beq @1
-	jsr sw_getxfer		; swiftlink
-	jmp @cont
-@1:	jsr up9600_getxfer	; up9600
-	jmp @cont
-@2:	jsr $F04F		; XXX necessary for User Port driver
-	jsr rsuser_getxfer	; regular
-@cont:	pha
+	jsr func_getxfer
+	pha
 	php
 	lda #0
 	rol
@@ -91,23 +103,9 @@ modput:
 	pha
 	lda #0
 	sta status
-	lda modem_type
-	beq @2			; MODEM_TYPE_USERPORT
-	cmp #MODEM_TYPE_UP9600
-	beq @1
 	pla
-	jmp sw_putxfer		; swiftlink
-@1:	pla
-	jmp up9600_putxfer	; up9600
-@2:	;jsr $EFE3		; XXX maybe necessary for User Port driver
-	pla
-	jmp rsuser_putxfer	; regular
+	jmp func_putxfer
 
 ;----------------------------------------------------------------------
 ; Dispatch: Hang up
-dropdtr:
-	lda modem_type
-	jeq rsuser_dropdtr	; MODEM_TYPE_USERPORT
-	cmp #MODEM_TYPE_UP9600
-	jeq up9600_dropdtr
-	jmp sw_dropdtr
+dropdtr	= func_dropdtr
