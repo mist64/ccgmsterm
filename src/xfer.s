@@ -489,10 +489,6 @@ send:
 	tay
 	jsr setlfs
 	jsr open
-	ldx #LFN_MODEM
-	jsr chkout	; [XXX unused because of commented out lines below]
-	;lda #15
-	;jsr chrout
 	jsr dskout
 	lda #LFN_FILE
 	jsr close

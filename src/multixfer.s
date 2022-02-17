@@ -110,16 +110,16 @@ mlsgo
 	jsr mlshdr
 	ldy #0
 mlsgo1	lda inpbuf,y
-	jsr chrout	; modem
+	jsr modput
 	iny
 	cpy max
 	bne mlsgo1
 	lda inpbuf,y
-	jsr chrout	; modem
+	jsr modput
 	lda inpbuf+1,y
-	jsr chrout	; modem
+	jsr modput
 	lda #CR
-	jsr chrout	; modem
+	jsr modput
 	jsr clrchn
 	jsr uplmen	; disk setup
 	ldx SHFLAG
@@ -141,11 +141,11 @@ mlss5
 	jsr mlshdr
 	ldx #16
 	lda #4		; ctrl-d
-:	jsr chrout	; modem
+:	jsr modput
 	dex
 	bne :-
 	lda #CR
-	jsr chrout	; modem
+	jsr modput
 mlssab	jsr clrchn
 	jsr text_color_restore
 	jsr gong
@@ -156,11 +156,9 @@ mlssab	jsr clrchn
 mlshdr:
 	jsr clear232
 	jsr enablexfer
-	ldx #LFN_MODEM
-	jsr chkout
 	ldx #16
 	lda #9		; ctrl-i
-:	jsr chrout	; modem
+:	jsr modput
 	dex
 	bne :-
 	rts
@@ -208,16 +206,14 @@ mlrwat
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	beq mulab2
-	ldx #LFN_MODEM
-	jsr chkin
-	jsr getin	; modem
+	jsr modget
 	cmp #9		; ctrl-i
 	bne mlrwat
 mlrwt2
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	beq mulab2
-	jsr getin	; modem
+	jsr modget
 	cmp #0
 	beq mlrwt2
 	cmp #9		; ctrl-i
@@ -227,9 +223,7 @@ mlrflp
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	beq mulab2
-	ldx #LFN_MODEM
-	jsr chkin
-	jsr getin	; modem
+	jsr modget
 	cmp #0
 	beq mlrflp
 mlrfl1

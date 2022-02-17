@@ -105,8 +105,6 @@ dir_once_per_line:
 	jsr chrout	; position cursor over last printed line
 	lda #3
 	sta DFLTN	; input from screen
-	ldx #LFN_MODEM
-	jsr chkout
 	ldy #0
 @loop:
 ; eat all bytes from the modem
@@ -120,7 +118,7 @@ dir_once_per_line:
 	jsr disablexfer
 	jsr getin	; input from screen
 	jsr enablexfer
-	jsr chrout	; send to modem
+	jsr modput
 	tya
 	pha
 	lda #21
@@ -132,15 +130,13 @@ dir_once_per_line:
 	cpy #27		; max with (will send extra spaces at the end)
 	bcc @loop
 	lda #CR
-	jsr chrout	; send to modem
+	jsr modput
 	jsr clrchn
 	lda #CR
 	jsr chrout	; screen
 
 ; eat all bytes in the RS232 buffer
-	ldx #LFN_MODEM
-	jsr chkin
-:	jsr getin
+:	jsr modget
 	lda RIDBE
 	cmp RIDBS
 	bne :-

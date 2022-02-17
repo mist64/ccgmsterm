@@ -254,8 +254,9 @@ newoutup:
 	beq :+
 	pla		;if so, go back to original rom routines
 	jmp oldout
-:
-	pla
+:	pla
+
+up9600_putxfer:
 	sta rsotm
 	stx rsotx
 	sty rsoty

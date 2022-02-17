@@ -151,7 +151,6 @@ COLTAB  = $e8da ; PETSCII codes for the colors 0-15
 ; logical file numbers
 LFN_FILE	= 2	; for upload/download
 LFN_PRINTER     = 4	; printing buffers
-LFN_MODEM	= 5
 LFN_DIR 	= 13
 LFN_DISK_CMD    = 15
 

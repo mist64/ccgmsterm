@@ -41,7 +41,7 @@ start
 
 ; editor/screen setup
 	lda #1
-	sta BLNSW	; enable cursor blinking
+	sta BLNSW	; disable cursor blinking
 	lda #BCOLOR
 	sta backgr
 	sta border
@@ -114,17 +114,13 @@ rsopen:
 	jsr up9600_disable
 	jsr enablemodem
 	jsr clall
-	lda #LFN_MODEM
-	ldx #DEV_MODEM
-	ldy #SA_MODEM
-	jsr setlfs
-	lda aciaemu_filename_len
-	ldx #<aciaemu_filename
-	ldy #>aciaemu_filename
-	jsr setnam
-	jsr open
-	lda #>ribuf	; move rs232 buffers
-	sta RIBUF+1	; for the userport 300-2400 modem nmi handling
+
+;	jsr $F483	; XXX maybe necessary for User Port driver
+
+	lda #<ribuf	; move rs232 buffers
+	sta RIBUF	; for the userport 300-2400 modem nmi handling
+	lda #>ribuf
+	sta RIBUF+1
 	jsr disablemodem
 	rts		; [XXX jmp]
 

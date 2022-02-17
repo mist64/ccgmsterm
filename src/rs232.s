@@ -109,7 +109,36 @@ modget:
 	beq @2			; MODEM_TYPE_USERPORT
 	cmp #MODEM_TYPE_UP9600
 	beq @1
-	jmp sw_getxfer		; swiftlink
-@1:	jmp up9600_getxfer	; up9600
-@2:	jmp rsuser_getxfer	; regular
+	jsr sw_getxfer		; swiftlink
+	jmp @cont
+@1:	jsr up9600_getxfer	; up9600
+	jmp @cont
+@2:	jsr $F04F		; XXX necessary for User Port driver
+	jsr rsuser_getxfer	; regular
+@cont:	pha
+	php
+	lda #0
+	rol
+	sta status		; some callers want STATUS set
+	plp			; others want C set on error/no data
+	pla
+	rts
+
+;----------------------------------------------------------------------
+; RS232 driver dispatch: send byte to modem
+modput:
+	pha
+	lda #0
+	sta status
+	lda modem_type
+	beq @2			; MODEM_TYPE_USERPORT
+	cmp #MODEM_TYPE_UP9600
+	beq @1
+	pla
+	jmp sw_putxfer		; swiftlink
+@1:	pla
+	jmp up9600_putxfer	; up9600
+@2:	;jsr $EFE3		; XXX maybe necessary for User Port driver
+	pla
+	jmp rsuser_putxfer	; regular
 

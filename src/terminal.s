@@ -171,11 +171,7 @@ term_mainloop:
 :
 
 ; send to modem
-	pha
-	ldx #LFN_MODEM
-	jsr chkout
-	pla
-	jsr chrout
+	jsr modput
 
 ; convert back to PETSCII
 	ldx ascii_mode
@@ -229,16 +225,11 @@ term_mainloop:
 :
 
 ; modem input
-	ldx #LFN_MODEM
-	jsr chkin	; get the byte from the modem
-	jsr getin
+@xxxx:	jsr modget
 	cmp #0
 	beq @loop2b	; = @loop2
 	ldx status
 	bne @loop2b	; = @loop2
-	pha
-	jsr clrchn
-	pla
 
 ; ASCII conversion
 	ldx ascii_mode

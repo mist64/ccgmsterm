@@ -41,7 +41,6 @@ xmobuf	= $fd	; zero page pointer to access the buffer
 ; uses the following KERNAL calls:
 ;  chkin
 ;  chkout
-;  chrout
 ;  close
 ;  clrchn
 ;  getin
@@ -179,8 +178,6 @@ xmodem_send:
 @send_again:
 	jsr clear_buffers
 	jsr enablexfer
-	ldx #LFN_MODEM
-	jsr chkout
 
 ; send block header
 	lda #SOH
@@ -188,18 +185,18 @@ xmodem_send:
 	cpx #PROTOCOL_XMODEM_1K
 	bne :+
 	lda #STX_
-:	jsr chrout	; 0: SOH/STX (128/1K)
+:	jsr modput	; 0: SOH/STX (128/1K)
 	lda xmoblk
-	jsr chrout	; 1: block index
+	jsr modput	; 1: block index
 	eor #$ff
-	jsr chrout	; 2: block index ^ $FF
+	jsr modput	; 2: block index ^ $FF
 
 	jsr setup_buffer
 
 	ldx pagectr
 	ldy #0
 :	lda (xmobuf),y
-	jsr chrout
+	jsr modput
 	iny
 	cpy firstpagebytes
 	bne :-
@@ -213,13 +210,13 @@ xmodem_send:
 
 ; send CRC
 	lda crcz+1
-	jsr chrout
+	jsr modput
 	lda crcz
 	jmp @send_crc_cont
 @ncrc:
 	lda xmochk
 @send_crc_cont:
-	jsr chrout
+	jsr modput
 
 	jsr clrchn
 	jsr clear_input_buffer
@@ -258,10 +255,8 @@ xmodem_send:
 ; send EOT
 @sne1:
 	jsr enablexfer
-	ldx #LFN_MODEM
-	jsr chkout
 	lda #EOT
-	jsr chrout	; send EOT
+	jsr modput	; send EOT
 	lda #3		; timeout
 	jsr modem_get
 	bne :+
@@ -452,7 +447,7 @@ xmcmab	lda #STAT_USER_ABORTED
 	ldx xmostk
 	txs
 
-:	jsr clear_buffers
+	jsr clear_buffers
 
 	lda xmstat
 	cmp #STAT_SYNC_LOST
@@ -460,12 +455,10 @@ xmcmab	lda #STAT_USER_ABORTED
 
 	; send CAN if STAT_SYNC_LOST and STAT_USER_ABORTED
 	jsr _enablexfer
-	ldx #LFN_MODEM
-	jsr chkout
 
 	ldy #8
 	lda #CAN
-:	jsr chrout
+:	jsr modput
 	dey
 	bpl :-		; 9x CAN
 
@@ -511,12 +504,10 @@ xmodem_receive:
 @retry2:
 	jsr clear232
 	jsr enablexfer
-	ldx #LFN_MODEM
-	jsr chkout
 
 @receive_nak_code = *+1
 	lda #NAK
-	jsr chrout
+	jsr modput
 	jsr clrchn
 
 ; block loop
@@ -661,10 +652,8 @@ xmodem_receive:
 
 ; send ACK
 	jsr enablexfer
-	ldx #LFN_MODEM
-	jsr chkout
 	lda #ACK
-	jsr chrout
+	jsr modput
 	jsr clrchn
 
 	lda #0

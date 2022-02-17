@@ -195,16 +195,14 @@ dorts	pha
 sendcode
 	jsr clear232
 	jsr enablexfer
-	ldx #LFN_MODEM
-	jsr chkout
 	ldx #0
 sn1	lda codes,y
-	jsr chrout
+	jsr modput
 	iny
 	inx
 	cpx #$03
 	bne sn1
-	jmp clrchn
+	rts
 ;
 ;do handshaking for reception end
 ;
@@ -320,15 +318,12 @@ tx10	lda #':'
 	jsr altbuf
 	jsr clear232
 	jsr enablexfer
-	ldx #LFN_MODEM
-	jsr chkout
 	ldy #0
 tx6	lda (pntb),y  ;transmit alternate buffer
-	jsr chrout
+	jsr modput
 	iny
 	cpy bufcount
 	bne tx6
-	jsr clrchn
 	lda #0
 	rts
 ;
