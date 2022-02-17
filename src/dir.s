@@ -6,151 +6,173 @@
 ; Show disk directory
 ;
 
-dirmdm:
-	.byte 0
-
+;----------------------------------------------------------------------
+dir_echo_to_modem:
+	.byte 0		; 0: f6, 1: c=f6
 dirfn:
 	.byte '$'
 
+;----------------------------------------------------------------------
+; Show the disk directory, optionally send it to the modem
+; (the filename has to be set already)
 dir:
 	jsr disablexfer
-	lda #$0d
+	lda #LFN_DIR
 	ldx device_disk
 	ldy #0
 	jsr setlfs
-	jsr drvchk
-	jmi drexit
+	jsr is_drive_present
+	jmi dir_exit	; no
 	jsr clrchn
 	jsr text_color_save
 	lda #CR
 	jsr chrout
 	jsr open
 	lda #0
-	sta dirmdm
+	sta dir_echo_to_modem
 	lda SHFLAG
 	cmp #SHFLAG_CBM	; c= f6
 	bne :+
 	lda #1
-	sta dirmdm
-:	ldx #$0d
+	sta dir_echo_to_modem
+:	ldx #LFN_DIR
 	jsr chkin
-	ldy #3
-@loop:	jsr getch
+	ldy #3		; skip 4 bytes (load address and link pointer)
+@loop1:	jsr getch
 	dey
-	bpl @loop
-	jsr getch
-	sta $0b
-	jsr getch
-	ldx $0b
-	jsr outnum
-	lda #$20
+	bpl @loop1
+	jsr getch	; blocks/line number (lo)
+	sta tmp0b
+	jsr getch	; blocks/line number (lo)
+	ldx tmp0b
+	jsr outnum	; print blocks
+	lda #' '
 	jsr chrout
-@skip:	jsr getch
-	ldx dirmdm
+@loop2:	jsr getch
+	ldx dir_echo_to_modem
 	beq @1
 	cmp #0
 	beq @2
-	cmp #' '
-	bcc @skip
+	cmp #$20	; suppress special chars if we need to read back
+	bcc @loop2	; the screen later [XXX not enough, also $80-$9F]
 @1:	jsr chrout
-	bne @skip
-@2:	jsr drret
-	ldy #1
-	bne @loop
+	bne @loop2
+@2:	jsr dir_once_per_line
+	ldy #1		; skip 2 bytes next time (link pointer)
+	bne @loop1
 
+;----------------------------------------------------------------------
 getch:
 	jsr getin
 	ldx status
-	bne drlp3
+	bne dir_cancel
 	cmp #0
 	rts
-drlp3
+dir_cancel:
 	pla
 	pla
-drexit
+dir_exit:
 	jsr clrchn
 	jsr text_color_restore
-	lda #$0d
-	jsr chrout
-	jsr close	; [XXX ugly: LFN matches code for CR]
+	lda #LFN_DIR
+	jsr chrout	; [XXX ugly: LFN matches code for CR]
+	jsr close
 	jmp enablexfer
 
-drret:
+;----------------------------------------------------------------------
+dir_once_per_line:
 	lda #CR
 	jsr chrout
 	jsr clrchn
-	jsr getin
-	beq @cont
-	cmp #$03
-	beq drlp3
+	jsr getin	; keyboard
+	beq @nokey
+
+; keypress
+	cmp #3		; STOP
+	beq dir_cancel
+; pause output until another keypress
 	lda #0
-	sta $c6
-:	jsr getin
+	sta NDX		; clear keyboard queue
+:	jsr getin	; wait for key
 	beq :-
-@cont:	ldx dirmdm
-	beq dircoe
+@nokey:
+
+	ldx dir_echo_to_modem
+	beq @skip
+
+; send line to modem by reading back the printed line from the screen
 	lda #CSR_UP
-	jsr chrout
-	lda #3		; screen
-	sta 153		; def input dev
+	jsr chrout	; position cursor over last printed line
+	lda #3
+	sta DFLTN	; input from screen
 	ldx #LFN_MODEM
 	jsr chkout
 	ldy #0
-drcon2
+@loop:
+; eat all bytes from the modem
 	lda #5
-	sta dget2
-	jsr dirget	; grab bytes in buffer so we dont lock up nmis
-	bcs :+		; no bytes
-	jmp drcon2	; [XXX bcc drcon2 would work]
-:	jsr disablexfer
-	jsr getin
+	sta timeout
+	jsr modget_timeout
+	bcs :+		; nothing
+	jmp @loop	; [XXX bcc @loop would work]
+:
+
+	jsr disablexfer
+	jsr getin	; input from screen
 	jsr enablexfer
-	jsr chrout
+	jsr chrout	; send to modem
 	tya
 	pha
-	lda #$15
-	sta dget2
-	jsr dirget	; grab bytes in buffer so we dont lock up nmis
+	lda #21
+	sta timeout
+	jsr modget_timeout; eat echo
 	pla
 	tay
 	iny
-	cpy #27
-	bcc drcon2
+	cpy #27		; max with (will send extra spaces at the end)
+	bcc @loop
 	lda #CR
-	jsr chrout
+	jsr chrout	; send to modem
 	jsr clrchn
 	lda #CR
-	jsr chrout
+	jsr chrout	; screen
+
+; eat all bytes in the RS232 buffer
 	ldx #LFN_MODEM
 	jsr chkin
 :	jsr getin
-	lda $029b
-	cmp $029c
+	lda RIDBE
+	cmp RIDBS
 	bne :-
-dircoe:
+
+@skip:
 	jsr clrchn
-	ldx #$0d
+	ldx #LFN_DIR
 	jmp chkin
 
-drvchk:
+;----------------------------------------------------------------------
+is_drive_present:
 	lda #0
 	sta status
 	lda device_disk
-	jsr $ed0c
+	jsr $ed0c	; LISTEN
 	lda #$f0
-	jsr $edbb
+	jsr $edbb	; SECND
 	ldx status
 	bmi :+
-	jsr $f654
+	jsr $f654	; UNLISTEN
 	lda #0
 :	rts
 
-;this timeout failsafe makes sure the byte is received back from modem
-;before accessing disk for another byte otherwise we can have
-;all sorts of nmi related issues.... this solves everything.
-;uses the 'fake' rtc / jiffy counter function / same as xmmget...
-dirget:
-dget2=*+1
+;----------------------------------------------------------------------
+; get character with timeout
+;
+; (this timeout failsafe makes sure the byte is received back from modem
+;  before accessing disk for another byte otherwise we can have
+;  all sorts of nmi related issues.... this solves everything.
+;  uses the 'fake' rtc / jiffy counter function / same as xmmget...)
+modget_timeout:
+timeout=*+1
 	lda #10		; timeout failsafe
 	sta xmodel
 	lda #0

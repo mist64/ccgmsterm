@@ -75,6 +75,7 @@ dskout:
 ;  before accessing disk for another byte otherwise we can have
 ;  all sorts of nmi related issues.... this solves everything.
 ;  uses the 'fake' rtc / jiffy counter function / same as xmmget...)
+; [XXX this is a duplicate of modget_timeout]
 	lda #70		; timeout failsafe
 	sta xmodel
 	lda #0
