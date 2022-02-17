@@ -6,113 +6,117 @@
 ; Macro Execution
 ;
 
+;----------------------------------------------------------------------
 ; xfer id and pw to macros F5 and F7
-xferidpw
+xferidpw:
 	ldy #59
-xferid
-	lda (nlocat),y
+:	lda (nlocat),y
 	sta macmem+69,y
 	iny
 	lda (nlocat),y
-	beq xferpw
-	jmp xferid
-xferpw
-	sta macmem+69,y
+	beq :+
+	jmp :-		; [XXX short jmp]
+:	sta macmem+69,y
 	ldy #71
-xferpw2
-	lda (nlocat),y
+:	lda (nlocat),y
 	sta macmem+121,y
 	iny
 	lda (nlocat),y
-	beq xferp3
-	jmp xferpw2
-xferp3
-	sta macmem+121,y
+	beq :+
+	jmp :-		; [XXX short jmp]
+:	sta macmem+121,y
 	rts
 
-macmdm	.byte 0
-macxrg	.byte 0
+;----------------------------------------------------------------------
+macro_dry_run_mode:
+	.byte 0
+macro_tmp:
+	.byte 0
 
-prmacx	;find index for macro
-	cpx #3     ;from LSTX f-key value
-	bne prmax2
+;----------------------------------------------------------------------
+decode_fkey_scancode:
+	cpx #3		; from LSTX f-key value
+	bne @1
 	ldx #7
-prmax2	txa
+@1:	txa
 	sec
-	sbc #4     ;now a=0..3 for f1,3,5,7
+	sbc #4		; now a = 0..3 for f1,f3,f5,f7
 	ldx #5
-prmax3	asl a
+:	asl a
 	dex
-	bpl prmax3  ;a=0,64,128,192
-	sta macxrg
+	bpl :-		; a = 0,64,128,192
+	sta macro_tmp
 	rts
 
 ;----------------------------------------------------------------------
 print_macro:
-	lda LSTX
+	lda LSTX	; 3-6 are F7/F1/F3/F5
 	cmp #7
-	bcc print_macro
-	jsr prmacx
+	bcc print_macro	; wait until key released
+
+	jsr decode_fkey_scancode
 prtmc0
-	ldx macxrg
+	ldx macro_tmp	; index into macro text
 	lda macmem,x
-	beq prtmc4
+	beq @end
 	pha
-	ldx macmdm
-	bne prtmc2
+	ldx macro_dry_run_mode
+	bne @mc2	; -> don't send
+
+; send character
 	ldx #LFN_MODEM
 	jsr chkout
 	pla
 	pha
 	ldx ascii_mode
-	beq prtmc1
+	beq :+
 	jsr petscii_to_ascii
-prtmc1
-	jsr chrout
+:	jsr chrout	; send character to modem
 	jsr clrchn
 	lda #$100-3
 	sta JIFFIES
-prtmcd	lda JIFFIES
-	bne prtmcd
+:	lda JIFFIES
+	bne :-		; wait 50 msec
 	lda #$100-3
 	sta JIFFIES
-prtmcd2	lda JIFFIES
-	bne prtmcd2
+:	lda JIFFIES
+	bne :-		; wait 50 msec [XXX combine]
+
+; get echo
 	ldx #LFN_MODEM
 	jsr chkin
 	jsr getin
 	cmp #0
-	bne prtmci
+	bne @mci
 	ldx half_duplex
-	beq prtmca
+	beq @mca
 	ldx ascii_mode
-	beq prtmc2
+	beq @mc2
 	pla
 	jsr petscii_to_ascii
-	bne prtmck
-	beq prtmc3
-prtmca	pla
-	bne prtmc3
-prtmci	tax
+	bne @mck
+	beq @mc3
+@mca:	pla
+	bne @mc3
+@mci:	tax
 	pla
 	txa
-prtmck	ldx ascii_mode
+@mck:	ldx ascii_mode
 	beq :+
 	jsr ascii_to_petscii
 :	pha
-prtmc2
-	jsr cursor_off
+
+@mc2:	jsr cursor_off
 	pla
-	ldx macmdm
-	bne prtmcs
+	ldx macro_dry_run_mode
+	bne :+		; then don't put into buffer
 	jsr buffer_put
-prtmcs
-	jsr handle_control_codes
-	bcs prtmc3
+:	jsr handle_control_codes
+	bcs @mc3
 	jsr chrout
 	jsr quote_insert_off
 	jsr cursor_show
-prtmc3	inc macxrg
+@mc3:	inc macro_tmp
 	cmp #255
 	bne prtmc0
-prtmc4	jmp cursor_off
+@end:	jmp cursor_off

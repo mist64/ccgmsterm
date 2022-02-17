@@ -214,7 +214,7 @@ term_mainloop:
 	cpx #7		; [XXX thinking it's SHFLAG; it works by accident]
 	bcs :+
 	lda #0
-	sta macmdm
+	sta macro_dry_run_mode
 	jsr print_macro
 	jmp @loop1
 :
