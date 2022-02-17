@@ -353,10 +353,11 @@ shocr2	lda #$20
 	bcs shocr3
 	jsr chrout
 	bne shocr2
-shocr3
-;lda unlisted
-;bne shotty
-shobau;start display of bottom line
+
+shocr3:
+;	lda unlisted
+;	bne shotty
+shobau	; start display of bottom line
 	lda #23
 	sta LINE
 	lda #CR
@@ -933,21 +934,21 @@ dalfc2
 dalterm
 	jmp term_entry
 dalf2
-	cmp #2      ;aborted
+	cmp #2		; aborted
 	bne dalf3
 	jmp dalfab
 dalf3
 	cmp #0
 	bne dalf4
-	lda dial_type  ;no connect
+	lda dial_type	; no connect
 	cmp #DIALTYPE_SELECTED
 	bcs dalslc
 	lda numbuf
 	cmp #CR
 	bne dalag
-	jmp dlabrt
+	jmp hayes_userabort
 dalag
-	jmp adnum   ;redial for curr/unl
+	jmp dial	; redial for curr/unl
 dalslc
 	lda #<stattx
 	ldy #>stattx
@@ -981,7 +982,7 @@ dalsl1
 dalsl2
 	cmp tmppik
 	bne dalsl3
-	jmp dlabrt
+	jmp hayes_userabort
 dalsl3
 	jsr phnptr
 	ldy #0
@@ -1046,7 +1047,7 @@ dalun2	sta 1951,y;$079f
 	ldx #32
 	jsr input
 	bne dalun3
-	jmp dlabrt
+	jmp hayes_userabort
 dalun3
 	ldx #0
 dalun6
@@ -1074,7 +1075,7 @@ dalun9	sta 1951,y;$079f
 	ldx #5
 	jsr input
 	bne dalun8
-	jmp dlabrt
+	jmp hayes_userabort
 dalun8
 	ldx #0
 	ldy unltemp
@@ -1144,30 +1145,25 @@ CONSTAT_CONNECT		= 1
 CONSTAT_USERABORT	= 2
 CONSTAT_UNKNOWN		= 3
 
-;main body of dialer
-dial
-adnum
+;----------------------------------------------------------------------
+; main body of dialer
+dial:
 	lda #CR
 	jsr chrout
-await0
 	lda unlisted	; unlisted gets a pass on the empty entry check
-	bne await01
-	ldy #2;empty entry? don't dial!
+	bne :+
+	ldy #2		; empty entry? don't dial!
 	lda (nlocat),y
-	bne await01
-	jmp dlabrt
-await01
+	jeq hayes_userabort
+:
 	lda #$100-106	; 1.75 sec delay
 	sta JIFFIES
-await1
-	jsr getin	; check r/s
-	cmp #$03
-	bne awaitl
-	jmp dlabrt
-awaitl
+@wloop:	jsr getin
+	cmp #3		; STOP
+	jeq hayes_userabort
 	lda JIFFIES
-	bne await1
-adbegn
+	bne @wloop
+
 	lda #$100-2*60	; 2 sec delay
 	sta JIFFIES	; for dial tone
 :	lda JIFFIES
@@ -1175,65 +1171,65 @@ adbegn
 	inc trycnt+1
 	lda trycnt+1
 	cmp #'9'+1
-	bcc dialnoinc
+	bcc :+
 	inc trycnt
 	lda trycnt
 	cmp #'9'+1
-	jeq dlabrt
+	jeq hayes_userabort
 	lda #'0'
 	sta trycnt+1
-dialnoinc
-	jsr shocr3
-dialin
+:	jsr shocr3
 	ldy #31
 	lda #1
-dlwhtl	sta $d800+23*40+7,y
+:	sta $d800+23*40+7,y
 	dey
-	bpl dlwhtl
-dlinit
+	bpl :-
+
 	lda #<txt_dialing
 	ldy #>txt_dialing
 	jsr prtstt
+
+;----------------------------------------------------------------------
 ; hayes dial
-smrtdl
 	jsr clear232
 	jsr enablemodem
 	ldx #LFN_MODEM
 	jsr chkout
-	lda #<txt_atv1
+	lda #<txt_atv1	; send word result codes (as opposed to numeric)
 	ldy #>txt_atv1
 	jsr outmod
 	lda firmware_zimmers
-	bne haydat
+	bne @1
 	lda #<txt_atd
 	ldy #>txt_atd
-	jmp haydatcont
-haydat
-	lda #<txt_atd_zimmers
+	jmp @2
+@1:	lda #<txt_atd_zimmers
 	ldy #>txt_atd_zimmers
-haydatcont
-	jsr outstr
+@2:	jsr outstr
 	ldx #0
-hayda4	stx numptr
+@loop:	stx numptr
 	ldx numptr
 	lda #14
 	sta $d800+23*40+7,x
 	ldx numptr
 	lda numbuf,x
-	jsr chrout
+	jsr chrout	; to modem
 	ldx numptr
 	inx
-	cmp #CR
-	bne hayda4
+	cmp #CR		; CR-terminated
+	bne @loop
 	jsr clrchn
-hayda6
 	jmp haybus
-haynan
+
+;----------------------------------------------------------------------
+hayes_no_carrier:
 	lda #<txt_no_carrier
 	ldy #>txt_no_carrier
 	jsr prtstt
 	jmp haybk2
-haybak
+
+;----------------------------------------------------------------------
+hayes_busy:
 	lda #<txt_busy
 	ldy #>txt_busy
 	jsr prtstt
@@ -1242,53 +1238,62 @@ haybk2
 	sta JIFFIES
 :	lda JIFFIES
 	bne :-
-	jsr haydel
-	jmp redial
-haycon
-	jsr haydel
+	jsr flush_modem
+	jmp hayes_redial
+
+;----------------------------------------------------------------------
+hayes_connected:
+	jsr flush_modem
 	lda #CONSTAT_CONNECT
 	sta connection_status
 	jmp dalfin
-haydel
+
+;----------------------------------------------------------------------
+; eat all modem bytes until CR (with timeout)
+flush_modem:
 	lda #$100-24
 	sta JIFFIES
 	ldx #LFN_MODEM
 	jsr chkin
-haydll	jsr getin
+:	jsr getin
 	cmp #CR
-	beq haydlo
+	beq :+
 	lda JIFFIES
-	bne haydll
-haydlo
-	jsr clrchn
+	bne :-
+:	jsr clrchn	; [XXX jmp]
 	rts
-dlabrt
+
+;----------------------------------------------------------------------
+hayes_userabort:
 	lda #$100-48
 	sta JIFFIES	; short delay
 :	lda JIFFIES
 	bne :-		; back to phbook
-dgobak
 	lda #CONSTAT_USERABORT
 	sta connection_status
 	jmp dalfin
 
-redial
+;----------------------------------------------------------------------
+hayes_redial:
 	lda #$100-128	; 2 second delay
 	sta JIFFIES
 :	lda JIFFIES	; before restart
 	bne :-
-rgobak
 	lda #CONSTAT_BUSY_NOCARRIER
-	sta connection_status     ;set redial flag
-	jmp dalfin     ;back to phbook
-outmod
+	sta connection_status; set redial flag
+	jmp dalfin	; back to phbook
+
+;----------------------------------------------------------------------
+; send string to modem and wait a bit
+outmod:
 	jsr outstr
-outmo1	lda #$100-32
+	lda #$100-32
 	sta JIFFIES
 :	lda JIFFIES
 	bne :-
 	rts
 
+;----------------------------------------------------------------------
 	.byte 0		; [XXX unused]
 
 txt_atd:
@@ -1316,134 +1321,136 @@ SET_ASCII
 
 	.byte 0		; [XXX unused]
 
-bustemp	.byte 0
+bustemp:
+	.byte 0
 
 ; [XXX this is all very verbose]
+;----------------------------------------------------------------------
 haybus:
 	ldy #0
 	sty bustemp
 
-	jsr gethayes
+	jsr hmodget
 haybus3
 	jsr puthayes
 	cpy #$ff
 	jeq hayout	; get out of routine. send data to terminal, and set connect!
-	jsr gethayes
+	jsr hmodget
 	cmp #'B'+$20
 	bne haynocarr	; move to check for no carrier
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'U'+$20
 	bne haybus3
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'S'+$20
 	bne haybus3
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'Y'+$20
 	bne haybus3
 	ldy #0
 	sty bustemp
-	jmp haybak ; busy!
+	jmp hayes_busy
 ;
 haynocarr
 	cmp #'N'+$20
 	bne haybusand;move to next char
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'O'+$20
 	bne haybus3
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #' '
 	bne haybus3
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'C'+$20
 	jne haynoanswer
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'A'+$20
 	bne haybus3
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'R'+$20
 	bne haybus3
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'R'+$20
 	bne haybus3
 	ldy #0
 	sty bustemp
-	jmp haynan ; no carrier!
+	jmp hayes_no_carrier
 ;
 haybusand
 	cmp #'B'
 	bne haynocarrand;move to check for no carrier
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'U'
 	beq :+
 haybus3b:
 	jmp haybus3
 :
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'S'
 	bne haybus3b
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'Y'
 	bne haybus3b
 	ldy #0
 	sty bustemp
-	jmp haybak ; busy!
+	jmp hayes_busy
 ;
 haynocarrand
 	cmp #'N'
 	bne haybus3b
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'O'
 	bne haybus3b
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #' '
 	bne haybus3b
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'C'
 	bne haynoanswerand
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'A'
 	bne haybus3b
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'R'
 	bne haybus3b
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'R'
 	bne haybus3b
 	ldy #0
 	sty bustemp
-	jmp haynan ; no carrier!
+	jmp hayes_no_carrier
 
 haynoanswerand
 	cmp #'A'
 	bne haybus3b
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'N'
 	bne haybus3b
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'S'
 	bne haybus3b
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'W'
 	beq :+
 haybus3c
@@ -1451,42 +1458,43 @@ haybus3c
 :
 	ldy #0
 	sty bustemp
-	jmp haynan ; no carrier!
+	jmp hayes_no_carrier
 
 haynoanswer
 	cmp #'A'+$20
 	bne haybus3c
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'N'+$20
 	bne haybus3c
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'S'+$20
 	bne haybus3c
 	jsr puthayes
-	jsr gethayes
+	jsr hmodget
 	cmp #'W'+$20
 	bne haybus3c
 	ldy #0
 	sty bustemp
-	jmp haynan	; no carrier!
+	jmp hayes_no_carrier
 
 ;
 hayout
 	sty bustemp
-	jmp haycon
+	jmp hayes_connected
 
 ;----------------------------------------------------------------------
-gethayes:
-	inc waittemp	; timeout for no character loop so
+; get modem byte with timeout
+hmodget:
+	inc waittemp	; timeout for no character loop
 	ldx waittemp	; so it doesn't lock up
 	cpx #144	; maybe change for various baud rates
 	beq :+
 	ldx #LFN_MODEM
 	jsr chkin
 	jsr getin
-	beq gethayes
+	beq hmodget
 :	ldx #0
 	stx waittemp
 	rts
