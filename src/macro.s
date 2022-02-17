@@ -6,8 +6,8 @@
 ; Macro editor
 ;
 
-prwcmc
-	lda macxrg
+prwcmc:
+	lda macro_tmp
 	and #$c0
 	asl a
 	rol a
@@ -72,7 +72,7 @@ edtmc3
 	lda LSTX
 	cmp #7
 	bcc edtmc3
-	jsr prmacx
+	jsr decode_fkey_scancode
 	sta wchmac
 edtmen
 	lda #0
@@ -88,10 +88,10 @@ edtstr
 	ldy #>txt_edit
 	jsr outstr
 	lda #1
-	sta macmdm
+	sta macro_dry_run_mode
 	sta cursor_flag
 	lda wchmac
-	sta macxrg
+	sta macro_tmp
 	clc
 	adc #62
 	sta macfull
@@ -111,7 +111,7 @@ edtkey
 	beq edtkey
 	cmp #CLR
 	bne edtky1
-	ldx macxrg
+	ldx macro_tmp
 edtclr
 	lda #0
 	sta macmem,x
@@ -120,20 +120,20 @@ edtclr
 	dex
 	jmp edtclr
 edtky0	ldx wchmac
-	stx macxrg
+	stx macro_tmp
 	jmp edtmen
 edtky1
 	cmp #24   ;ctrl-x
 	beq edtbye
 	cmp #DEL
 	bne edtky2
-	lda macxrg
+	lda macro_tmp
 	cmp wchmac
 	beq edtkey
 	tax
 	jsr edtdel
 jcs	edtmen
-	lda macxrg
+	lda macro_tmp
 	and #$3f
 	cmp #$3f
 	bne edtkey
@@ -145,7 +145,7 @@ edtky2
 	cpx #3
 	bcc edtkey
 edtky3
-	ldx macxrg
+	ldx macro_tmp
 	cpx macfull;64 bytes of memory per macro
 	bcs edtkey
 	sta macmem,x
@@ -159,7 +159,7 @@ edtky3
 	jsr bell
 	jmp edtmen
 edtky4
-	inc macxrg
+	inc macro_tmp
 	jsr cursor_off
 	pla
 	jsr handle_control_codes
@@ -169,7 +169,7 @@ edtky5
 	jsr chrout
 	jsr quote_insert_off
 	jmp edtinp
-edtbye	ldx macxrg
+edtbye	ldx macro_tmp
 	lda #0
 	sta macmem,x
 	rts
@@ -225,7 +225,7 @@ edtde3	lda macmem-1,x
 	bne edtdeo
 edtde4	jsr edtcok
 	bmi edtde7
-	ldx macxrg
+	ldx macro_tmp
 	lda macmem-2,x
 	sta macbkg
 edtde5	dex
@@ -270,7 +270,7 @@ edtde7
 	beq edtde8
 	cmp #11
 	bne edtd12
-edtde8	ldx macxrg
+edtde8	ldx macro_tmp
 edtde9	dex
 	cpx wchmac
 	beq edtd11
@@ -285,7 +285,7 @@ edtd11	lda maccty
 edtd12	and #$7f
 	cmp #18
 	bne edtd15
-	ldx macxrg
+	ldx macro_tmp
 edtd13	dex
 	cpx wchmac
 	beq edtd14
@@ -308,7 +308,7 @@ edtd15
 	beq edtd16
 	cmp #21
 	bne edtd19
-edtd16	ldx macxrg
+edtd16	ldx macro_tmp
 edtdlc	dex
 	cpx wchmac
 	beq edtd18
@@ -329,8 +329,8 @@ edtd19
 	sta 199
 	lda #RVSOFF
 	jsr edprrv
-	dec macxrg
-	ldx macxrg
+	dec macro_tmp
+	ldx macro_tmp
 	lda #0
 	sta macmem,x
 	sec
@@ -342,8 +342,8 @@ edtdle
 edtdln
 	jsr edprrv
 edtdla
-	dec macxrg
-	ldx macxrg
+	dec macro_tmp
+	ldx macro_tmp
 	lda #0
 	sta macmem,x
 	clc
