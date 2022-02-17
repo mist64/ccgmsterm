@@ -258,3 +258,18 @@ rsuser_setbaud:
 	lda bdloc+13,y
 	sta fullhi
 	rts
+
+;----------------------------------------------------------------------
+; Hang up
+rsuser_dropdtr:
+	lda #%00000100
+	sta $dd03
+	lda #0
+	sta cia2pb
+	ldx #$100-30
+	stx JIFFIES
+:	bit JIFFIES
+	bmi :-
+	lda #4
+	sta cia2pb
+	rts
