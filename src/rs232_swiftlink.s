@@ -137,16 +137,6 @@ sm18	lda sw_ctrl
 	ora swbaud,x
 sm19	sta sw_ctrl
 
-	lda #<newout
-	ldx #>newout
-	sta $0326 ; IBSOUT
-	stx $0327
-
-	lda #<newin
-	ldx #>newin
-	sta $032a ; IGETIN
-	stx $032b
-
 	lda #<nmisw
 	ldx #>nmisw
 	sta $0318 ; NMINV
@@ -157,16 +147,6 @@ sm19	sta sw_ctrl
 	rts
 
 ;----------------------------------------------------------------------
-; new BSOUT
-newout:
-	pha		; dupliciaton of original kernal routines
-	lda DFLTO	; test dfault output device for
-	cmp #2		; screen, and...
-	beq :+
-	pla		; if so, go back to original rom routines
-	jmp oldout
-:    	pla
-
 sw_putxfer:
 	sta rsotm
 	stx rsotx
@@ -196,20 +176,6 @@ wait30	bit JIFFIES
 	bmi wait30
 	ora #%00000001
 sm25	sta sw_cmd
-	rts
-
-;----------------------------------------------------------------------
-; new GETIN
-newin	lda DFLTN
-	cmp #2		; see if default input is modem
-	beq :+
-	jmp ogetin	; nope, go back to original
-
-:	jsr sw_getxfer
-	bcs :+		; if no character, then return 0 in a
-	rts
-:	clc
-	lda #0
 	rts
 
 ;----------------------------------------------------------------------
