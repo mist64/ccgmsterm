@@ -114,7 +114,15 @@ term_mainloop:
 ; shift-stop: hang up
 	cmp #$83
 	bne @no4
-	jmp hangup
+	ldx SHFLAG
+	cpx #SHFLAG_CBM
+	bne :+	; not C= Stop
+	jsr cursor_off
+	lda #<txt_disconnecting
+	ldy #>txt_disconnecting
+	jsr outstr
+	jsr dropdtr
+:	jmp term_mainloop
 @no4:
 
 ; f1..f8: functions

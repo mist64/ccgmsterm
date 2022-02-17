@@ -281,3 +281,18 @@ up9600_disable:
 	sta $0315	; irq
 	cli
 	rts
+
+;----------------------------------------------------------------------
+; Hang up
+up9600_dropdtr:
+	lda #%00000100
+	sta cia2ddrb
+	lda #%00000010
+	sta cia2pb
+	ldx #$100-30
+	stx JIFFIES
+:	bit JIFFIES
+	bmi :-
+	lda #%00000010
+	sta cia2ddrb
+	rts
