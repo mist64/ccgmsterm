@@ -13,48 +13,9 @@ enablemodem:
 	beq @2		; MODEM_TYPE_USERPORT
 	cmp #MODEM_TYPE_UP9600
 	beq @1
-	cmp #MODEM_TYPE_SWIFTLINK_DE
-	beq @3
-	cmp #MODEM_TYPE_SWIFTLINK_DF
-	beq @4
-	cmp #MODEM_TYPE_SWIFTLINK_D7
-	beq @5
-	rts
+	jmp sw_setup
 @1:	jmp up9600_setup
 @2:	jmp rsuser_setup
-@3:	lda #$de
-	jmp @6
-@4:	lda #$df
-	jmp @6
-@5:	lda #$d7
-; set Swiftlink address by modifying all access code
-; [XXX this should be moved to the Swiftlink code]
-@6:	sta sm1+2
-	sta sm2+2
-	sta sm3+2
-	sta sm4+2
-	sta sm5+2
-	sta sm6+2
-	sta sm7+2
-	sta sm8+2
-	sta sm9+2
-	sta sm10+2
-	sta sm11+2
-	sta sm12+2
-	sta sm13+2
-	sta sm14+2
-	sta sm15+2
-	sta sm16+2
-	sta sm17+2
-	sta sm18+2
-	sta sm19+2
-	sta sm20+2
-	sta sm21+2
-	sta sm22+2
-	sta sm23+2
-	sta sm24+2
-	sta sm25+2
-	jmp sw_setup
 
 ;----------------------------------------------------------------------
 ; Dispatch: Enable transfer

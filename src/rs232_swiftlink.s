@@ -101,6 +101,42 @@ sm15	sta sw_cmd
 
 ;----------------------------------------------------------------------
 sw_setup:
+; set SwiftLink address by modifying all access code
+	cmp #MODEM_TYPE_SWIFTLINK_DE
+	beq @de
+	cmp #MODEM_TYPE_SWIFTLINK_DF
+	beq @df
+	lda #$d7	; else MODEM_TYPE_SWIFTLINK_D7
+	bne @cont
+@de:	lda #$de
+	bne @cont
+@df:	lda #$df
+@cont:	sta sm1+2
+	sta sm2+2
+	sta sm3+2
+	sta sm4+2
+	sta sm5+2
+	sta sm6+2
+	sta sm7+2
+	sta sm8+2
+	sta sm9+2
+	sta sm10+2
+	sta sm11+2
+	sta sm12+2
+	sta sm13+2
+	sta sm14+2
+	sta sm15+2
+	sta sm16+2
+	sta sm17+2
+	sta sm18+2
+	sta sm19+2
+	sta sm20+2
+	sta sm21+2
+	sta sm22+2
+	sta sm23+2
+	sta sm24+2
+	sta sm25+2
+
 	sei
 ;             .------------------------- parity control,
 ;             :.------------------------ bits 5-7
