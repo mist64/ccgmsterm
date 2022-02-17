@@ -64,15 +64,12 @@ prtmc0
 	bne @mc2	; -> don't send
 
 ; send character
-	ldx #LFN_MODEM
-	jsr chkout
 	pla
 	pha
 	ldx ascii_mode
 	beq :+
 	jsr petscii_to_ascii
-:	jsr chrout	; send character to modem
-	jsr clrchn
+:	jsr modput
 	lda #$100-3
 	sta JIFFIES
 :	lda JIFFIES
@@ -83,9 +80,7 @@ prtmc0
 	bne :-		; wait 50 msec [XXX combine]
 
 ; get echo
-	ldx #LFN_MODEM
-	jsr chkin
-	jsr getin
+	jsr modget
 	cmp #0
 	bne @mci
 	ldx half_duplex

@@ -167,6 +167,7 @@ swiftlink_bsout:
 	jmp oldout
 :    	pla
 
+sw_putxfer:
 	sta rsotm
 	stx rsotx
 	sty rsoty
