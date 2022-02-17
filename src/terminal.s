@@ -19,7 +19,7 @@ term_entry:
 
 	jsr wic64_connect
 
-:
+;:
 ;	ldx #0
 ;@1:	dex
 ;	bne @1
