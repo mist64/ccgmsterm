@@ -34,7 +34,7 @@ handle_f7_config:
 
 config_loop:
 	lda #0
-	sta $c6
+	sta NDX
 	jsr f7parm
 f7chos
 	lda JIFFIES

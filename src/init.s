@@ -82,7 +82,7 @@ start
 	sta device_disk
 	jmp @dsk2
 @dsk1:	sta device_disk
-	jsr drvchk
+	jsr is_drive_present
 	bmi @loop
 	lda #1
 	sta drive_present; we have a drive!

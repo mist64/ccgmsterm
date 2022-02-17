@@ -62,7 +62,7 @@ dskcmd
 	lda inpbuf
 	cmp #'#'	; drive
 	beq chgdev
-	jsr drvchk
+	jsr is_drive_present
 	bmi drvext
 	lda #CR		; exit
 	jsr chrout
@@ -95,7 +95,7 @@ drvext
 	jsr enablexfer
 	jmp term_mainloop
 drverr
-	jsr drvchk
+	jsr is_drive_present
 	bmi drvext
 	jsr clrchn
 	ldx #LFN_DISK_CMD
@@ -142,7 +142,7 @@ chgdv9
 	pha
 	sty device_disk
 	sty 612
-	jsr drvchk
+	jsr is_drive_present
 	bmi chgdv3
 	pla
 	lda #CSR_UP
