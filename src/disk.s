@@ -3,40 +3,48 @@
 ; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
 ; This project is licensed under the BSD 3-Clause License.
 ;
-; Disk
+; Send file or buffer to screen and/or modem
 ;
 
-;
-;disk output routine
+; bufflg
+;   $80: 0: disk, 1: buffer
+;   $40: 0: no delay, 1: delay
+; buffl2:
+;   0:   output to screen
+;   !=0: output to screen and modem
+
 dskout:
 	jsr clrchn
 	jsr cursor_show
-	lda bufflg	; bufflg 00=disk
-	bpl dskmo	; $40=disk w. delay
-	jsr get_memory_byte;$80=memory get
-	bit bufflg	; $ff=mem w. delay
-	bvs timdel
+	lda bufflg
+	bpl @dskmo	; -> disk
+
+; buffer
+	jsr buffer_get_byte
+	bit bufflg
+	bvs @timdel	; -> buffer & delay
 	ldx #$ff
-mrloop
-	dex
-	bne mrloop
-	beq chstat
-dskmo
+:	dex		; short delay (about 1ms)
+	bne :-
+	beq @chstat	; always
+
+; disk
+@dskmo:
 	jsr disablexfer
 	ldx #LFN_FILE
 	jsr chkin
-	jsr getin
+	jsr getin	; get byte from disk
 	pha
-	pla
-timdel
+	pla		; [XXX]
+@timdel:
 	bit bufflg
-	bvc chstat
-	jsr tmsetl
-chstat
+	bvc @chstat	; -> no delay
+	jsr sleep_50ms
+@chstat:
 	pha
 	lda status
 	and #$40
-jne	dskext
+	jne @dskext	; -> EOF
 	jsr clrchn
 	jsr cursor_off
 	pla
@@ -44,11 +52,13 @@ jne	dskext
 	jsr handle_control_codes
 	jsr chrout
 	jsr quote_insert_off
-	ldx buffl2 ;non zero=to modem
-	bne dskmo1
+	ldx buffl2
+	bne @dskmo1	; non zero: also output to modem
 	pla
-	jmp chkkey
-dskmo1
+	jmp @chkkey	; skip
+
+; output to modem
+@dskmo1:
 	jsr clear232
 	jsr enablexfer
 	jsr clear232
@@ -59,52 +69,62 @@ dskmo1
 	beq :+
 	jsr petscii_to_ascii
 :	jsr chrout
-dxmmget;this timeout failsafe makes sure the byte is received back from modem
-	;before accessing disk for another byte otherwise we can have
-	;all sorts of nmi related issues.... this solves everything.
-	;uses the 'fake' rtc / jiffy counter function / same as xmmget...
+
+; eat echo from modem
+; (this timeout failsafe makes sure the byte is received back from modem
+;  before accessing disk for another byte otherwise we can have
+;  all sorts of nmi related issues.... this solves everything.
+;  uses the 'fake' rtc / jiffy counter function / same as xmmget...)
 	lda #70		; timeout failsafe
 	sta xmodel
 	lda #0
 	sta rtca1
 	sta rtca2
 	sta rtca0
-dxmogt1
-	jsr modget
-	bcs dxmmgt2
-	jmp chkkey
-dxmmgt2
-	jsr xmmrtc
+
+:	jsr modget	; get byte (and ignore)
+	jcc @chkkey	; done
+	jsr xmmrtc	; count up
 	lda rtca1
 	cmp xmodel
-	bcc dxmogt1
-chkkey
-	jsr keyprs
-	jeq dskout
-	cmp #3;run stop
-	beq dskex2
+	bcc :-		; retry until time is up
+
+@chkkey:
+	jsr get_key
+	jeq dskout	; loop
+
+; handle keypress
+	cmp #3		; STOP key
+	beq @dskex2
+
 	jsr enablexfer
 	cmp #'S'
-	bne dskwat
-	lda bufflg
-	bpl dskwat
-	jsr skpbuf
-	ldx status
-	bne dskex2
+	bne @nos
+
+; 'S'
+	lda bufflg	; only in memory mode
+	bpl @nos
+	jsr buffer_skip_256
+	ldx status	; EOI?
+	bne @dskex2	; end
+	jsr enablexfer
+	jmp dskout	; loop
+@nos:
+
+:	jsr get_key
+	beq :-
+
 	jsr enablexfer
 	jmp dskout
-dskwat
-	jsr keyprs
-	beq dskwat
-	jsr enablexfer
-	jmp dskout
-dskext
+@dskext:
 	jsr enablexfer
 	pla
-dskex2
+@dskex2:
 	jsr clrchn
 	jmp cursor_off
-keyprs
+
+;----------------------------------------------------------------------
+get_key:
 	jsr clrchn
 	jsr getin
 	cmp #0
