@@ -110,16 +110,16 @@ mlsgo
 	jsr mlshdr
 	ldy #0
 mlsgo1	lda inpbuf,y
-	jsr chrout
+	jsr chrout	; modem
 	iny
 	cpy max
 	bne mlsgo1
 	lda inpbuf,y
-	jsr chrout
+	jsr chrout	; modem
 	lda inpbuf+1,y
-	jsr chrout
+	jsr chrout	; modem
 	lda #CR
-	jsr chrout
+	jsr chrout	; modem
 	jsr clrchn
 	jsr uplmen	; disk setup
 	ldx SHFLAG
@@ -141,33 +141,38 @@ mlss5
 	jsr mlshdr
 	ldx #16
 	lda #4		; ctrl-d
-mlss6	jsr chrout
+:	jsr chrout	; modem
 	dex
-	bne mlss6
+	bne :-
 	lda #CR
-	jsr chrout
+	jsr chrout	; modem
 mlssab	jsr clrchn
 	jsr text_color_restore
 	jsr gong
 	jmp term_entry
-mlshdr
+
+;----------------------------------------------------------------------
+; send 16 TABs
+mlshdr:
 	jsr clear232
 	jsr enablexfer
 	ldx #LFN_MODEM
 	jsr chkout
 	ldx #16
 	lda #9		; ctrl-i
-mlscri	jsr chrout
+:	jsr chrout	; modem
 	dex
-	bne mlscri
+	bne :-
 	rts
-mulabt
+
+;----------------------------------------------------------------------
+mulabt:
 	jsr gong
 mulab2
 	jsr clrchn
 	lda #CR
 	jsr chrout
-	lda #2
+	lda #LFN_FILE
 	jsr close
 	lda modem_type
 	cmp #MODEM_TYPE_SWIFTLINK_DE
@@ -205,14 +210,14 @@ mlrwat
 	beq mulab2
 	ldx #LFN_MODEM
 	jsr chkin
-	jsr getin
+	jsr getin	; modem
 	cmp #9		; ctrl-i
 	bne mlrwat
 mlrwt2
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	beq mulab2
-	jsr getin
+	jsr getin	; modem
 	cmp #0
 	beq mlrwt2
 	cmp #9		; ctrl-i
@@ -224,7 +229,7 @@ mlrflp
 	beq mulab2
 	ldx #LFN_MODEM
 	jsr chkin
-	jsr getin
+	jsr getin	; modem
 	cmp #0
 	beq mlrflp
 mlrfl1
