@@ -18,6 +18,15 @@ RTS_MIN	= 50	; enable Request To Send when buffer reaches this
 RTS_MAX	= 200	; disable Request To Send when buffer reaches this
 
 ;----------------------------------------------------------------------
+up9600_funcs:
+	.word up9600_setup
+	.word up9600_enable
+	.word up9600_disable
+	.word up9600_getxfer
+	.word up9600_putxfer
+	.word up9600_dropdtr
+
+;----------------------------------------------------------------------
 up9600_nmi:
 	bit $dd0d	; check bit 7 (startbit ?)
 nmi_bmi=*+1

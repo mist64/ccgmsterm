@@ -26,6 +26,15 @@ sw_ctrl	= swift+3
 sw_baud	= swift+7
 
 ;----------------------------------------------------------------------
+sw_funcs:
+	.word sw_setup
+	.word sw_enable
+	.word sw_disable
+	.word sw_getxfer
+	.word sw_putxfer
+	.word sw_dropdtr
+
+;----------------------------------------------------------------------
 ; new NMI handler
 nmisw:
 	pha
@@ -102,6 +111,7 @@ sm15	sta sw_cmd
 ;----------------------------------------------------------------------
 sw_setup:
 ; set SwiftLink address by modifying all access code
+	lda modem_type
 	cmp #MODEM_TYPE_SWIFTLINK_DE
 	beq @de
 	cmp #MODEM_TYPE_SWIFTLINK_DF
