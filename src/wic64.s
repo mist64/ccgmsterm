@@ -86,31 +86,34 @@ sendcommand:
 ;	lda #CR
 ;	jsr $ffd2
 
+	ldy #1
+	lda (zpcmd),y				; Länge des Kommandos holen
+
+sendcommand2:
+	tay
+
 	lda $dd02
 	ora #$04
-	sta $dd02				; Datenrichtung Port A PA2 auf Ausgang
-	lda #$ff				; Datenrichtung Port B Ausgang
+	sta $dd02	; DDR Port A PA2 auf Ausgang
+	lda #$ff	; DDR Port B Ausgang
 	sta $dd03
 	lda $dd00
-	ora #$04				; PA2 auf HIGH = ESP im Empfangsmodus
+	ora #$04	; PA2 auf HIGH = ESP im Empfangsmodus
 	sta $dd00
 
-	ldy #$01
-	lda (zpcmd),y				; Länge des Kommandos holen
-	sta stringexit		; Als Exit speichern
-
+	tya
+	sta @len
 	ldy #0
-string_next:
-	lda (zpcmd),y
+:	lda (zpcmd),y
 	jsr write_byte
 	iny
-stringexit=*+1
-	cpy #$00				; Selbstmodifizierender Code - Hier wird die länge des Kommandos eingetragen -> Siehe Ende von send_string
-	bne string_next
+@len=*+1
+	cpy #$ff
+	bne :-
 	rts
 
 getanswer_data:
-	lda #$00	; Datenrichtung Port B Eingang
+	lda #$00	; DDR Port B Eingang
 	sta $dd03
 	lda $dd00
 	and #$ff-4	; PA2 auf LOW = ESP im Sendemodus
