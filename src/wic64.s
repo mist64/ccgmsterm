@@ -134,7 +134,13 @@ sendcommand2:
 	bne :-
 	rts
 
-getanswer_data:
+get_tcp_bytes:
+	lda #<cmd_tcp_get
+	sta zpcmd
+	lda #>cmd_tcp_get
+	sta zpcmd+1
+	jsr sendcommand
+
 	lda #$00	; DDR Port B Eingang
 	sta $dd03
 	lda $dd00
@@ -267,13 +273,8 @@ wic64_getxfer:
 	ora bytes_in_buffer+1
 	bne @skip_command
 
-	lda #<cmd_tcp_get
-	sta zpcmd
-	lda #>cmd_tcp_get
-	sta zpcmd+1
-	jsr sendcommand
 	inc $d020
-	jsr getanswer_data
+	jsr get_tcp_bytes
 	cmp #2
 	jeq BADBADBAD2
 
