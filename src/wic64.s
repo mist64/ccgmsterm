@@ -7,7 +7,7 @@
 ;  based on "Simple Telnet Demo" source by KiWi, 2-clause BSD
 ;
 
-zp=$40
+zpcmd=$40
 
 ;----------------------------------------------------------------------
 wic64_funcs:
@@ -25,15 +25,24 @@ wic64_dropdtr:
 
 ;----------------------------------------------------------------------
 wic64_setup:
+	; XXX for now, connect to fixed server immediately
 	lda #0
 	sta bytes_in_buffer
 	sta bytes_in_buffer+1
 
 	lda #<commandserver
-	sta zp
+	sta zpcmd
 	lda #>commandserver
-	sta zp+1
-	jsr fixsting
+	sta zpcmd+1
+
+	ldy #4
+:	iny
+	lda (zpcmd),y
+	bne :-
+	tya
+	ldy #1
+	sta (zpcmd),y
+
 	jsr sendcommand
 
 	jsr read_status
@@ -44,29 +53,16 @@ BADBADBAD:
 	inc $d021
 	jmp BADBADBAD
 
+;----------------------------------------------------------------------
 wic64_send:
 	sta commandputbyte+4
 	lda #<commandputbyte
-	sta zp
+	sta zpcmd
 	lda #>commandputbyte
-	sta zp+1
+	sta zpcmd+1
 	jsr sendcommand
 	jsr read_status
 	bcs BADBADBAD
-	rts
-
-
-
-
-fixsting:
-	ldy #4
-countstring:
-	iny
-	lda (zp),y
-	bne countstring
-	tya
-	ldy #1
-	sta (zp),y
 	rts
 
 txt_sendcmd:
@@ -83,7 +79,7 @@ sendcommand:
 ;	ldy #>txt_sendcmd
 ;	jsr $ab1e
 ;	ldy #3
-;	lda (zp),y
+;	lda (zpcmd),y
 ;	tax
 ;	lda #0
 ;	jsr $bdcd
@@ -100,16 +96,14 @@ sendcommand:
 	sta $dd00
 
 	ldy #$01
-	lda (zp),y				; Länge des Kommandos holen
-	sec
-	sbc #$01
+	lda (zpcmd),y				; Länge des Kommandos holen
 	sta stringexit		; Als Exit speichern
 
-	ldy #$ff
+	ldy #0
 string_next:
-	iny
-	lda (zp),y
+	lda (zpcmd),y
 	jsr write_byte
+	iny
 stringexit=*+1
 	cpy #$00				; Selbstmodifizierender Code - Hier wird die länge des Kommandos eingetragen -> Siehe Ende von send_string
 	bne string_next
@@ -215,9 +209,9 @@ wic64_getxfer:
 	bne @skip_command
 
 	lda #<commandget
-	sta zp
+	sta zpcmd
 	lda #>commandget
-	sta zp+1
+	sta zpcmd+1
 	jsr sendcommand
 	inc $d020
 	jsr getanswer_data
