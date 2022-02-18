@@ -94,26 +94,19 @@ wic64_send:
 	bcs BADBADBAD2
 	rts
 
-txt_sendcmd:
-	.byte "CMD: ",0
-txt_length:
-	.byte "LEN: ",0
-txt_bufferx:
-	.byte "BUF: ",0
-txt_char:
-	.byte "CHR: ",0
-
 sendcommand:
-;	lda #<txt_sendcmd
-;	ldy #>txt_sendcmd
-;	jsr $ab1e
-;	ldy #3
-;	lda (zpcmd),y
-;	tax
-;	lda #0
-;	jsr $bdcd
-;	lda #CR
-;	jsr $ffd2
+.ifdef DEBUG
+	lda #<txt_sendcmd
+	ldy #>txt_sendcmd
+	jsr $ab1e
+	ldy #3
+	lda (zpcmd),y
+	tax
+	lda #0
+	jsr $bdcd
+	lda #CR
+	jsr $ffd2
+.endif
 
 	ldy #1
 	lda (zpcmd),y				; Länge des Kommandos holen
@@ -155,17 +148,16 @@ getanswer_data:
 	sta bytes_in_buffer
 	sta $0400
 
+.ifdef DEBUG
 	lda #<txt_length
-;	ldy #>txt_length
-;	jsr $ab1e
-;	lda bytes_in_buffer+1
-;	ldx bytes_in_buffer
-;	jsr $bdcd
-;	lda #CR
-;	jsr $ffd2
-
-;:	inc $d020
-;	jmp :-
+	ldy #>txt_length
+	jsr $ab1e
+	lda bytes_in_buffer+1
+	ldx bytes_in_buffer
+	jsr $bdcd
+	lda #CR
+	jsr $ffd2
+.endif
 
 	rts
 
@@ -224,11 +216,6 @@ write_byte:
 
 	rts
 
-txt_write_byte:
-	.byte "WRITE: ",0
-txt_read_byte:
-	.byte "READ: ",0
-
 read_byte:
 	lda #$10	; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
 :	bit $dd0d
@@ -260,26 +247,6 @@ read_byte:
 	plp
 .endif
 	rts
-
-cmd_tcp_get:
-	.byte 'W'
-	.word 4
-	.byte 34
-
-cmd_tcp_put:
-	.byte 'W'
-	.word 5
-	.byte 35
-	.byte $00	; <- will be overwritten
-
-commandserver:
-	.byte 'W'
-	.word $00	; <- will be overwritten
-	.byte 33
-server_address:
-	.byte "192.168.176.104:25232",0
-;	.byte "raveolution.hopto.org:64128",0
-
 
 wic64_getxfer:
 	php
@@ -349,6 +316,39 @@ wic64_enable:
 
 wic64_disable:
 	rts
+
+cmd_tcp_get:
+	.byte 'W'
+	.word 4
+	.byte 34
+
+cmd_tcp_put:
+	.byte 'W'
+	.word 5
+	.byte 35
+	.byte $00	; <- will be overwritten
+
+commandserver:
+	.byte 'W'
+	.word $00	; <- will be overwritten
+	.byte 33
+
+server_address:
+	.byte "192.168.176.104:25232",0
+;	.byte "raveolution.hopto.org:64128",0
+
+txt_sendcmd:
+	.byte "CMD: ",0
+txt_length:
+	.byte "LEN: ",0
+txt_bufferx:
+	.byte "BUF: ",0
+txt_char:
+	.byte "CHR: ",0
+txt_write_byte:
+	.byte "WRITE: ",0
+txt_read_byte:
+	.byte "READ: ",0
 
 bytes_in_buffer:
 	.word 0
