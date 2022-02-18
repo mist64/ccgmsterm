@@ -256,11 +256,15 @@ cmd_tcp_get:
 	.byte 34
 
 cmd_tcp_put:
-	.byte 'W',$05,$00,35
+	.byte 'W'
+	.word 5
+	.byte 35
 	.byte $00	; <- will be overwritten
 
 commandserver:
-	.byte 'W',$00,$00,33
+	.byte 'W'
+	.word $00	; <- will be overwritten
+	.byte 33
 	.byte "192.168.176.104:25232",0
 ;	.byte "raveolution.hopto.org:64128",0
 
