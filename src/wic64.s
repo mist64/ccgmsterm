@@ -117,7 +117,7 @@ sendcommand2:
 	lda #$ff	; DDR PB  input
 	sta $dd03
 	lda $dd00
-	ora #$04	; PA2 = HIGH -> put device into receiving move
+	ora #$04	; PA2 := HIGH -> put device into receiving move
 	sta $dd00
 
 	ldy #0
@@ -129,6 +129,17 @@ sendcommand2:
 	bne :-
 	rts
 
+get_reply_size:
+	lda #$00	; DDR PB input
+	sta $dd03
+	lda $dd00
+	and #$ff-4	; PA2 := LOW -> put device into sending mode
+	sta $dd00
+	jsr read_byte	; dummy byte
+	jsr read_byte	; data size HI
+	tax
+	jmp read_byte	; data size LO
+
 get_tcp_bytes:
 	lda #<cmd_tcp_get
 	sta zpcmd
@@ -136,18 +147,11 @@ get_tcp_bytes:
 	sta zpcmd+1
 	jsr sendcommand
 
-	lda #$00	; DDR Port B Eingang
-	sta $dd03
-	lda $dd00
-	and #$ff-4	; PA2 auf LOW = ESP im Sendemodus
-	sta $dd00
-	jsr read_byte	; dummy byte
-	jsr read_byte	; data size HI
-	sta bytes_in_buffer+1
-	sta $0401
-	jsr read_byte	; data size LO
+	jsr get_reply_size
 	sta bytes_in_buffer
+	stx bytes_in_buffer+1
 	sta $0400
+	stx $0401
 
 .ifdef DEBUG
 	lda #<txt_length
@@ -165,17 +169,10 @@ get_tcp_bytes:
 
 
 read_status:
-	lda #$00
-	sta $dd03
-	lda $dd00
-	and #251
-	sta $dd00
-	jsr read_byte	; dummy
-	jsr read_byte	; data size HI (always 0)
-	jsr read_byte	; data size LO (1: ok, 2: error)
-	pha
+	jsr get_reply_size
+	tax
 	jsr read_byte	; '0': ok, '!': error
-	pla
+	txa
 	cmp #1
 	bne :+
 	clc		; ok
