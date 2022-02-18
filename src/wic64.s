@@ -166,16 +166,16 @@ read_status:
 
 
 write_byte:
-	sta $dd01		; Bit 0..7: Userport Daten PB 0-7 schreiben
-:	lda $dd0d
-	and #$10		; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
+	sta $dd01	; Bit 0..7: Userport Daten PB 0-7 schreiben
+	lda #$10
+:	bit $dd0d	; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
 	beq :-
 	rts
 
 read_byte:
-	lda $dd0d
-	and #$10		; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
-	beq read_byte
+	lda #$10	; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
+:	bit $dd0d
+	beq :-
 	lda $dd01
 	rts
 
