@@ -117,18 +117,14 @@ up9600_enable:
 	lda ihitab,x	; the ti$ - variable)
 	sta $dc07	; start value for timer B (of CIA1)
 
-	lda sndlo	; ** time constant for sender **
-	lsr
+	lda rcvtim
 	sta $dc04	; start value for timerA (of CIA1)
-	lda sndhi
-	ror
+	lda rcvtim+1
 	sta $dc05	; (time is around 1/(2*baudrate) )
 
-sndlo=*+1
-	lda #$00	; ** time constant for receiver **
+	lda sndtim
 	sta $dd06	; start value for timerB (of CIA2)
-sndhi=*+1
-	lda #$00
+	lda sndtim+1
 	sta $dd07	; (time is around 1/baudrate )
 
 	lda #$41	; start timerA of CIA1, SP1 used as output
@@ -200,19 +196,25 @@ setbaudup:
 	beq :+
 	lda #<TIMER_PAL
 	ldx #>TIMER_PAL
-:	sta sndlo
-	stx sndhi
+:	sta sndtim
+	stx sndtim+1
 
-	ldx baud_rate	; 0=300, 1=2400, 2=4800 etc.
+	ldx baud_rate	; 0=300, 1=1200, 2=2400 etc.
 	beq :+
-	inx		; -> 0=300, 2=400, 3=4800 etc.
+	inx		; -> 0=300, 2=1200, 3=2400 etc.
 :	txa
 	beq @skip
-@loop:	lsr sndhi	; divide by 2 repeatedly
-	ror sndlo
+@loop:	lsr sndtim+1	; divide by 2 repeatedly
+	ror sndtim
 	dex
 	bne @loop
-@skip:	rts
+@skip:	lda sndtim+1
+	lsr
+	sta rcvtim+1
+	lda sndtim
+	ror
+	sta rcvtim
+	rts
 
 ;----------------------------------------------------------------------
 ; new GETIN
