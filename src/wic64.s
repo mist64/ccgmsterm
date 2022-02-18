@@ -35,6 +35,10 @@ wic64_setup:
 	rts
 :	inc once
 
+	; set DDR PA2 to output (data direction indicator for device)
+	lda $dd02
+	ora #$04
+	sta $dd02
 
 	; XXX for now, connect to fixed server immediately
 	lda #0
@@ -110,13 +114,9 @@ sendcommand:
 
 	ldy #1
 	lda (zpcmd),y	; length of command
-
 sendcommand2:
 	sta @len
 
-	lda $dd02
-	ora #$04
-	sta $dd02	; DDR PA2 output
 	lda #$ff	; DDR PB  input
 	sta $dd03
 	lda $dd00
