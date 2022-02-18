@@ -13,15 +13,6 @@
 ;  rsuser_disable
 ;  rsuser_getxfer
 
-; KERNAL
-ENABL	= $02a1
-
-inbits	= $a8
-inbyte	= $aa
-outbits	= $b4
-outbit	= $b5
-outbyte	= $b6
-
 ;----------------------------------------------------------------------
 rsuser_setup:
 	sei
@@ -33,13 +24,13 @@ rsuser_setup:
 	sta $0318 ; NMINV
 	sty $0319
 
-	lda #<rsout
-	ldx #>rsout
+	lda #<rsuser_bsout
+	ldx #>rsuser_bsout
 	sta $0326 ; IBSOUT
 	stx $0327
 
-	lda #<rsget
-	ldx #>rsget
+	lda #<rsuser_getin
+	ldx #>rsuser_getin
 	sta $032a ; IGETIN
 	stx $032b
 
@@ -48,11 +39,11 @@ rsuser_setup:
 	jmp clear232
 
 ;----------------------------------------------------------------------
-bdloc
-bntsc	.word 3408,851,425	; NTSC: transmit times
+bdloc:
+bntsc:	.word 3408,851,425	; NTSC: transmit times
 	.word 4915,1090,459	; NTSC: startup bit times
 	.word 3410,845,421	; NTSC: full bit times
-bpal	.word 3283,820,409	; PAL:  transmit times
+bpal:	.word 3283,820,409	; PAL:  transmit times
 	.word 4735,1050,442	; PAL:  startup bit times
 	.word 3285,814,406	; PAL:  full bit times
 OFFSET		= bpal-bntsc
@@ -65,13 +56,12 @@ lastring:		; [XXX unused]
 
 ;----------------------------------------------------------------------
 ; new GETIN
-rsget:
+rsuser_getin:
 	lda DFLTN
 	cmp #2		; see if default input is modem
-	beq jbgetrs
-	jmp ogetin	; nope, go back to original
+	jne ogetin	; nope, go back to original
 
-jbgetrs	jsr rsuser_getxfer
+	jsr rsuser_getxfer
 	bcs :+		; if no character, then return 0 in a
 	rts
 :	clc
@@ -143,8 +133,8 @@ fullhi=*+1
 	sta inbits
 	jmp chktxd
 
-notcia	;ldy #0
-	;jmp rstkey	; or jmp norest
+;notcia	ldy #0
+;	jmp rstkey	; or jmp norest
 
 nmion	lda ENABL	; receive a bit
 	sta $dd0d
@@ -200,7 +190,8 @@ endbyte	lda #0
 
 ;----------------------------------------------------------------------
 ; new BSOUT
-rsout	pha
+rsuser_bsout:
+	pha
 	lda DFLTO
 	cmp #2
 	bne notmod
@@ -235,8 +226,8 @@ change	sta $dd0d
 	sta ENABL
 	sta $dd0d
 	plp
-rsout3	bit isbyte
-	bmi rsout3
+:	bit isbyte
+	bmi :-
 ret1	clc
 	ldx rsotx
 	ldy rsoty
@@ -249,9 +240,10 @@ notmod	pla
 ; disable rs232 input
 rsuser_disable:
 	pha
-:	;lda ENABL;this fucks shit up... get rid of it...
-	;and #$03
-	;bne :-
+:
+;	lda ENABL;this fucks shit up... get rid of it...
+;	and #$03
+;	bne :-
 	lda isbyte
 	bne :-
 	lda #$10
@@ -280,7 +272,7 @@ rsuser_enable:
 rsuser_setbaud:
 	lda baud_rate
 	asl
-.if 1	; [XXX This is incorrect! Instead, OFFSET has to be added if is_pal_system != 0]
+.if 1	; [XXX This is incorrect and completely breaks the user port driver on PAL]
 	clc
 	adc is_pal_system
 .else	; --- this is the corrected version ---

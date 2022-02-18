@@ -14,7 +14,8 @@
 ;  up9600_disable
 ;  up9600_getxfer
 
-outstat	= $a9	; re-used KERNAL symbol RER/RINONE
+RTS_MIN	= 50	; enable Request To Send when buffer reaches this
+RTS_MAX	= 200	; disable Request To Send when buffer reaches this
 
 ;----------------------------------------------------------------------
 nmi_startbit:
@@ -72,9 +73,9 @@ nmi_bytrdy:
 	sec
 	txa
 	sbc rhead
-	cmp #200
+	cmp #RTS_MAX
 	bcc :+
-	lda $dd01	; more than 200 bytes in the receive buffer
+	lda $dd01	; more than RTS_MAX bytes in the receive buffer
 	and #$fd	; then disbale RTS
 	sta $dd01
 :	pla
@@ -99,13 +100,13 @@ up9600_setup:
 
 	jsr setbaudup
 
-	lda #<newoutup
-	ldx #>newoutup
+	lda #<up9600_bsout
+	ldx #>up9600_bsout
 	sta $0326
 	stx $0327
 
-	lda #<newinup
-	ldx #>newinup
+	lda #<up9600_getin
+	ldx #>up9600_getin
 	sta $032a
 	stx $032b
 
@@ -176,18 +177,25 @@ sndhi=*+1
 new_irq:
 	lda $dc0d	; read IRQ-mask
 	lsr
-	lsr		; move bit1 into carry-flag (timer B - flag)
-	and #2		; test bit3 (SDR - flag)
-	beq @2		; SDR not empty, then skip the first part
+	lsr		; move bit 1 into carry-flag (timer B)
+	and #2		; test bit 3 (SDR)
+	beq @nsdr	; no
+; SDR
 	ldx outstat
-	beq @1		; skip, if we're not waiting for an empty SDR
+	beq :+		; skip, if we're not waiting for an empty SDR
 	dex
 	stx outstat
-@1:	bcc @end	; skip if there was no timer-B-underflow
-@2:	cli
+:
+
+	bcc @notim	; skip if there was no timer-B-underflow
+
+@nsdr:	cli		; [XXX label should be at bcc OR bcc should be removed]
+			; [XXX there is no other source set up, so the bcc]
+			; [XXX would never be taken anyway]
 	jsr $ffea	; update jiffy clock
 	jsr $ea87	; (jmp) - scan keyboard
-@end:	jmp $ea81
+
+@notim:	jmp $ea81
 
 ;----------------------------------------------------------------------
 CLOCK_PAL	= 4433619 * 4 / 18	;   985,249 Hz
@@ -231,13 +239,12 @@ sndtab_hi: .hibytes sndtab
 
 ;----------------------------------------------------------------------
 ; new GETIN
-newinup:
+up9600_getin:
 	lda DFLTN
 	cmp #2		; see if default input is modem
-	beq :+
-	jmp ogetin	; nope, go back to original
+	jne ogetin	; nope, go back to original
 
-:	jsr up9600_getxfer
+	jsr up9600_getxfer
 	bcs :+		; if no character, then return 0 in a
 	rts
 :	clc
@@ -251,7 +258,7 @@ newinup:
 up9600_getxfer:
 	ldx rhead
 	cpx rtail
-	beq @1		; skip (empty buffer, return with carry set)
+	beq @skip	; empty buffer, return with carry set
 	lda ribuf,x
 	inx
 	stx rhead
@@ -259,18 +266,18 @@ up9600_getxfer:
 	txa
 	sec
 	sbc rtail
-	cmp #50
+	cmp #RTS_MIN
 	bcc :+
-	lda #2		; enable RTS if there are less than 50 bytes
+	lda #2		; enable RTS if there are less than RTS_MIN bytes
 	ora $dd01	; in the receive buffer
 	sta $dd01
 :  	clc
 	pla
-@1	rts
+@skip:	rts
 
 ;----------------------------------------------------------------------
 ; new BSOUT
-newoutup:
+up9600_bsout:
 	pha		;dupliciaton of original kernal routines
 	lda DFLTO	;test dfault output device for
 	cmp #2		;screen, and...
