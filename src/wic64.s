@@ -131,6 +131,7 @@ sendcommand2:
 	bne :-
 	rts
 
+read_status:
 get_reply_size:
 	lda #$00	; DDR PB input
 	sta $dd03
@@ -140,7 +141,19 @@ get_reply_size:
 	jsr read_byte	; dummy byte
 	jsr read_byte	; data size HI
 	tax
-	jmp read_byte	; data size LO
+	jsr read_byte	; data size LO
+; This function doubles as getting and interpreting the status, which is
+; what the extra "cmp" below is for.
+; Any command that returns a status will send one of these strings
+; * OK:    1, 0, "0"
+; * ERROR: 2, 0, "!E"
+; (The first two bytes being the length of the string.)
+; Since transmissions are interruptable, it is possible to check the
+; status by only reading the size and checking whether it's 1 or 2,
+; without receiving the actual text. That's what the "cmp" does.
+; (In the case of get_reply_size, the result of the "cmp" is useless/unused.
+	cmp #2		; C=0 for length 1, C=1 for length 2
+	rts
 
 get_tcp_bytes:
 	lda #<cmd_tcp_get
@@ -169,16 +182,6 @@ get_tcp_bytes:
 
 
 
-
-read_status:
-	; status is
-	; * OK:    "0",  length 1
-	; * ERROR: "!E", length 2
-	; we only look at the length to device which one it is
-	; and don't receive the actual text
-	jsr get_reply_size
-	cmp #2		; C=0 for length 1, C=1 for length 2
-	rts
 
 write_byte:
 .ifdef DEBUG
