@@ -6,8 +6,13 @@
 
 int
 main(int argc, char **argv) {
-	while (!feof(stdin)) {
-		int c = _inbyte(0);
+	char c = 'A';
+	for (;;) {
 		_outbyte(c);
+		sleep(1);
+		c++;
+		if (c == 'Z' + 1) {
+			c = 'A';
+		}
 	}
 }

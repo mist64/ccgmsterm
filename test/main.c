@@ -2,26 +2,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include "inout.h"
 
 extern int xmodemTransmit(unsigned char *src, int srcsz, int use_1k);
 extern int xmodemReceive(unsigned char *dest, int destsz, int crc);
 
 FILE *f;
-
-int
-_inbyte(unsigned short timeout) {
-	int c = fgetc(stdin);
-	fprintf(stderr, "***** SERVER: <--- %02X\n", (unsigned char)c);
-	return c;
-}
-
-void
-_outbyte(int c) {
-	fprintf(stderr, "***** SERVER: ---> %02X\n", (unsigned char)c);
-	fputc(c, stdout);
-	fflush(stdout);
-}
-
 
 void
 announce(char *s) {
