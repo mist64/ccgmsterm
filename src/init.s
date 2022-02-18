@@ -149,7 +149,7 @@ init
 	;sta allcap     ; upper/lower
 	sta buffer_open
 	sta half_duplex	; full duplex
-	jsr $e544	; clear screen
+;	jsr $e544	; clear screen
 	lda config_file_loaded; already loaded config file?
 	bne @noload
 	lda drive_present

@@ -23,8 +23,17 @@ wic64_putxfer:
 wic64_dropdtr:
 	rts
 
+once:
+	.byte 0
+
 ;----------------------------------------------------------------------
 wic64_setup:
+	lda once
+	beq :+
+	rts
+:	inc once
+
+
 	; XXX for now, connect to fixed server immediately
 	lda #0
 	sta bytes_in_buffer
@@ -46,12 +55,21 @@ wic64_setup:
 	jsr sendcommand
 
 	jsr read_status
-	bcs BADBADBAD		  ; Could not connect
+	bcs BADBADBAD1		  ; Could not connect
 	rts
 
-BADBADBAD:
+BADBADBAD1:
 	inc $d021
-	jmp BADBADBAD
+	jmp BADBADBAD1
+BADBADBAD2:
+	inc $d020
+	jmp BADBADBAD2
+BADBADBAD3:
+	inc $0400
+	jmp BADBADBAD3
+BADBADBAD4:
+	inc $0401
+	jmp BADBADBAD4
 
 ;----------------------------------------------------------------------
 wic64_send:
@@ -62,7 +80,7 @@ wic64_send:
 	sta zpcmd+1
 	jsr sendcommand
 	jsr read_status
-	bcs BADBADBAD
+	bcs BADBADBAD2
 	rts
 
 txt_sendcmd:
@@ -164,17 +182,72 @@ read_status:
 	rts
 
 write_byte:
+.ifdef DEBUG
+	sta @save_a
+	pha
+	txa
+	pha
+	tya
+	pha
+	lda #<txt_write_byte
+	ldy #>txt_write_byte
+	jsr $ab1e
+@save_a=*+1
+	ldx #$00
+	lda #0
+	jsr $bdcd
+	lda #CR
+	jsr $ffd2
+	pla
+	tay
+	pla
+	tax
+	pla
+.endif
+
 	sta $dd01	; Bit 0..7: Userport Daten PB 0-7 schreiben
 	lda #$10
 :	bit $dd0d	; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
 	beq :-
+
+
 	rts
+
+txt_write_byte:
+	.byte "WRITE: ",0
+txt_read_byte:
+	.byte "READ: ",0
 
 read_byte:
 	lda #$10	; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
 :	bit $dd0d
 	beq :-
 	lda $dd01
+
+.ifdef DEBUG
+	php
+	sta @save_a
+	pha
+	txa
+	pha
+	tya
+	pha
+	lda #<txt_read_byte
+	ldy #>txt_read_byte
+	jsr $ab1e
+@save_a=*+1
+	ldx #$00
+	lda #0
+	jsr $bdcd
+	lda #CR
+	jsr $ffd2
+	pla
+	tay
+	pla
+	tax
+	pla
+	plp
+.endif
 	rts
 
 cmd_tcp_get:
@@ -198,9 +271,6 @@ wic64_getxfer:
 	stx @save_x
 	sty @save_y
 
-	lda #0
-	sta status
-
 ;	lda #<txt_bufferx
 ;	ldy #>txt_bufferx
 ;	jsr $ab1e
@@ -222,7 +292,7 @@ wic64_getxfer:
 	inc $d020
 	jsr getanswer_data
 	cmp #2
-	jeq BADBADBAD
+	jeq BADBADBAD2
 
 	lda bytes_in_buffer
 	ora bytes_in_buffer+1
@@ -255,6 +325,7 @@ wic64_getxfer:
 @save_y=*+1
 	ldy #$ff
 	plp
+	clc
 	rts
 
 wic64_enable:
