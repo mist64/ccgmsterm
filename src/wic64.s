@@ -252,14 +252,16 @@ wic64_getxfer:
 	stx @save_x
 	sty @save_y
 
-;	lda #<txt_bufferx
-;	ldy #>txt_bufferx
-;	jsr $ab1e
-;	lda bytes_in_buffer+1
-;	ldx bytes_in_buffer
-;	jsr $bdcd
-;	lda #CR
-;	jsr $ffd2
+.ifdef DEBUG
+	lda #<txt_bufferx
+	ldy #>txt_bufferx
+	jsr $ab1e
+	lda bytes_in_buffer+1
+	ldx bytes_in_buffer
+	jsr $bdcd
+	lda #CR
+	jsr $ffd2
+.endif
 
 	lda bytes_in_buffer
 	ora bytes_in_buffer+1
