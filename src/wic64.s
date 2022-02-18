@@ -249,8 +249,6 @@ read_byte:
 	rts
 
 wic64_getxfer:
-	php
-	sei
 	stx @save_x
 	sty @save_y
 
@@ -282,6 +280,7 @@ wic64_getxfer:
 	bne @skip_command
 
 	lda #0		; no data
+	sec
 	beq @end
 
 @skip_command:
@@ -302,13 +301,12 @@ wic64_getxfer:
 ;	jsr $bdcd
 ;	pla
 
+	clc
 @end:
 @save_x=*+1
 	ldx #$ff
 @save_y=*+1
 	ldy #$ff
-	plp
-	clc
 	rts
 
 wic64_enable:
