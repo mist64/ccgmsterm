@@ -7,7 +7,7 @@
 ;  based on "Simple Telnet Demo" source by KiWi, 2-clause BSD
 ;
 
-DEBUG	= 1
+;DEBUG	= 1
 
 zpcmd=$40
 
@@ -175,16 +175,9 @@ read_status:
 	; * OK:    "0",  length 1
 	; * ERROR: "!E", length 2
 	; we only look at the length to device which one it is
+	; and don't receive the actual text
 	jsr get_reply_size
-;	tax		; save low byte
-;	jsr read_byte	; first char
-;	txa
-	cmp #1		; length == 1?
-	bne :+
-	clc		; ok
-	rts
-:;	jsr read_byte	; second char
-	sec		; error
+	cmp #2		; C=0 for length 1, C=1 for length 2
 	rts
 
 write_byte:
