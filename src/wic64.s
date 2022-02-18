@@ -84,16 +84,17 @@ BADBADBAD3:
 ;----------------------------------------------------------------------
 wic64_send:
 	sta cmd_tcp_put+4
-	lda #<cmd_tcp_put
-	sta zpcmd
-	lda #>cmd_tcp_put
-	sta zpcmd+1
+	ldx #<cmd_tcp_put
+	ldy #>cmd_tcp_put
 	jsr sendcommand
 	jsr read_status
 	bcs BADBADBAD2
 	rts
 
 sendcommand:
+	stx zpcmd
+	sty zpcmd+1
+
 .ifdef DEBUG
 	lda #<txt_sendcmd
 	ldy #>txt_sendcmd
@@ -156,10 +157,8 @@ get_reply_size:
 	rts
 
 get_tcp_bytes:
-	lda #<cmd_tcp_get
-	sta zpcmd
-	lda #>cmd_tcp_get
-	sta zpcmd+1
+	ldx #<cmd_tcp_get
+	ldy #>cmd_tcp_get
 	jsr sendcommand
 
 	jsr get_reply_size
