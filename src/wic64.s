@@ -55,10 +55,10 @@ BADBADBAD:
 
 ;----------------------------------------------------------------------
 wic64_send:
-	sta commandputbyte+4
-	lda #<commandputbyte
+	sta cmd_tcp_put+4
+	lda #<cmd_tcp_put
 	sta zpcmd
-	lda #>commandputbyte
+	lda #>cmd_tcp_put
 	sta zpcmd+1
 	jsr sendcommand
 	jsr read_status
@@ -150,20 +150,18 @@ read_status:
 	and #251
 	sta $dd00
 	jsr read_byte	; dummy
-	jsr read_byte	; data size HI
-	jsr read_byte	; data size LO
+	jsr read_byte	; data size HI (always 0)
+	jsr read_byte	; data size LO (1: ok, 2: error)
 	pha
-	jsr read_byte	; '0' or '!'
+	jsr read_byte	; '0': ok, '!': error
 	pla
 	cmp #1
 	bne :+
 	clc		; ok
 	rts
-:	jsr read_byte	; 'E'
+:	jsr read_byte	; always 'E'
 	sec		; error
 	rts
-
-
 
 write_byte:
 	sta $dd01	; Bit 0..7: Userport Daten PB 0-7 schreiben
@@ -179,10 +177,15 @@ read_byte:
 	lda $dd01
 	rts
 
-commandget:
-	.byte 'W',$04,$00,34
-commandputbyte:
-	.byte 'W',$05,$00,35,$00
+cmd_tcp_get:
+	.byte 'W'
+	.word 4
+	.byte 34
+
+cmd_tcp_put:
+	.byte 'W',$05,$00,35
+	.byte $00	; <- will be overwritten
+
 commandserver:
 	.byte 'W',$00,$00,33
 	.byte "192.168.176.104:25232",0
@@ -211,9 +214,9 @@ wic64_getxfer:
 	ora bytes_in_buffer+1
 	bne @skip_command
 
-	lda #<commandget
+	lda #<cmd_tcp_get
 	sta zpcmd
-	lda #>commandget
+	lda #>cmd_tcp_get
 	sta zpcmd+1
 	jsr sendcommand
 	inc $d020
