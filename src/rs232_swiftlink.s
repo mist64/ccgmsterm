@@ -137,13 +137,13 @@ sm18	lda sw_ctrl
 	ora swbaud,x
 sm19	sta sw_ctrl
 
-	lda #<newout
-	ldx #>newout
+	lda #<swiftlink_bsout
+	ldx #>swiftlink_bsout
 	sta $0326 ; IBSOUT
 	stx $0327
 
-	lda #<newin
-	ldx #>newin
+	lda #<swiftlink_getin
+	ldx #>swiftlink_getin
 	sta $032a ; IGETIN
 	stx $032b
 
@@ -158,7 +158,7 @@ sm19	sta sw_ctrl
 
 ;----------------------------------------------------------------------
 ; new BSOUT
-newout:
+swiftlink_bsout:
 	pha		; dupliciaton of original kernal routines
 	lda DFLTO	; test dfault output device for
 	cmp #2		; screen, and...
@@ -191,20 +191,20 @@ sm23	lda sw_cmd
 sm24	sta sw_cmd
 	ldx #226
 	stx JIFFIES
-wait30	bit JIFFIES
-	bmi wait30
+:	bit JIFFIES
+	bmi :-
 	ora #%00000001
 sm25	sta sw_cmd
 	rts
 
 ;----------------------------------------------------------------------
 ; new GETIN
-newin	lda DFLTN
+swiftlink_getin:
+	lda DFLTN
 	cmp #2		; see if default input is modem
-	beq :+
-	jmp ogetin	; nope, go back to original
+	jne ogetin	; nope, go back to original
 
-:	jsr sw_getxfer
+	jsr sw_getxfer
 	bcs :+		; if no character, then return 0 in a
 	rts
 :	clc
@@ -234,9 +234,12 @@ sw_getxfer:
 @1:	rts
 
 ;----------------------------------------------------------------------
-temp	.byte 0
-paused	.byte 0
+temp:
+	.byte 0
+paused:
+	.byte 0
 
 ;----------------------------------------------------------------------
-swbaud	.byte $15,$17,$18,$1a,$1c,$1e,$1f,$10,$10,$10
+swbaud:
+	.byte $15,$17,$18,$1a,$1c,$1e,$1f,$10,$10,$10
 

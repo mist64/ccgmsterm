@@ -81,11 +81,18 @@ half_duplex	= $12
 zpoutstr	= $22 ; 2 bytes
 tmp9e	= $9e
 tmp9f	= $9f
+inbits	= $a8
+outstat	= $a9	; re-used KERNAL symbol RER/RINONE
+inbyte	= $aa
 endpos	= $ac
-buffst	= $b2
 buffer_ptr	= $b0 ; 2 bytes
+buffst	= $b2
+outbits	= $b4
+outbit	= $b5
+outbyte	= $b6
 tmpfd	= $fd
 cursor_flag	= $fe
+
 
 ; BASIC symbols
 outnum	= $bdcd
@@ -108,6 +115,7 @@ SHFLAG	= $028d ; bitfield: modifier keys currently pressed
  SHFLAG_CTRL	= 4
 KEYLOG	= $028f
 MODE	= $0291
+ENABL	= $02a1
 
 untalk	= $ffab
 unlstn	= $ffae
