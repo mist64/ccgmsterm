@@ -39,20 +39,31 @@ wic64_setup:
 	sta bytes_in_buffer
 	sta bytes_in_buffer+1
 
+	; count string length
+	ldy #0
+:	lda server_address,y
+	iny
+	and #$ff
+	bne :-
+	iny
+	iny
+	iny
+	sty commandserver+1
+
 	lda #<commandserver
 	sta zpcmd
 	lda #>commandserver
 	sta zpcmd+1
+	lda #4
+	jsr sendcommand2
 
-	ldy #4
-:	iny
-	lda (zpcmd),y
+	ldy #0
+:	lda server_address,y
+	beq :+
+	jsr write_byte
+	iny
 	bne :-
-	tya
-	ldy #1
-	sta (zpcmd),y
-
-	jsr sendcommand
+:
 
 	jsr read_status
 	bcs BADBADBAD1		  ; Could not connect
@@ -265,6 +276,7 @@ commandserver:
 	.byte 'W'
 	.word $00	; <- will be overwritten
 	.byte 33
+server_address:
 	.byte "192.168.176.104:25232",0
 ;	.byte "raveolution.hopto.org:64128",0
 
