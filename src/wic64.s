@@ -7,7 +7,7 @@
 ;  based on "Simple Telnet Demo" source by KiWi, 2-clause BSD
 ;
 
-;DEBUG	= 1
+DEBUG	= 1
 
 zpcmd=$40
 
@@ -117,10 +117,10 @@ sendcommand:
 sendcommand2:
 	sta @len
 
-	lda #$ff	; DDR PB  input
+	lda #$ff	; DDR PB output
 	sta $dd03
 	lda $dd00
-	ora #$04	; PA2 := HIGH -> put device into receiving move
+	ora #$04	; PA2 := HIGH -> tell device to receive
 	sta $dd00
 
 	ldy #0
@@ -137,7 +137,7 @@ get_reply_size:
 	lda #$00	; DDR PB input
 	sta $dd03
 	lda $dd00
-	and #$ff-4	; PA2 := LOW -> put device into sending mode
+	and #$ff-4	; PA2 := LOW -> tell device to send
 	sta $dd00
 	jsr read_byte	; dummy byte
 	jsr read_byte	; data size HI
@@ -210,8 +210,6 @@ write_byte:
 	lda #$10
 :	bit $dd0d	; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
 	beq :-
-
-
 	rts
 
 read_byte:
@@ -268,13 +266,11 @@ wic64_getxfer:
 	inc $d020
 	jsr get_tcp_bytes
 
-	lda bytes_in_buffer
-	ora bytes_in_buffer+1
+	cmp #0
 	bne @skip_command
-
-	lda #0		; no data
+	cpx #0
 	sec
-	beq @end
+	beq @end	; no data, C=1
 
 @skip_command:
 	lda bytes_in_buffer
