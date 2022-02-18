@@ -54,9 +54,9 @@ mlsall	= $07fd
 mulfln	= $07fe
 mulcnt	= $07ff
 
-rtail	= $029b
-rhead	= $029c
-rfree	= $029d ; used for swiftlink only
+rtail	= RIDBE ; friendlier name
+rhead	= RIDBS ; friendlier name
+rfree	= RODBS ; re-purposed; SwiftLink only
 
 ; register saving, used by rs_user, swiftlink, up9600
 rsotm	= $97

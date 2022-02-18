@@ -141,8 +141,8 @@ dir_once_per_line:
 	ldx #LFN_MODEM
 	jsr chkin
 :	jsr getin
-	lda RIDBE
-	cmp RIDBS
+	lda rtail
+	cmp rhead	; [XXX isn't this what clear232 does?]
 	bne :-
 
 @skip:

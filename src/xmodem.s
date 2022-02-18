@@ -350,12 +350,12 @@ setup_buffer:
 
 ;----------------------------------------------------------------------
 clear_buffers:
-	lda RODBS	; clear rs232 output
-	sta RODBE
+	lda RODBS	; clear rs232 output buffer
+	sta RODBE	; [XXX no driver has one, SwiftLink uses RODBS for something else!]
 ;----------------------------------------------------------------------
 clear_input_buffer:
-	lda RIDBE	; and input buffers
-	sta RIDBS
+	lda rtail	; clear rs232 input buffer
+	sta rhead
 	rts
 
 ;----------------------------------------------------------------------
