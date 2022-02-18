@@ -78,9 +78,6 @@ BADBADBAD2:
 BADBADBAD3:
 	inc $0400
 	jmp BADBADBAD3
-BADBADBAD4:
-	inc $0401
-	jmp BADBADBAD4
 
 ;----------------------------------------------------------------------
 wic64_send:
@@ -109,22 +106,20 @@ sendcommand:
 .endif
 
 	ldy #1
-	lda (zpcmd),y				; Länge des Kommandos holen
+	lda (zpcmd),y	; length of command
 
 sendcommand2:
-	tay
+	sta @len
 
 	lda $dd02
 	ora #$04
-	sta $dd02	; DDR Port A PA2 auf Ausgang
-	lda #$ff	; DDR Port B Ausgang
+	sta $dd02	; DDR PA2 output
+	lda #$ff	; DDR PB  input
 	sta $dd03
 	lda $dd00
-	ora #$04	; PA2 auf HIGH = ESP im Empfangsmodus
+	ora #$04	; PA2 = HIGH -> put device into receiving move
 	sta $dd00
 
-	tya
-	sta @len
 	ldy #0
 :	lda (zpcmd),y
 	jsr write_byte
@@ -164,7 +159,6 @@ get_tcp_bytes:
 	lda #CR
 	jsr $ffd2
 .endif
-
 	rts
 
 
@@ -275,8 +269,6 @@ wic64_getxfer:
 
 	inc $d020
 	jsr get_tcp_bytes
-	cmp #2
-	jeq BADBADBAD2
 
 	lda bytes_in_buffer
 	ora bytes_in_buffer+1
