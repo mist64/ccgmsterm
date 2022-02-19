@@ -20,8 +20,6 @@ wic64_funcs:
 	.word wic64_putxfer
 	.word wic64_dropdtr
 
-wic64_putxfer:
-	rts
 wic64_dropdtr:
 	rts
 
@@ -86,7 +84,8 @@ BADBADBAD3:
 	jmp BADBADBAD3
 
 ;----------------------------------------------------------------------
-wic64_send:
+wic64_putxfer:
+	inc $d020
 	sta cmd_tcp_put+4
 	ldx #<cmd_tcp_put
 	ldy #>cmd_tcp_put
@@ -218,14 +217,12 @@ write_byte:
 
 	sta $dd01	; Bit 0..7: Userport Daten PB 0-7 schreiben
 	lda #$10
-:	bit $dd0d	; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
+:	bit $dd0d	; wait for device to accept the byte
 	beq :-
-
-
 	rts
 
 read_byte:
-	lda #$10	; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
+	lda #$10	; wait for device to have a byte ready
 :	bit $dd0d
 	beq :-
 	lda $dd01
@@ -275,7 +272,7 @@ wic64_getxfer:
 	ora bytes_in_buffer+1
 	bne @skip_command
 
-	inc $d020
+;	inc $d020
 	jsr get_tcp_bytes
 
 ;@loop:
