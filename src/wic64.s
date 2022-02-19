@@ -7,7 +7,7 @@
 ;  based on "Simple Telnet Demo" source by KiWi, 2-clause BSD
 ;
 
-DEBUG	= 1
+;DEBUG	= 1
 
 zpcmd=$40
 
@@ -32,6 +32,9 @@ wic64_setup:
 	beq :+
 	rts
 :	inc once
+
+	lda #0
+	sta extra_dummy_byte
 
 	; set DDR PA2 to output (data direction indicator for device)
 	lda $dd02
@@ -71,6 +74,9 @@ wic64_setup:
 
 	jsr read_status
 	bcs BADBADBAD1		  ; Could not connect
+
+	lda #1
+	sta extra_dummy_byte
 	rts
 
 BADBADBAD1:
@@ -138,7 +144,10 @@ get_reply_size:
 	and #$ff-4	; PA2 := LOW -> put device into sending mode
 	sta $dd00
 	jsr read_byte	; dummy byte
-	jsr read_byte	; data size HI
+	lda extra_dummy_byte
+	beq :+
+	jsr read_byte	; dummy byte
+:	jsr read_byte	; data size HI
 	tax
 	jmp read_byte	; data size LO
 
@@ -162,13 +171,6 @@ get_tcp_bytes:
 	ldx #<cmd_tcp_get
 	ldy #>cmd_tcp_get
 	jsr sendcommand
-
-	lda #$00	; DDR PB input
-	sta $dd03
-	lda $dd00
-	and #$ff-4	; PA2 := LOW -> put device into sending mode
-	sta $dd00
-	jsr read_byte	; dummy byte
 
 	jsr get_reply_size
 	sta bytes_in_buffer
@@ -354,3 +356,6 @@ txt_read_byte:
 
 bytes_in_buffer:
 	.word 0
+
+extra_dummy_byte:
+	.byte 0
