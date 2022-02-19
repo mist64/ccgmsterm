@@ -7,7 +7,7 @@
 ;  based on "Simple Telnet Demo" source by KiWi, 2-clause BSD
 ;
 
-;DEBUG	= 1
+DEBUG	= 1
 
 zpcmd=$40
 
@@ -35,6 +35,7 @@ wic64_setup:
 
 	lda #0
 	sta extra_dummy_byte
+	sta ribuf
 
 	; set DDR PA2 to output (data direction indicator for device)
 	lda $dd02
@@ -91,11 +92,40 @@ BADBADBAD3:
 
 ;----------------------------------------------------------------------
 wic64_putxfer:
+	ldx ribuf_index
+	sta ribuf,x
+	inx
+	beq :+		; drop chars after 255
+	stx ribuf_index
+:
+	lda bytes_in_buffer
+	ora bytes_in_buffer+1
+	beq send_bytes
+	rts
+
+send_bytes:
 	inc $d020
-	sta cmd_tcp_put+4
+	lda ribuf_index	; number of chars
+	clc
+	adc #4		; plus cmd header
+	sta cmd_tcp_put+1
 	ldx #<cmd_tcp_put
 	ldy #>cmd_tcp_put
-	jsr sendcommand
+	stx zpcmd
+	sty zpcmd+1
+	lda #4
+	jsr sendcommand2
+
+	ldy #0
+:	lda ribuf,y
+	jsr write_byte
+	iny
+	cpy ribuf_index
+	bne :-
+:
+	lda #0
+	sta ribuf_index
+
 	jsr read_status
 	bcs BADBADBAD2
 	rts
@@ -296,6 +326,23 @@ wic64_getxfer:
 :	dec bytes_in_buffer
 	jsr read_byte
 
+	pha
+	txa
+	pha
+	tya
+	pha
+	lda bytes_in_buffer
+	ora bytes_in_buffer
+	bne :+
+	lda ribuf_index
+	beq :+
+	jsr send_bytes
+:	pla
+	tay
+	pla
+	tax
+	pla
+
 ;	pha
 ;	lda #<txt_char
 ;	ldy #>txt_char
@@ -328,9 +375,8 @@ cmd_tcp_get:
 
 cmd_tcp_put:
 	.byte 'W'
-	.word 5
+	.word $00	; <- will be overwritten
 	.byte 35
-	.byte $00	; <- will be overwritten
 
 commandserver:
 	.byte 'W'
@@ -340,6 +386,7 @@ commandserver:
 server_address:
 	.byte "192.168.176.104:25232",0
 ;	.byte "raveolution.hopto.org:64128",0
+;	.byte "lu8fjh-c64.ddns.net:6400",0
 
 txt_sendcmd:
 	.byte "CMD: ",0
@@ -356,6 +403,8 @@ txt_read_byte:
 
 bytes_in_buffer:
 	.word 0
+ribuf_index:
+	.byte 0
 
 extra_dummy_byte:
 	.byte 0

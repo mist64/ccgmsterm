@@ -9,7 +9,7 @@ main(int argc, char **argv) {
 	char c = 'A';
 	for (;;) {
 		_outbyte(c);
-		usleep(1000000);
+		usleep(100000);
 		c++;
 		if (c == 'Z' + 1) {
 			c = 'A';
