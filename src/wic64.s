@@ -117,10 +117,10 @@ sendcommand:
 sendcommand2:
 	sta @len
 
-	lda #$ff	; DDR PB output
+	lda #$ff	; DDR PB  input
 	sta $dd03
 	lda $dd00
-	ora #$04	; PA2 := HIGH -> tell device to receive
+	ora #$04	; PA2 := HIGH -> put device into receiving move
 	sta $dd00
 
 	ldy #0
@@ -132,28 +132,31 @@ sendcommand2:
 	bne :-
 	rts
 
-read_status:
 get_reply_size:
 	lda #$00	; DDR PB input
 	sta $dd03
 	lda $dd00
-	and #$ff-4	; PA2 := LOW -> tell device to send
+	and #$ff-4	; PA2 := LOW -> put device into sending mode
 	sta $dd00
 	jsr read_byte	; dummy byte
 	jsr read_byte	; data size HI
 	tax
-	jsr read_byte	; data size LO
-; This function doubles as getting and interpreting the status, which is
-; what the extra "cmp" below is for.
+	jmp read_byte	; data size LO
+
+read_status:
 ; Any command that returns a status will send one of these strings
 ; * OK:    1, 0, "0"
 ; * ERROR: 2, 0, "!E"
 ; (The first two bytes being the length of the string.)
-; Since transmissions are interruptable, it is possible to check the
-; status by only reading the size and checking whether it's 1 or 2,
-; without receiving the actual text. That's what the "cmp" does.
-; (In the case of get_reply_size, the result of the "cmp" is useless/unused.
-	cmp #2		; C=0 for length 1, C=1 for length 2
+; We decide on the first character ('0' or not), which one it is.
+	jsr get_reply_size
+	jsr read_byte
+	cmp #'0'
+	bne :+
+	clc
+	rts
+:	jsr read_byte
+	sec
 	rts
 
 get_tcp_bytes:
@@ -210,6 +213,8 @@ write_byte:
 	lda #$10
 :	bit $dd0d	; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
 	beq :-
+
+
 	rts
 
 read_byte:
@@ -266,11 +271,13 @@ wic64_getxfer:
 	inc $d020
 	jsr get_tcp_bytes
 
-	cmp #0
+	lda bytes_in_buffer
+	ora bytes_in_buffer+1
 	bne @skip_command
-	cpx #0
+
+	lda #0		; no data
 	sec
-	beq @end	; no data, C=1
+	beq @end
 
 @skip_command:
 	lda bytes_in_buffer
