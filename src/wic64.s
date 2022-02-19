@@ -164,6 +164,13 @@ get_tcp_bytes:
 	ldy #>cmd_tcp_get
 	jsr sendcommand
 
+	lda #$00	; DDR PB input
+	sta $dd03
+	lda $dd00
+	and #$ff-4	; PA2 := LOW -> put device into sending mode
+	sta $dd00
+	jsr read_byte	; dummy byte
+
 	jsr get_reply_size
 	sta bytes_in_buffer
 	stx bytes_in_buffer+1
@@ -270,6 +277,10 @@ wic64_getxfer:
 
 	inc $d020
 	jsr get_tcp_bytes
+
+;@loop:
+;	jsr read_byte
+;	jmp @loop
 
 	lda bytes_in_buffer
 	ora bytes_in_buffer+1
