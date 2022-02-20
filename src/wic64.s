@@ -155,25 +155,6 @@ getanswer:
     bne check2
     cpx #$00      ; Mehr als 1 bytes als Rückgabe
     beq nomsg     ; Keine Sendedaten vorhanden (Antwort $00 $00)
-    cpx #$01
-    beq noerrorcode
-    cpx #$02
-    beq errorcode
-    jmp check2
-noerrorcode:
-    jsr read_byte
-    cmp #$30
-    bne printit
-    lda #$00
-    rts
-errorcode:
-    jsr read_byte
-    cmp #$21
-    bne printit
-    jsr read_byte
-    lda #$02
-    rts
-
 check2:
     cpx #$00
     bne goread
