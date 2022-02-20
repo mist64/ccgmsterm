@@ -1,3 +1,6 @@
+.word $0801
+  ;SYS 2064
+    .byte $0C,$08,$0A,$00,$9E,$20,$32,$30,$36,$34,$00,$00,$00,$00,$00
 
 start:
     lda #$00                ; Black fore and background
@@ -288,11 +291,14 @@ getanswer:
 
 
     jsr read_byte   ;; Dummy Byte -
+    sta $0400
 
 
     jsr read_byte
+    sta $0401
     tay
     jsr read_byte
+    sta $0402
     sta inputsize
     tax
     cpy #$00      ; Mehr als $0100 bytes als Rückgabe
@@ -325,6 +331,9 @@ check2:
 
 goread:
     jsr read_byte
+    bne :+
+    inc $d020
+:
 printit:
     jsr $ffd2
     dex

@@ -126,16 +126,15 @@ get_status:
     lda #$02
     rts
 
-
-
-
-
-
-
-
-
-
 getanswer:
+;    ldy #0
+;    ldx #0
+;:   inc $d020
+;    dex
+;    bne :-
+;    dey
+;    bne :-
+
     lda #$00      ; Datenrichtung Port B Eingang
     sta $dd03
     lda $dd00
@@ -143,12 +142,27 @@ getanswer:
     sta $dd00
 
 
+    ldx #0
+:   lda $dd0d
+    and #$10        ; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
+    beq :-
+    lda $dd01
+    jsr hex8
+    lda #' '
+    jsr $ffd2
+    inx
+    bne :-
+    jmp *
+
     jsr read_byte   ;; Dummy Byte -
+    sta $0400
 
 
     jsr read_byte
+    sta $0401
     tay
     jsr read_byte
+    sta $0402
     sta inputsize
     tax
     cpy #0
@@ -170,6 +184,26 @@ getanswer:
 @nomsg:
     rts
 
+hex8:
+    pha
+    lsr
+    lsr
+    lsr
+    lsr
+    jsr hex4
+    pla
+    and #$0f
+hex4:
+    stx @save_x
+    tax
+    lda hextab,x
+    jsr $ffd2
+@save_x=*+1
+    ldx #0
+    rts
+hextab:
+    .byte "0123456789ABCDEF"
+
 
 write_byte:
 
@@ -183,10 +217,9 @@ dowrite:
 
 read_byte:
 
-doread:
-    lda $dd0d
+:   lda $dd0d
     and #$10        ; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
-    beq doread
+    beq :-
 
     lda $dd01
     rts
