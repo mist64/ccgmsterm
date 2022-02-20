@@ -60,11 +60,6 @@ getdata:
     jsr sendcommand
 
     jsr getanswer
-    cmp #$01
-    bne getdata       ; Es sind noch Daten abzuholen - so lange loopen und ausgeben !
-    cmp #$02
-    bne inputchar
-    jmp start
 
 inputchar:
     jsr $ffe4
