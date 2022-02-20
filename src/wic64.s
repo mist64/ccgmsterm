@@ -48,7 +48,9 @@ doserver01:
     jsr get_status
     cmp #$02
     bne getdata           ; Could not connect
-    jmp start
+
+:	inc $d020
+	jmp :-
 
 getdata:
     lda #<commandget
