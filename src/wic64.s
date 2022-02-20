@@ -22,12 +22,11 @@ wic64_funcs:
 
 wic64_setup:
     ldy #0
-doserver01:
-    lda bbs01,y
+:   lda bbs01,y
     sta xbuffer,y
     iny
     cmp #$00
-    bne doserver01
+    bne :-
 
     lda #<commandserver
     sta $fe
@@ -58,10 +57,8 @@ getdata:
     lda #>commandget
     sta $ff
     jsr sendcommand
-
     jsr getanswer
 
-inputchar:
     jsr $ffe4
     beq nokey
     sta commandputbyte+4
@@ -81,22 +78,7 @@ nokey:
 
 
 
-end:
-    lda #$ff      ; Datenrichtung Port B Ausgang
-    sta $dd03
-
-    lda $dd00
-    ora #$04      ; PA2 auf HIGH = ESP im Empfangsmodus
-    sta $dd00
-
-
-
-    cli
-    lda #$00
-    rts
-
 sendcommand:
-
     lda $dd02
     ora #$04
     sta $dd02               ; Datenrichtung Port A PA2 auf Ausgang
