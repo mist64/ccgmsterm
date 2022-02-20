@@ -131,58 +131,22 @@ get_status:
     lda $dd00
     and #251      ; PA2 auf LOW = ESP im Sendemodus
     sta $dd00
-
-
     jsr read_byte   ;; Dummy Byte -
-
-
     jsr read_byte
     tay
     jsr read_byte
     sta inputsize
     tax
-    cpy #$00      ; Mehr als $0100 bytes als Rückgabe
-    bne @check2
-    cpx #$00      ; Mehr als 1 bytes als Rückgabe
-    beq @nomsg     ; Keine Sendedaten vorhanden (Antwort $00 $00)
-    cpx #$01
-    beq @noerrorcode
     cpx #$02
-    beq @errorcode
-    jmp @check2
-@noerrorcode:
+    beq :+
     jsr read_byte
-    cmp #$30
-    bne @printit
     lda #$00
     rts
-@errorcode:
-    jsr read_byte
-    cmp #$21
-    bne @printit
+:   jsr read_byte
     jsr read_byte
     lda #$02
     rts
 
-@check2:
-    cpx #$00
-    bne @goread
-    dey
-
-@goread:
-    jsr read_byte
-@printit:
-    jsr $ffd2
-    dex
-    bne @goread
-    dey
-    cpy #$ff
-    bne @goread
-    lda #$00
-    rts
-@nomsg:
-    lda #$01
-    rts
 
 
 
