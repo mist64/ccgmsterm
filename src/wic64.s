@@ -39,7 +39,7 @@ doserver01:
     lda #$0d
     jsr $ffd2
 
-    jsr getanswer
+    jsr read_status
     cmp #$02
     bne getdata           ; Could not connect
     jmp start
@@ -62,70 +62,14 @@ inputchar:
     jsr $ffe4
     beq nokey
     sta commandputbyte+4
-    cmp #$85
-    beq f1
-    cmp #$86
-    beq f3
-    cmp #$88
-    beq f7
-    jmp putbyte
 
-f1:
-    jmp start
-f3:
-
-    ldy #$00
-    lda #$00
-clearbuff2:
-    sta stringbuffer,y
-    iny
-    cpy #100
-    bne clearbuff2
-
-    jsr $A560
-    lda $0200
-    cmp #$00        ; Eingabebuffer leer
-    beq inp2done
-
-    ldx #$00
-    ldy #$00
-inp2:
-    lda $0200,y
-    cmp #$00
-    beq inp2done
-    jsr charconvert
-    sta stringbuffer,x
-    inx
-    iny
-    bne inp2
-inp2done:
-
-    lda #<commandputstring
-    sta $fe
-    lda #>commandputstring
-    sta $ff
-    jsr fixsting
-    jsr sendcommand
-    jsr getanswer
-    cmp #$02              ; disconnected
-    bne loopdata
-    jmp start             ; disconnected
-loopdata:
-    jmp getdata
-
-f7:
-    lda #$0a
-    sta commandputbyte+4
-    jmp putbyte
-
-putbyte:
     lda #<commandputbyte
     sta $fe
     lda #>commandputbyte
     sta $ff
     jsr sendcommand
 
-    jsr getanswer
+    jsr read_status
     cmp #$02              ; disconnected
     bne nokey
     jmp start
@@ -186,6 +130,33 @@ stringexit:
     cpy #$00                ; Selbstmodifizierender Code - Hier wird die länge des Kommandos eingetragen -> Siehe Ende von send_string
     bne string_next
     rts
+
+read_status:
+; Any command that returns a status will send one of these strings
+; * OK:    1, 0, "0"
+; * ERROR: 2, 0, "!E"
+; (The first two bytes being the length of the string.)
+; We decide on the first character ('0' or not), which one it is.
+	jsr get_reply_size
+	jsr read_byte
+	cmp #'0'
+	bne :+
+	clc
+	rts
+:	jsr read_byte
+	sec
+	rts
+
+get_reply_size:
+	lda #$00	; DDR PB input
+	sta $dd03
+	lda $dd00
+	and #$ff-4	; PA2 := LOW -> put device into sending mode
+	sta $dd00
+	jsr read_byte	; dummy byte
+	tax
+	jmp read_byte	; data size LO
+
 
 getanswer:
     lda #$00      ; Datenrichtung Port B Eingang
