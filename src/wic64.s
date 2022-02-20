@@ -7,404 +7,329 @@
 ;  based on "Simple Telnet Demo" source by KiWi, 2-clause BSD
 ;
 
-DEBUG	= 1
+;DEBUG	= 1
 
 zpcmd=$40
 
 ;----------------------------------------------------------------------
 wic64_funcs:
 	.word wic64_setup
-	.word wic64_enable
-	.word wic64_disable
-	.word wic64_getxfer
-	.word wic64_putxfer
-	.word wic64_dropdtr
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word 0
 
-wic64_dropdtr:
-	rts
-
-once:
-	.byte 0
-
-;----------------------------------------------------------------------
 wic64_setup:
-	lda once
-	beq :+
-	rts
-:	inc once
+    ldy #0
+doserver01:
+    lda bbs01,y
+    sta xbuffer,y
+    iny
+    cmp #$00
+    bne doserver01
 
-	lda #0
-	sta extra_dummy_byte
-	sta ribuf
+    lda #<commandserver
+    sta $fe
+    lda #>commandserver
+    sta $ff
+    jsr fixsting
+    jsr sendcommand
 
-	; set DDR PA2 to output (data direction indicator for device)
-	lda $dd02
-	ora #$04
-	sta $dd02
+    lda #$0d
+    jsr $ffd2
 
-	; XXX for now, connect to fixed server immediately
-	lda #0
-	sta bytes_in_buffer
-	sta bytes_in_buffer+1
+    jsr getanswer
+    cmp #$02
+    bne getdata           ; Could not connect
+    jmp start
 
-	; count string length
-	ldy #0
-:	lda server_address,y
-	iny
-	and #$ff
-	bne :-
-	iny
-	iny
-	iny
-	sty commandserver+1
+getdata:
+    lda #<commandget
+    sta $fe
+    lda #>commandget
+    sta $ff
+    jsr sendcommand
 
-	lda #<commandserver
-	sta zpcmd
-	lda #>commandserver
-	sta zpcmd+1
-	lda #4
-	jsr sendcommand2
+    jsr getanswer
+    cmp #$01
+    bne getdata       ; Es sind noch Daten abzuholen - so lange loopen und ausgeben !
+    cmp #$02
+    bne inputchar
+    jmp start
 
-	ldy #0
-:	lda server_address,y
-	beq :+
-	jsr write_byte
-	iny
-	bne :-
-:
+inputchar:
+    jsr $ffe4
+    beq nokey
+    sta commandputbyte+4
+    cmp #$85
+    beq f1
+    cmp #$86
+    beq f3
+    cmp #$88
+    beq f7
+    jmp putbyte
 
-	jsr read_status
-	bcs BADBADBAD1		  ; Could not connect
+f1:
+    jmp start
+f3:
 
-	lda #1
-	sta extra_dummy_byte
-	rts
+    ldy #$00
+    lda #$00
+clearbuff2:
+    sta stringbuffer,y
+    iny
+    cpy #100
+    bne clearbuff2
 
-BADBADBAD1:
-	inc $d021
-	jmp BADBADBAD1
-BADBADBAD2:
-	inc $d020
-	jmp BADBADBAD2
-BADBADBAD3:
-	inc $0400
-	jmp BADBADBAD3
+    jsr $A560
+    lda $0200
+    cmp #$00        ; Eingabebuffer leer
+    beq inp2done
 
-;----------------------------------------------------------------------
-wic64_putxfer:
-	ldx ribuf_index
-	sta ribuf,x
-	inx
-	beq :+		; drop chars after 255
-	stx ribuf_index
-:
-	lda bytes_in_buffer
-	ora bytes_in_buffer+1
-	beq send_bytes
-	rts
+    ldx #$00
+    ldy #$00
+inp2:
+    lda $0200,y
+    cmp #$00
+    beq inp2done
+    jsr charconvert
+    sta stringbuffer,x
+    inx
+    iny
+    bne inp2
+inp2done:
 
-send_bytes:
-	inc $d020
-	lda ribuf_index	; number of chars
-	clc
-	adc #4		; plus cmd header
-	sta cmd_tcp_put+1
-	ldx #<cmd_tcp_put
-	ldy #>cmd_tcp_put
-	stx zpcmd
-	sty zpcmd+1
-	lda #4
-	jsr sendcommand2
+    lda #<commandputstring
+    sta $fe
+    lda #>commandputstring
+    sta $ff
+    jsr fixsting
+    jsr sendcommand
+    jsr getanswer
+    cmp #$02              ; disconnected
+    bne loopdata
+    jmp start             ; disconnected
+loopdata:
+    jmp getdata
 
-	ldy #0
-:	lda ribuf,y
-	jsr write_byte
-	iny
-	cpy ribuf_index
-	bne :-
-:
-	lda #0
-	sta ribuf_index
+f7:
+    lda #$0a
+    sta commandputbyte+4
+    jmp putbyte
 
-	jsr read_status
-	bcs BADBADBAD2
-	rts
+putbyte:
+    lda #<commandputbyte
+    sta $fe
+    lda #>commandputbyte
+    sta $ff
+    jsr sendcommand
+
+    jsr getanswer
+    cmp #$02              ; disconnected
+    bne nokey
+    jmp start
+nokey:
+    jmp getdata
+
+
+
+end:
+    lda #$ff      ; Datenrichtung Port B Ausgang
+    sta $dd03
+
+    lda $dd00
+    ora #$04      ; PA2 auf HIGH = ESP im Empfangsmodus
+    sta $dd00
+
+
+
+    cli
+    lda #$00
+    rts
+
+fixsting:
+    ldy #$04
+countstring:
+    iny
+    lda ($fe),y
+    cmp #$00
+    bne countstring
+    tya
+    ldy #$01
+    sta ($fe),y
+    rts
 
 sendcommand:
-	stx zpcmd
-	sty zpcmd+1
 
-.ifdef DEBUG
-	lda #<txt_sendcmd
-	ldy #>txt_sendcmd
-	jsr $ab1e
-	ldy #3
-	lda (zpcmd),y
-	tax
-	lda #0
-	jsr $bdcd
-	lda #CR
-	jsr $ffd2
-.endif
+    lda $dd02
+    ora #$04
+    sta $dd02               ; Datenrichtung Port A PA2 auf Ausgang
+    lda #$ff                ; Datenrichtung Port B Ausgang
+    sta $dd03
+    lda $dd00
+    ora #$04                ; PA2 auf HIGH = ESP im Empfangsmodus
+    sta $dd00
 
-	ldy #1
-	lda (zpcmd),y	; length of command
-sendcommand2:
-	sta @len
+    ldy #$01
+    lda ($fe),y             ; Länge des Kommandos holen
+    sec
+    sbc #$01
+    sta stringexit+1        ; Als Exit speichern
 
-	lda #$ff	; DDR PB  input
-	sta $dd03
-	lda $dd00
-	ora #$04	; PA2 := HIGH -> put device into receiving move
-	sta $dd00
+    ldy #$ff
+string_next:
+    iny
+    lda ($fe),y
+    jsr write_byte
+stringexit:
+    cpy #$00                ; Selbstmodifizierender Code - Hier wird die länge des Kommandos eingetragen -> Siehe Ende von send_string
+    bne string_next
+    rts
 
-	ldy #0
-:	lda (zpcmd),y
-	jsr write_byte
-	iny
-@len=*+1
-	cpy #$ff
-	bne :-
-	rts
-
-get_reply_size:
-	lda #$00	; DDR PB input
-	sta $dd03
-	lda $dd00
-	and #$ff-4	; PA2 := LOW -> put device into sending mode
-	sta $dd00
-	jsr read_byte	; dummy byte
-	lda extra_dummy_byte
-	beq :+
-	jsr read_byte	; dummy byte
-:	jsr read_byte	; data size HI
-	tax
-	jmp read_byte	; data size LO
-
-read_status:
-; Any command that returns a status will send one of these strings
-; * OK:    1, 0, "0"
-; * ERROR: 2, 0, "!E"
-; (The first two bytes being the length of the string.)
-; We decide on the first character ('0' or not), which one it is.
-	jsr get_reply_size
-	jsr read_byte
-	cmp #'0'
-	bne :+
-	clc
-	rts
-:	jsr read_byte
-	sec
-	rts
-
-get_tcp_bytes:
-	ldx #<cmd_tcp_get
-	ldy #>cmd_tcp_get
-	jsr sendcommand
-
-	jsr get_reply_size
-	sta bytes_in_buffer
-	stx bytes_in_buffer+1
-	sta $0400
-	stx $0401
-
-.ifdef DEBUG
-	lda #<txt_length
-	ldy #>txt_length
-	jsr $ab1e
-	lda bytes_in_buffer+1
-	ldx bytes_in_buffer
-	jsr $bdcd
-	lda #CR
-	jsr $ffd2
-.endif
-	rts
+getanswer:
+    lda #$00      ; Datenrichtung Port B Eingang
+    sta $dd03
+    lda $dd00
+    and #251      ; PA2 auf LOW = ESP im Sendemodus
+    sta $dd00
 
 
+    jsr read_byte   ;; Dummy Byte -
+
+
+    jsr read_byte
+    tay
+    jsr read_byte
+    sta inputsize
+    tax
+    cpy #$00      ; Mehr als $0100 bytes als Rückgabe
+    bne check2
+    cpx #$00      ; Mehr als 1 bytes als Rückgabe
+    beq nomsg     ; Keine Sendedaten vorhanden (Antwort $00 $00)
+    cpx #$01
+    beq noerrorcode
+    cpx #$02
+    beq errorcode
+    jmp check2
+noerrorcode:
+    jsr read_byte
+    cmp #$30
+    bne printit
+    lda #$00
+    rts
+errorcode:
+    jsr read_byte
+    cmp #$21
+    bne printit
+    jsr read_byte
+    lda #$02
+    rts
+
+check2:
+    cpx #$00
+    bne goread
+    dey
+
+goread:
+    jsr read_byte
+printit:
+    jsr $ffd2
+    dex
+    bne goread
+    dey
+    cpy #$ff
+    bne goread
+    lda #$00
+    rts
+nomsg:
+    lda #$01
+    rts
 
 
 write_byte:
-.ifdef DEBUG
-	sta @save_a
-	pha
-	txa
-	pha
-	tya
-	pha
-	lda #<txt_write_byte
-	ldy #>txt_write_byte
-	jsr $ab1e
-@save_a=*+1
-	ldx #$00
-	lda #0
-	jsr $bdcd
-	lda #CR
-	jsr $ffd2
-	pla
-	tay
-	pla
-	tax
-	pla
-.endif
 
-	sta $dd01	; Bit 0..7: Userport Daten PB 0-7 schreiben
-	lda #$10
-:	bit $dd0d	; wait for device to accept the byte
-	beq :-
-	rts
+    sta $dd01       ; Bit 0..7: Userport Daten PB 0-7 schreiben
+
+dowrite:
+    lda $dd0d
+    and #$10        ; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
+    beq dowrite
+    rts
 
 read_byte:
-	lda #$10	; wait for device to have a byte ready
-:	bit $dd0d
-	beq :-
-	lda $dd01
 
-.ifdef DEBUG
-	php
-	sta @save_a
-	pha
-	txa
-	pha
-	tya
-	pha
-	lda #<txt_read_byte
-	ldy #>txt_read_byte
-	jsr $ab1e
-@save_a=*+1
-	ldx #$00
-	lda #0
-	jsr $bdcd
-	lda #CR
-	jsr $ffd2
-	pla
-	tay
-	pla
-	tax
-	pla
-	plp
-.endif
-	rts
+doread:
+    lda $dd0d
+    and #$10        ; Warten auf NMI FLAG2 = Byte wurde gelesen vom ESP
+    beq doread
 
-wic64_getxfer:
-	stx @save_x
-	sty @save_y
+    lda $dd01
+    rts
 
-.ifdef DEBUG
-	lda #<txt_bufferx
-	ldy #>txt_bufferx
-	jsr $ab1e
-	lda bytes_in_buffer+1
-	ldx bytes_in_buffer
-	jsr $bdcd
-	lda #CR
-	jsr $ffd2
-.endif
+charconvert:
+    rts
+    cmp #$c0
+    bcs con2
+    cmp #$40
+    bcs con1
+    rts
+con1:
+    clc
+    adc #$20
+    rts
+con2:
+    sec
+    sbc #$80
+    rts
 
-	lda bytes_in_buffer
-	ora bytes_in_buffer+1
-	bne @skip_command
 
-;	inc $d020
-	jsr get_tcp_bytes
+printtext:
+    ldy #$00
+printloop:
+    lda ($fe),y
+    cmp #$00
+    beq printdone
+    jsr $ffd2
+    iny
+    bne printloop
+    inc $ff
+    jmp printtext
+printdone:
+    rts
 
-;@loop:
-;	jsr read_byte
-;	jmp @loop
+servername:                .byte $0d,$0a,$0d,$0a,$0e,"server:port->",$00
+prefdata:                   .byte "data: ",$00
 
-	lda bytes_in_buffer
-	ora bytes_in_buffer+1
-	bne @skip_command
+commandget:                 .byte "W",$04,$00,34
+commandputbyte:             .byte "W",$05,$00,35,$00
+commandputstring:           .byte "W",$00,$00,35
+stringbuffer:               .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+                            .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+                            .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
-	lda #0		; no data
-	sec
-	beq @end
 
-@skip_command:
-	lda bytes_in_buffer
-	bne :+
-	dec bytes_in_buffer+1
-:	dec bytes_in_buffer
-	jsr read_byte
+commandserver:           .byte "W",$00,$00,33
+xbuffer:            .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+                   .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+                   .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
-	pha
-	txa
-	pha
-	tya
-	pha
-	lda bytes_in_buffer
-	ora bytes_in_buffer
-	bne :+
-	lda ribuf_index
-	beq :+
-	jsr send_bytes
-:	pla
-	tay
-	pla
-	tax
-	pla
+text:               .byte $0e,"  wIc64 simple telnet demo 1.1 by kIwI",$0d
+                    .byte "----------------------------------------",$0d,$0d
+                    .byte " 1: 13th.hoyvision.com:6400",$0d,$0a
+                    .byte " 2: cib.dyndns.org:6405",$0d,$0a
+                    .byte " 3: darklevel.hopto.org:64128",$0d,$0a
+                    .byte " 4: rapidfire.hopto.org:64128",$0d,$0a
+                    .byte " 5: raveolution.hopto.org:64128",$0d,$0a
+                    .byte " 9: ENTER YOUR OWN SERVER",$0d,$0a,$0d,$0a,$0d,$0a
+                    .byte " wHILE RUNNING:",$0d,$0a,$0d,$0a
+                    .byte " f1=mAIN MENU",$0d,$0a
+                    .byte " f3=iNPUT STRING & SEND DATA",$0d,$0a,$00
 
-;	pha
-;	lda #<txt_char
-;	ldy #>txt_char
-;	jsr $ab1e
-;	pla
-;	pha
-;	tax
-;	lda #0
-;	jsr $bdcd
-;	pla
 
-	clc
-@end:
-@save_x=*+1
-	ldx #$ff
-@save_y=*+1
-	ldy #$ff
-	rts
-
-wic64_enable:
-	rts
-
-wic64_disable:
-	rts
-
-cmd_tcp_get:
-	.byte 'W'
-	.word 4
-	.byte 34
-
-cmd_tcp_put:
-	.byte 'W'
-	.word $00	; <- will be overwritten
-	.byte 35
-
-commandserver:
-	.byte 'W'
-	.word $00	; <- will be overwritten
-	.byte 33
-
-server_address:
+bbs01:
 	.byte "192.168.176.104:25232",0
-;	.byte "raveolution.hopto.org:64128",0
-;	.byte "lu8fjh-c64.ddns.net:6400",0
 
-txt_sendcmd:
-	.byte "CMD: ",0
-txt_length:
-	.byte "LEN: ",0
-txt_bufferx:
-	.byte "BUF: ",0
-txt_char:
-	.byte "CHR: ",0
-txt_write_byte:
-	.byte "WRITE: ",0
-txt_read_byte:
-	.byte "READ: ",0
 
-bytes_in_buffer:
-	.word 0
-ribuf_index:
-	.byte 0
+inputsize:          .byte 0
 
-extra_dummy_byte:
-	.byte 0
