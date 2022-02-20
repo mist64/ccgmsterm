@@ -45,10 +45,7 @@ doserver01:
 
     jsr sendcommand
 
-    lda #$0d
-    jsr $ffd2
-
-    jsr read_status
+    jsr getanswer
     cmp #$02
     bne getdata           ; Could not connect
     jmp start
@@ -78,7 +75,7 @@ inputchar:
     sta $ff
     jsr sendcommand
 
-    jsr read_status
+    jsr getanswer
     cmp #$02              ; disconnected
     bne nokey
     jmp start
