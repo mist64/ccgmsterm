@@ -151,28 +151,23 @@ getanswer:
     jsr read_byte
     sta inputsize
     tax
-    cpy #$00      ; Mehr als $0100 bytes als Rückgabe
-    bne check2
-    cpx #$00      ; Mehr als 1 bytes als Rückgabe
-    beq nomsg     ; Keine Sendedaten vorhanden (Antwort $00 $00)
-check2:
-    cpx #$00
-    bne goread
+    cpy #0
+    bne @check2
+    cpx #0
+    beq @nomsg
+@check2:
+    cpx #0
+    bne :+
     dey
-
-goread:
+:
     jsr read_byte
-printit:
     jsr $ffd2
     dex
-    bne goread
+    bne :-
     dey
     cpy #$ff
-    bne goread
-    lda #$00
-    rts
-nomsg:
-    lda #$01
+    bne :-
+@nomsg:
     rts
 
 
