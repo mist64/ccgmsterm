@@ -45,7 +45,7 @@ doserver01:
 
     jsr sendcommand
 
-    jsr getanswer
+    jsr get_status
     cmp #$02
     bne getdata           ; Could not connect
     jmp start
@@ -125,31 +125,71 @@ stringexit:
     bne string_next
     rts
 
-read_status:
-; Any command that returns a status will send one of these strings
-; * OK:    1, 0, "0"
-; * ERROR: 2, 0, "!E"
-; (The first two bytes being the length of the string.)
-; We decide on the first character ('0' or not), which one it is.
-	jsr get_reply_size
-	jsr read_byte
-	cmp #'0'
-	bne :+
-	clc
-	rts
-:	jsr read_byte
-	sec
-	rts
+get_status:
+    lda #$00      ; Datenrichtung Port B Eingang
+    sta $dd03
+    lda $dd00
+    and #251      ; PA2 auf LOW = ESP im Sendemodus
+    sta $dd00
 
-get_reply_size:
-	lda #$00	; DDR PB input
-	sta $dd03
-	lda $dd00
-	and #$ff-4	; PA2 := LOW -> put device into sending mode
-	sta $dd00
-	jsr read_byte	; dummy byte
-	tax
-	jmp read_byte	; data size LO
+
+    jsr read_byte   ;; Dummy Byte -
+
+
+    jsr read_byte
+    tay
+    jsr read_byte
+    sta inputsize
+    tax
+    cpy #$00      ; Mehr als $0100 bytes als Rückgabe
+    bne @check2
+    cpx #$00      ; Mehr als 1 bytes als Rückgabe
+    beq @nomsg     ; Keine Sendedaten vorhanden (Antwort $00 $00)
+    cpx #$01
+    beq @noerrorcode
+    cpx #$02
+    beq @errorcode
+    jmp @check2
+@noerrorcode:
+    jsr read_byte
+    cmp #$30
+    bne @printit
+    lda #$00
+    rts
+@errorcode:
+    jsr read_byte
+    cmp #$21
+    bne @printit
+    jsr read_byte
+    lda #$02
+    rts
+
+@check2:
+    cpx #$00
+    bne @goread
+    dey
+
+@goread:
+    jsr read_byte
+@printit:
+    jsr $ffd2
+    dex
+    bne @goread
+    dey
+    cpy #$ff
+    bne @goread
+    lda #$00
+    rts
+@nomsg:
+    lda #$01
+    rts
+
+
+
+
+
+
+
 
 
 getanswer:
