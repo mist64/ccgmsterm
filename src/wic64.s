@@ -33,7 +33,16 @@ doserver01:
     sta $fe
     lda #>commandserver
     sta $ff
-    jsr fixsting
+
+    ldy #$04
+:   iny
+    lda ($fe),y
+    cmp #$00
+    bne :-
+    tya
+    ldy #$01
+    sta ($fe),y
+
     jsr sendcommand
 
     lda #$0d
@@ -90,18 +99,6 @@ end:
 
     cli
     lda #$00
-    rts
-
-fixsting:
-    ldy #$04
-countstring:
-    iny
-    lda ($fe),y
-    cmp #$00
-    bne countstring
-    tya
-    ldy #$01
-    sta ($fe),y
     rts
 
 sendcommand:
