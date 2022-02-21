@@ -7,7 +7,7 @@
 ;  based on "Simple Telnet Demo" source by KiWi, 2-clause BSD
 ;
 
-DEBUG	= 1
+;DEBUG	= 1
 
 zpcmd=$40
 
@@ -34,7 +34,6 @@ wic64_setup:
 :	inc once
 
 	lda #0
-	sta extra_dummy_byte
 	sta ribuf
 
 	; set DDR PA2 to output (data direction indicator for device)
@@ -76,8 +75,6 @@ wic64_setup:
 	jsr read_status
 	bcs BADBADBAD1		  ; Could not connect
 
-	lda #1
-	sta extra_dummy_byte
 	rts
 
 BADBADBAD1:
@@ -122,7 +119,7 @@ send_bytes:
 	iny
 	cpy ribuf_index
 	bne :-
-:
+
 	lda #0
 	sta ribuf_index
 
@@ -174,10 +171,7 @@ get_reply_size:
 	and #$ff-4	; PA2 := LOW -> put device into sending mode
 	sta $dd00
 	jsr read_byte	; dummy byte
-	lda extra_dummy_byte
-	beq :+
-	jsr read_byte	; dummy byte
-:	jsr read_byte	; data size HI
+	jsr read_byte	; data size HI
 	tax
 	jmp read_byte	; data size LO
 
@@ -249,13 +243,15 @@ write_byte:
 
 	sta $dd01	; Bit 0..7: Userport Daten PB 0-7 schreiben
 	lda #$10
-:	bit $dd0d	; wait for device to accept the byte
+:	;inc $d021
+	bit $dd0d	; wait for device to accept the byte
 	beq :-
 	rts
 
 read_byte:
 	lda #$10	; wait for device to have a byte ready
-:	bit $dd0d
+:	;inc $d020
+	bit $dd0d
 	beq :-
 	lda $dd01
 
@@ -370,8 +366,9 @@ wic64_disable:
 
 cmd_tcp_get:
 	.byte 'W'
-	.word 4
+	.word 6
 	.byte 34
+	.word 40
 
 cmd_tcp_put:
 	.byte 'W'
@@ -404,7 +401,4 @@ txt_read_byte:
 bytes_in_buffer:
 	.word 0
 ribuf_index:
-	.byte 0
-
-extra_dummy_byte:
 	.byte 0
