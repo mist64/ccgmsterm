@@ -34,7 +34,8 @@ wic64_setup:
 :	inc once
 
 	lda #0
-	sta ribuf
+	sta rhead
+	sta rtail
 
 	; set DDR PA2 to output (data direction indicator for device)
 	lda $dd02
@@ -89,39 +90,14 @@ BADBADBAD3:
 
 ;----------------------------------------------------------------------
 wic64_putxfer:
-	ldx ribuf_index
-	sta ribuf,x
-	inx
-	beq :+		; drop chars after 255
-	stx ribuf_index
-:
-	lda bytes_in_buffer
-	ora bytes_in_buffer+1
-	beq send_bytes
-	rts
-
-send_bytes:
 	inc $d020
-	lda ribuf_index	; number of chars
-	clc
-	adc #4		; plus cmd header
-	sta cmd_tcp_put+1
+	sta cmd_tcp_put+4
 	ldx #<cmd_tcp_put
 	ldy #>cmd_tcp_put
 	stx zpcmd
 	sty zpcmd+1
-	lda #4
+	lda #5
 	jsr sendcommand2
-
-	ldy #0
-:	lda ribuf,y
-	jsr write_byte
-	iny
-	cpy ribuf_index
-	bne :-
-
-	lda #0
-	sta ribuf_index
 
 	jsr read_status
 	bcs BADBADBAD2
@@ -197,10 +173,15 @@ get_tcp_bytes:
 	jsr sendcommand
 
 	jsr get_reply_size
-	sta bytes_in_buffer
-	stx bytes_in_buffer+1
-	sta $0400
-	stx $0401
+	sta rtail	; lo; hi is assumed 0
+	ldx #0
+:	jsr read_byte
+	sta ribuf,x
+	inx
+	cpx rtail
+	bne :-
+	lda #0
+	sta rhead
 
 .ifdef DEBUG
 	lda #<txt_length
@@ -296,19 +277,15 @@ wic64_getxfer:
 	jsr $ffd2
 .endif
 
-	lda bytes_in_buffer
-	ora bytes_in_buffer+1
+	lda rhead
+	cmp rtail
 	bne @skip_command
 
 ;	inc $d020
 	jsr get_tcp_bytes
 
-;@loop:
-;	jsr read_byte
-;	jmp @loop
-
-	lda bytes_in_buffer
-	ora bytes_in_buffer+1
+	lda rhead
+	cmp rtail
 	bne @skip_command
 
 	lda #0		; no data
@@ -316,28 +293,10 @@ wic64_getxfer:
 	beq @end
 
 @skip_command:
-	lda bytes_in_buffer
-	bne :+
-	dec bytes_in_buffer+1
-:	dec bytes_in_buffer
-	jsr read_byte
-
-	pha
-	txa
-	pha
-	tya
-	pha
-	lda bytes_in_buffer
-	ora bytes_in_buffer
-	bne :+
-	lda ribuf_index
-	beq :+
-	jsr send_bytes
-:	pla
-	tay
-	pla
-	tax
-	pla
+	ldx rhead
+	lda ribuf,x
+	inx
+	stx rhead
 
 ;	pha
 ;	lda #<txt_char
@@ -372,8 +331,9 @@ cmd_tcp_get:
 
 cmd_tcp_put:
 	.byte 'W'
-	.word $00	; <- will be overwritten
+	.word 5
 	.byte 35
+	.byte $00	; <- will be overwritten
 
 commandserver:
 	.byte 'W'
@@ -402,3 +362,4 @@ bytes_in_buffer:
 	.word 0
 ribuf_index:
 	.byte 0
+
