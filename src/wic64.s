@@ -9,6 +9,8 @@
 
 ;DEBUG	= 1
 
+BYTES_PER_TCP_GET	= 128	; max 255
+
 zpcmd=$40
 
 ;----------------------------------------------------------------------
@@ -90,7 +92,7 @@ BADBADBAD3:
 
 ;----------------------------------------------------------------------
 wic64_putxfer:
-	inc $d020
+	inc $d021
 	sta cmd_tcp_put+4
 	ldx #<cmd_tcp_put
 	ldy #>cmd_tcp_put
@@ -231,7 +233,7 @@ write_byte:
 
 read_byte:
 	lda #$10	; wait for device to have a byte ready
-:	;inc $d020
+:	inc $d020
 	bit $dd0d
 	beq :-
 	lda $dd01
@@ -327,7 +329,7 @@ cmd_tcp_get:
 	.byte 'W'
 	.word 6
 	.byte 34
-	.word 40
+	.word BYTES_PER_TCP_GET
 
 cmd_tcp_put:
 	.byte 'W'
