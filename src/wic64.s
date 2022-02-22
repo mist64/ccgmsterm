@@ -28,6 +28,11 @@ wic64_setup:
 :	inc once
 
 	lda #0
+	sta $30
+	lda #4
+	sta $31
+
+	lda #0
 	sta rhead
 	sta rtail
 
@@ -80,6 +85,46 @@ BADBADBAD3:
 	jmp BADBADBAD3
 
 ;----------------------------------------------------------------------
+wic64_getxfer:
+	stx @save_x
+	sty @save_y
+
+	lda rhead
+	cmp rtail
+	bne @skip_command
+
+	ldx #<cmd_tcp_get
+	ldy #>cmd_tcp_get
+	jsr sendcommand
+
+	lda #0
+	sta rhead
+	jsr get_reply_size
+	sta rtail	; length lo (hi is assumed 0)
+	sec
+	beq @end	; no data
+	ldx #0
+:	jsr read_byte
+	sta ribuf,x
+	inx
+	cpx rtail
+	bne :-
+
+@skip_command:
+	ldx rhead
+	lda ribuf,x
+	inx
+	stx rhead
+
+	clc
+@end:
+@save_x=*+1
+	ldx #$ff
+@save_y=*+1
+	ldy #$ff
+	rts
+
+;----------------------------------------------------------------------
 wic64_putxfer:
 	stx @save_x
 	sty @save_y
@@ -100,6 +145,7 @@ wic64_putxfer:
 	ldy #$ff
 	rts
 
+;----------------------------------------------------------------------
 sendcommand:
 	stx zpcmd
 	sty zpcmd+1
@@ -124,6 +170,7 @@ sendcommand2:
 	bne :-
 	rts
 
+;----------------------------------------------------------------------
 get_reply_size:
 	lda #$00	; DDR PB input
 	sta $dd03
@@ -135,6 +182,7 @@ get_reply_size:
 	tax
 	jmp read_byte	; data size LO
 
+;----------------------------------------------------------------------
 read_status:
 ; Any command that returns a status will send one of these strings
 ; * OK:    1, 0, "0"
@@ -151,33 +199,15 @@ read_status:
 	sec
 	rts
 
-get_tcp_bytes:
-	ldx #<cmd_tcp_get
-	ldy #>cmd_tcp_get
-	jsr sendcommand
-
-	jsr get_reply_size
-	sta rtail	; lo; hi is assumed 0
-	ldx #0
-:	jsr read_byte
-	sta ribuf,x
-	inx
-	cpx rtail
-	bne :-
-	lda #0
-	sta rhead
-	rts
-
-
-
-
+;----------------------------------------------------------------------
 write_byte:
 	sta $dd01	; Bit 0..7: Userport Daten PB 0-7 schreiben
 	lda #$10
-	bit $dd0d	; wait for device to accept the byte
+:	bit $dd0d	; wait for device to accept the byte
 	beq :-
 	rts
 
+;----------------------------------------------------------------------
 read_byte:
 	lda #$10	; wait for device to have a byte ready
 :	bit $dd0d
@@ -185,55 +215,19 @@ read_byte:
 	lda $dd01
 	rts
 
-wic64_getxfer:
-	stx @save_x
-	sty @save_y
-
-	lda rhead
-	cmp rtail
-	bne @skip_command
-
-	jsr get_tcp_bytes
-
-	lda rhead
-	cmp rtail
-	bne @skip_command
-
-	lda #0		; no data
-	sec
-	beq @end
-
-@skip_command:
-	ldx rhead
-	lda ribuf,x
-	inx
-	stx rhead
-
-;	pha
-;	lda #<txt_char
-;	ldy #>txt_char
-;	jsr $ab1e
-;	pla
-;	pha
-;	tax
-;	lda #0
-;	jsr $bdcd
-;	pla
-
-	clc
-@end:
-@save_x=*+1
-	ldx #$ff
-@save_y=*+1
-	ldy #$ff
-	rts
-
+;----------------------------------------------------------------------
 wic64_enable:
 	rts
 
+;----------------------------------------------------------------------
 wic64_disable:
 	rts
 
+;----------------------------------------------------------------------
+wic64_dropdtr:
+	rts
+
+;----------------------------------------------------------------------
 cmd_tcp_get:
 	.byte 'W'
 	.word 6
@@ -256,24 +250,6 @@ server_address:
 ;	.byte "raveolution.hopto.org:64128",0
 ;	.byte "lu8fjh-c64.ddns.net:6400",0
 
-txt_sendcmd:
-	.byte "CMD: ",0
-txt_length:
-	.byte "LEN: ",0
-txt_bufferx:
-	.byte "BUF: ",0
-txt_char:
-	.byte "CHR: ",0
-txt_write_byte:
-	.byte "WRITE: ",0
-txt_read_byte:
-	.byte "READ: ",0
-
+;----------------------------------------------------------------------
 once:
 	.byte 0
-
-ribuf_index:
-	.byte 0
-
-wic64_dropdtr:
-	rts
