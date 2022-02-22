@@ -28,11 +28,6 @@ wic64_setup:
 :	inc once
 
 	lda #0
-	sta $30
-	lda #4
-	sta $31
-
-	lda #0
 	sta rhead
 	sta rtail
 
@@ -89,30 +84,31 @@ wic64_getxfer:
 	stx @save_x
 	sty @save_y
 
+	; is there data in the buffer?
 	lda rhead
 	cmp rtail
-	bne @skip_command
+	bne @skip
 
+	; ask for more data
 	ldx #<cmd_tcp_get
 	ldy #>cmd_tcp_get
 	jsr sendcommand
-
 	lda #0
 	sta rhead
 	jsr get_reply_size
 	sta rtail	; length lo (hi is assumed 0)
 	sec
-	beq @end	; no data
+	beq @end	; no data, return with C=1
 	ldx #0
-:	jsr read_byte
+:	jsr read_byte	; read data into buffer
 	sta ribuf,x
 	inx
 	cpx rtail
 	bne :-
 
-@skip_command:
+@skip:
 	ldx rhead
-	lda ribuf,x
+	lda ribuf,x	; get byte from buffer
 	inx
 	stx rhead
 
@@ -128,17 +124,13 @@ wic64_getxfer:
 wic64_putxfer:
 	stx @save_x
 	sty @save_y
-	sta cmd_tcp_put+4
+	sta cmd_tcp_put_payload
 	ldx #<cmd_tcp_put
 	ldy #>cmd_tcp_put
-	stx zpcmd
-	sty zpcmd+1
-	lda #5
-	jsr sendcommand2
-
+	jsr sendcommand
 	jsr read_status
 	bcs BADBADBAD2
-	lda cmd_tcp_put+4
+	lda cmd_tcp_put_payload
 @save_x=*+1
 	ldx #$ff
 @save_y=*+1
@@ -155,7 +147,7 @@ sendcommand:
 sendcommand2:
 	sta @len
 
-	lda #$ff	; DDR PB  input
+	lda #$ff	; DDR PB input
 	sta $dd03
 	lda $dd00
 	ora #$04	; PA2 := HIGH -> put device into receiving move
@@ -238,6 +230,7 @@ cmd_tcp_put:
 	.byte 'W'
 	.word 5
 	.byte 35
+cmd_tcp_put_payload:
 	.byte $00	; <- will be overwritten
 
 commandserver:
