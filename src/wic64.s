@@ -9,8 +9,6 @@
 
 BYTES_PER_TCP_GET	= 128	; max 255
 
-zpcmd=$40
-
 ;----------------------------------------------------------------------
 wic64_funcs:
 	.word wic64_setup
@@ -47,11 +45,11 @@ wic64_setup:
 	iny
 	iny
 	iny
-	sty commandserver+1
+	sty cmd_tcp_connect_len
 
-	lda #<commandserver
+	lda #<cmd_tcp_connect
 	sta zpcmd
-	lda #>commandserver
+	lda #>cmd_tcp_connect
 	sta zpcmd+1
 	lda #4
 	jsr sendcommand2
@@ -193,9 +191,9 @@ read_status:
 
 ;----------------------------------------------------------------------
 write_byte:
-	sta $dd01	; Bit 0..7: Userport Daten PB 0-7 schreiben
+	sta $dd01	; write data
 	lda #$10
-:	bit $dd0d	; wait for device to accept the byte
+:	bit $dd0d	; wait for the device to accept the byte
 	beq :-
 	rts
 
@@ -209,13 +207,7 @@ read_byte:
 
 ;----------------------------------------------------------------------
 wic64_enable:
-	rts
-
-;----------------------------------------------------------------------
 wic64_disable:
-	rts
-
-;----------------------------------------------------------------------
 wic64_dropdtr:
 	rts
 
@@ -233,8 +225,9 @@ cmd_tcp_put:
 cmd_tcp_put_payload:
 	.byte $00	; <- will be overwritten
 
-commandserver:
+cmd_tcp_connect:
 	.byte 'W'
+cmd_tcp_connect_len:
 	.word $00	; <- will be overwritten
 	.byte 33
 

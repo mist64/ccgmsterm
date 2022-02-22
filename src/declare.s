@@ -81,6 +81,7 @@ half_duplex	= $12
 zpoutstr	= $22 ; 2 bytes
 sndtim  = $24   ; 2 bytes, UP9600
 rcvtim  = $26   ; 2 bytes, UP9600
+zpcmd   = $26   ; 2 bytes, WiC64
 tmp9e	= $9e
 tmp9f	= $9f
 inbits	= $a8
