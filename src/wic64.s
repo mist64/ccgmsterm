@@ -7,8 +7,6 @@
 ;  based on "Simple Telnet Demo" source by KiWi, 2-clause BSD
 ;
 
-;DEBUG	= 1
-
 BYTES_PER_TCP_GET	= 128	; max 255
 
 zpcmd=$40
@@ -21,12 +19,6 @@ wic64_funcs:
 	.word wic64_getxfer
 	.word wic64_putxfer
 	.word wic64_dropdtr
-
-wic64_dropdtr:
-	rts
-
-once:
-	.byte 0
 
 ;----------------------------------------------------------------------
 wic64_setup:
@@ -45,9 +37,6 @@ wic64_setup:
 	sta $dd02
 
 	; XXX for now, connect to fixed server immediately
-	lda #0
-	sta bytes_in_buffer
-	sta bytes_in_buffer+1
 
 	; count string length
 	ldy #0
@@ -92,7 +81,8 @@ BADBADBAD3:
 
 ;----------------------------------------------------------------------
 wic64_putxfer:
-	inc $d021
+	stx @save_x
+	sty @save_y
 	sta cmd_tcp_put+4
 	ldx #<cmd_tcp_put
 	ldy #>cmd_tcp_put
@@ -103,24 +93,16 @@ wic64_putxfer:
 
 	jsr read_status
 	bcs BADBADBAD2
+	lda cmd_tcp_put+4
+@save_x=*+1
+	ldx #$ff
+@save_y=*+1
+	ldy #$ff
 	rts
 
 sendcommand:
 	stx zpcmd
 	sty zpcmd+1
-
-.ifdef DEBUG
-	lda #<txt_sendcmd
-	ldy #>txt_sendcmd
-	jsr $ab1e
-	ldy #3
-	lda (zpcmd),y
-	tax
-	lda #0
-	jsr $bdcd
-	lda #CR
-	jsr $ffd2
-.endif
 
 	ldy #1
 	lda (zpcmd),y	; length of command
@@ -184,106 +166,33 @@ get_tcp_bytes:
 	bne :-
 	lda #0
 	sta rhead
-
-.ifdef DEBUG
-	lda #<txt_length
-	ldy #>txt_length
-	jsr $ab1e
-	lda bytes_in_buffer+1
-	ldx bytes_in_buffer
-	jsr $bdcd
-	lda #CR
-	jsr $ffd2
-.endif
 	rts
 
 
 
 
 write_byte:
-.ifdef DEBUG
-	sta @save_a
-	pha
-	txa
-	pha
-	tya
-	pha
-	lda #<txt_write_byte
-	ldy #>txt_write_byte
-	jsr $ab1e
-@save_a=*+1
-	ldx #$00
-	lda #0
-	jsr $bdcd
-	lda #CR
-	jsr $ffd2
-	pla
-	tay
-	pla
-	tax
-	pla
-.endif
-
 	sta $dd01	; Bit 0..7: Userport Daten PB 0-7 schreiben
 	lda #$10
-:	;inc $d021
 	bit $dd0d	; wait for device to accept the byte
 	beq :-
 	rts
 
 read_byte:
 	lda #$10	; wait for device to have a byte ready
-:	inc $d020
-	bit $dd0d
+:	bit $dd0d
 	beq :-
 	lda $dd01
-
-.ifdef DEBUG
-	php
-	sta @save_a
-	pha
-	txa
-	pha
-	tya
-	pha
-	lda #<txt_read_byte
-	ldy #>txt_read_byte
-	jsr $ab1e
-@save_a=*+1
-	ldx #$00
-	lda #0
-	jsr $bdcd
-	lda #CR
-	jsr $ffd2
-	pla
-	tay
-	pla
-	tax
-	pla
-	plp
-.endif
 	rts
 
 wic64_getxfer:
 	stx @save_x
 	sty @save_y
 
-.ifdef DEBUG
-	lda #<txt_bufferx
-	ldy #>txt_bufferx
-	jsr $ab1e
-	lda bytes_in_buffer+1
-	ldx bytes_in_buffer
-	jsr $bdcd
-	lda #CR
-	jsr $ffd2
-.endif
-
 	lda rhead
 	cmp rtail
 	bne @skip_command
 
-;	inc $d020
 	jsr get_tcp_bytes
 
 	lda rhead
@@ -360,8 +269,11 @@ txt_write_byte:
 txt_read_byte:
 	.byte "READ: ",0
 
-bytes_in_buffer:
-	.word 0
+once:
+	.byte 0
+
 ribuf_index:
 	.byte 0
 
+wic64_dropdtr:
+	rts
