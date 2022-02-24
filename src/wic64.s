@@ -232,6 +232,7 @@ cmd_tcp_connect_len:
 	.byte 33
 
 server_address:
+	.byte 0
 	.byte "192.168.176.104:25232",0
 ;	.byte "raveolution.hopto.org:64128",0
 ;	.byte "lu8fjh-c64.ddns.net:6400",0
