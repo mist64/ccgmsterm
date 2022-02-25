@@ -45,6 +45,10 @@
 * Additional cartridges (e.g. Lt. Kernal)
 * 100% support for hardware acceleration devices (SuperCPU etc). Certain conditions may affect file transfer handshake timing.
 
+## Known Bugs
+
+* [#5](https://github.com/mist64/ccgmsterm/issues/5): XMODEM (and possibly PUNTER) transmission may be broken for UP9600 devices
+
 ## Build
 
 Build with make & [ca65](https://github.com/cc65/cc65).
