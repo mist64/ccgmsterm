@@ -45,17 +45,6 @@
 * Additional cartridges (e.g. Lt. Kernal)
 * 100% support for hardware acceleration devices (SuperCPU etc). Certain conditions may affect file transfer handshake timing.
 
-## Changes since CCGMS 2021
-
-* Fixed User Port timing for PAL
-* Fixed UP9600 timing for PAL
-* Implemented XMODEM-1K
-	* protocol XMODEM-1K forces 1K on upload
-	* any XMODEM protocol will accept 1K blocks on download
-* XMODEM-CRC autodetect on upload
-	* protocols XMODEM-CRC/-1K will force CRC on download
-	* any XMODEM protocol will accept CRC on upload
-
 ## Build
 
 Build with make & [ca65](https://github.com/cc65/cc65).
@@ -73,6 +62,16 @@ The EasyFlash version gives you the option of loading/saving the phonebook to ca
 In either case, the resulting file will be `build/ccgmsterm.prg`.
 
 ## Changelog
+
+### 2022-02-25: Future 0.1
+
+* Fixed timing for PAL in User Port and UP9600 drivers
+* Implemented XMODEM-1K
+	* protocol XMODEM-1K forces 1K on upload
+	* any XMODEM protocol will accept 1K blocks on download
+* XMODEM-CRC autodetect on upload
+	* protocols XMODEM-CRC/-1K will force CRC on download
+	* any XMODEM protocol will accept CRC on upload
 
 ### 2020-12-08: v2021 final
 * Punter stack and Unlisted dialer bugs have been eliminated
