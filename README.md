@@ -37,9 +37,9 @@
 
 ## Missing Features
 
-* RR-Net support
-* WiC64 support
-* 80 column support
+* [RR-Net support](https://github.com/mist64/ccgmsterm/issues/1)
+* [WiC64 support](https://github.com/mist64/ccgmsterm/issues/3)
+* [80 column support](https://github.com/mist64/ccgmsterm/issues/2)
 * YMODEM/ZMODEM/HMODEM protocols
 * IDE64 compatibility
 * Additional cartridges (e.g. Lt. Kernal)
@@ -48,6 +48,10 @@
 ## Known Bugs
 
 * [#5](https://github.com/mist64/ccgmsterm/issues/5): XMODEM (and possibly PUNTER) transmission may be broken for UP9600 devices
+
+## Changes since CCGMS Future 0.1
+
+* rewrote RS232 driver model – this may cause regressions; needs testing, especially PUNTER and Multi-PUNTER
 
 ## Build
 
