@@ -62,13 +62,11 @@ dskout:
 	jsr clear232
 	jsr enablexfer
 	jsr clear232
-	ldx #LFN_MODEM
-	jsr chkout
 	pla
 	ldx ascii_mode
 	beq :+
 	jsr petscii_to_ascii
-:	jsr chrout
+:	jsr modput
 
 ; eat echo from modem
 ; (this timeout failsafe makes sure the byte is received back from modem

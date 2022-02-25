@@ -8,14 +8,17 @@
 ;  Message-Id: <199711301621.RAA01078@dosbuster.home.dd>
 ;
 
-; calls from outside code:
-;  up9600_setup
-;  up9600_enable
-;  up9600_disable
-;  up9600_getxfer
-
 RTS_MIN	= 50	; enable Request To Send when buffer reaches this
 RTS_MAX	= 200	; disable Request To Send when buffer reaches this
+
+;----------------------------------------------------------------------
+up9600_funcs:
+	.word up9600_setup
+	.word up9600_enable
+	.word up9600_disable
+	.word up9600_getxfer
+	.word up9600_putxfer
+	.word up9600_dropdtr
 
 ;----------------------------------------------------------------------
 up9600_nmi:
@@ -83,16 +86,6 @@ up9600_setup:
 	jsr clear232
 
 	jsr setbaudup
-
-	lda #<up9600_bsout
-	ldx #>up9600_bsout
-	sta $0326
-	stx $0327
-
-	lda #<up9600_getin
-	ldx #>up9600_getin
-	sta $032a
-	stx $032b
 
 ;----------------------------------------------------------------------
 ; enable serial interface (IRQ+NMI)
@@ -217,23 +210,7 @@ setbaudup:
 	rts
 
 ;----------------------------------------------------------------------
-; new GETIN
-up9600_getin:
-	lda DFLTN
-	cmp #2		; see if default input is modem
-	jne ogetin	; nope, go back to original
-
-	jsr up9600_getxfer
-	bcs :+		; if no character, then return 0 in a
-	rts
-:	clc
-	lda #0
-	rts
-
-;----------------------------------------------------------------------
 ; get byte from serial interface
-;  refer to this routine only if you wanna use it for
-;  protocols (xmodem, punter etc)
 up9600_getxfer:
 	ldx rhead
 	cpx rtail
@@ -255,16 +232,7 @@ up9600_getxfer:
 @skip:	rts
 
 ;----------------------------------------------------------------------
-; new BSOUT
-up9600_bsout:
-	pha		;dupliciaton of original kernal routines
-	lda DFLTO	;test dfault output device for
-	cmp #2		;screen, and...
-	beq :+
-	pla		;if so, go back to original rom routines
-	jmp oldout
-:
-	pla
+up9600_putxfer:
 	sta rsotm
 	stx rsotx
 	sty rsoty
@@ -323,4 +291,19 @@ up9600_disable:
 	lda #>oldirq
 	sta $0315	; irq
 	cli
+	rts
+
+;----------------------------------------------------------------------
+; Hang up
+up9600_dropdtr:
+	lda #%00000100
+	sta cia2ddrb
+	lda #%00000010
+	sta cia2pb
+	ldx #$100-30
+	stx JIFFIES
+:	bit JIFFIES
+	bmi :-
+	lda #%00000010
+	sta cia2ddrb
 	rts

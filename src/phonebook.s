@@ -1228,11 +1228,9 @@ dial:
 ; hayes dial
 	jsr clear232
 	jsr enablemodem
-	ldx #LFN_MODEM
-	jsr chkout
 	lda #<txt_atv1	; send word result codes (as opposed to numeric)
 	ldy #>txt_atv1
-	jsr outmod
+	jsr strmod_delay
 	lda firmware_zimmers
 	bne @1
 	lda #<txt_atd
@@ -1240,7 +1238,7 @@ dial:
 	jmp @2
 @1:	lda #<txt_atd_zimmers
 	ldy #>txt_atd_zimmers
-@2:	jsr outstr
+@2:	jsr strmod
 	ldx #0
 @loop:	stx numptr
 	ldx numptr
@@ -1248,12 +1246,11 @@ dial:
 	sta $d800+23*40+7,x
 	ldx numptr
 	lda numbuf,x
-	jsr chrout	; to modem
+	jsr modput
 	ldx numptr
 	inx
 	cmp #CR		; CR-terminated
 	bne @loop
-	jsr clrchn
 	jmp parse_hayes_answer
 
 ;----------------------------------------------------------------------
@@ -1288,15 +1285,12 @@ hayes_connected:
 flush_modem:
 	lda #$100-24
 	sta JIFFIES
-	ldx #LFN_MODEM
-	jsr chkin
-:	jsr getin
+:	jsr modget
 	cmp #CR
 	beq :+
 	lda JIFFIES
 	bne :-
-:	jsr clrchn	; [XXX jmp]
-	rts
+:	rts
 
 ;----------------------------------------------------------------------
 hayes_userabort:
@@ -1319,9 +1313,21 @@ hayes_redial:
 	jmp dalfin	; back to phonebook
 
 ;----------------------------------------------------------------------
-; send string to modem and wait a bit
-outmod:
-	jsr outstr
+; send string to modem
+strmod:
+	sty zpoutstr+1
+	sta zpoutstr
+	ldy #0
+@loop:	lda (zpoutstr),y
+	beq @rts
+	jsr modput
+	iny
+	bne @loop
+@rts:	rts
+
+;----------------------------------------------------------------------
+strmod_delay:
+	jsr strmod
 	lda #$100-32
 	sta JIFFIES
 :	lda JIFFIES
@@ -1527,10 +1533,9 @@ hmodget:
 	ldx waittemp	; so it doesn't lock up
 	cpx #144	; maybe change for various baud rates
 	beq :+
-	ldx #LFN_MODEM
-	jsr chkin
-	jsr getin
+	jsr modget
 	beq hmodget
+	bcs hmodget
 :	ldx #0
 	stx waittemp
 	rts

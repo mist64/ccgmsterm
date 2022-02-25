@@ -7,13 +7,6 @@
 ;  based on Jeff Brown adaptation of Novaterm version
 ;
 
-; calls from outside code:
-;  sw_setup
-;  sw_enable
-;  sw_disable
-;  sw_getxfer
-;  sw_dropdtr
-
 stopsw	= 1
 startsw	= 0
 
@@ -24,6 +17,15 @@ sw_stat	= swift+1
 sw_cmd	= swift+2
 sw_ctrl	= swift+3
 sw_baud	= swift+7
+
+;----------------------------------------------------------------------
+sw_funcs:
+	.word sw_setup
+	.word sw_enable
+	.word sw_disable
+	.word sw_getxfer
+	.word sw_putxfer
+	.word sw_dropdtr
 
 ;----------------------------------------------------------------------
 ; new NMI handler
@@ -101,6 +103,43 @@ sm15	sta sw_cmd
 
 ;----------------------------------------------------------------------
 sw_setup:
+; set SwiftLink address by modifying all access code
+	lda modem_type
+	cmp #MODEM_TYPE_SWIFTLINK_DE
+	beq @de
+	cmp #MODEM_TYPE_SWIFTLINK_DF
+	beq @df
+	lda #$d7	; else MODEM_TYPE_SWIFTLINK_D7
+	bne @cont
+@de:	lda #$de
+	bne @cont
+@df:	lda #$df
+@cont:	sta sm1+2
+	sta sm2+2
+	sta sm3+2
+	sta sm4+2
+	sta sm5+2
+	sta sm6+2
+	sta sm7+2
+	sta sm8+2
+	sta sm9+2
+	sta sm10+2
+	sta sm11+2
+	sta sm12+2
+	sta sm13+2
+	sta sm14+2
+	sta sm15+2
+	sta sm16+2
+	sta sm17+2
+	sta sm18+2
+	sta sm19+2
+	sta sm20+2
+	sta sm21+2
+	sta sm22+2
+	sta sm23+2
+	sta sm24+2
+	sta sm25+2
+
 	sei
 ;             .------------------------- parity control,
 ;             :.------------------------ bits 5-7
@@ -137,16 +176,6 @@ sm18	lda sw_ctrl
 	ora swbaud,x
 sm19	sta sw_ctrl
 
-	lda #<swiftlink_bsout
-	ldx #>swiftlink_bsout
-	sta $0326 ; IBSOUT
-	stx $0327
-
-	lda #<swiftlink_getin
-	ldx #>swiftlink_getin
-	sta $032a ; IGETIN
-	stx $032b
-
 	lda #<nmisw
 	ldx #>nmisw
 	sta $0318 ; NMINV
@@ -157,16 +186,7 @@ sm19	sta sw_ctrl
 	rts
 
 ;----------------------------------------------------------------------
-; new BSOUT
-swiftlink_bsout:
-	pha		; dupliciaton of original kernal routines
-	lda DFLTO	; test dfault output device for
-	cmp #2		; screen, and...
-	beq :+
-	pla		; if so, go back to original rom routines
-	jmp oldout
-:    	pla
-
+sw_putxfer:
 	sta rsotm
 	stx rsotx
 	sty rsoty
@@ -185,6 +205,7 @@ sm22	sta sw_cmd
 	rts
 
 ;----------------------------------------------------------------------
+; Hang up
 sw_dropdtr:
 sm23	lda sw_cmd
 	and #%11111110
@@ -195,20 +216,6 @@ sm24	sta sw_cmd
 	bmi :-
 	ora #%00000001
 sm25	sta sw_cmd
-	rts
-
-;----------------------------------------------------------------------
-; new GETIN
-swiftlink_getin:
-	lda DFLTN
-	cmp #2		; see if default input is modem
-	jne ogetin	; nope, go back to original
-
-	jsr sw_getxfer
-	bcs :+		; if no character, then return 0 in a
-	rts
-:	clc
-	lda #0
 	rts
 
 ;----------------------------------------------------------------------

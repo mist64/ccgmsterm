@@ -7,11 +7,14 @@
 ;  based on Novaterm 9.6
 ;
 
-; calls from outside code:
-;  rsuser_setup
-;  rsuser_enable
-;  rsuser_disable
-;  rsuser_getxfer
+;----------------------------------------------------------------------
+rsuser_funcs:
+	.word rsuser_setup
+	.word rsuser_enable
+	.word rsuser_disable
+	.word rsuser_getxfer
+	.word rsuser_putxfer
+	.word rsuser_dropdtr
 
 ;----------------------------------------------------------------------
 rsuser_setup:
@@ -23,16 +26,6 @@ rsuser_setup:
 	ldy #>nmi64
 	sta $0318 ; NMINV
 	sty $0319
-
-	lda #<rsuser_bsout
-	ldx #>rsuser_bsout
-	sta $0326 ; IBSOUT
-	stx $0327
-
-	lda #<rsuser_getin
-	ldx #>rsuser_getin
-	sta $032a ; IGETIN
-	stx $032b
 
 	cli
 
@@ -55,22 +48,9 @@ lastring:		; [XXX unused]
 	.byte 0
 
 ;----------------------------------------------------------------------
-; new GETIN
-rsuser_getin:
-	lda DFLTN
-	cmp #2		; see if default input is modem
-	jne ogetin	; nope, go back to original
-
-	jsr rsuser_getxfer
-	bcs :+		; if no character, then return 0 in a
-	rts
-:	clc
-	lda #0
-	rts
-
-;----------------------------------------------------------------------
 ; get byte from serial interface
 rsuser_getxfer:
+	jsr $f04f	; KERNAL code to set up user port
 	ldx rhead
 	cpx rtail
 	beq :+		; skip (empty buffer, return with carry set)
@@ -189,13 +169,7 @@ endbyte	lda #0
 	jmp rsuser_disable
 
 ;----------------------------------------------------------------------
-; new BSOUT
-rsuser_bsout:
-	pha
-	lda DFLTO
-	cmp #2
-	bne notmod
-	pla
+rsuser_putxfer:
 	sta rsotm
 	stx rsotx
 	sty rsoty
@@ -233,8 +207,6 @@ ret1	clc
 	ldy rsoty
 	lda rsotm
 	rts
-notmod	pla
-	jmp  oldout
 
 ;----------------------------------------------------------------------
 ; disable rs232 input
@@ -289,4 +261,19 @@ rsuser_setbaud:
 	sta fulllo
 	lda bdloc+13,y
 	sta fullhi
+	rts
+
+;----------------------------------------------------------------------
+; Hang up
+rsuser_dropdtr:
+	lda #%00000100
+	sta $dd03
+	lda #0
+	sta cia2pb
+	ldx #$100-30
+	stx JIFFIES
+:	bit JIFFIES
+	bmi :-
+	lda #4
+	sta cia2pb
 	rts

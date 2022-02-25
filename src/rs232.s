@@ -3,80 +3,71 @@
 ; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
 ; This project is licensed under the BSD 3-Clause License.
 ;
-; Generic RS232 Code
+; RS232 Driver Dispatch
 ;
 
 ;----------------------------------------------------------------------
-; RS232 driver dispatch: enable modem
-enablemodem
+; Dispatch: Enable modem
+enablemodem:
+	ldx #MODEM_TYPE_SWIFTLINK_DE
 	lda modem_type
-	beq @2		; MODEM_TYPE_USERPORT
-	cmp #MODEM_TYPE_UP9600
-	beq @1
 	cmp #MODEM_TYPE_SWIFTLINK_DE
-	beq @3
-	cmp #MODEM_TYPE_SWIFTLINK_DF
-	beq @4
-	cmp #MODEM_TYPE_SWIFTLINK_D7
-	beq @5
-	rts
-@1:	jmp up9600_setup
-@2:	jmp rsuser_setup
-@3:	lda #$de
-	jmp @6
-@4:	lda #$df
-	jmp @6
-@5:	lda #$d7
-; set Swiftlink address by modifying all access code
-; [XXX this should be moved to the Swiftlink code]
-@6:	sta sm1+2
-	sta sm2+2
-	sta sm3+2
-	sta sm4+2
-	sta sm5+2
-	sta sm6+2
-	sta sm7+2
-	sta sm8+2
-	sta sm9+2
-	sta sm10+2
-	sta sm11+2
-	sta sm12+2
-	sta sm13+2
-	sta sm14+2
-	sta sm15+2
-	sta sm16+2
-	sta sm17+2
-	sta sm18+2
-	sta sm19+2
-	sta sm20+2
-	sta sm21+2
-	sta sm22+2
-	sta sm23+2
-	sta sm24+2
-	sta sm25+2
-	jmp sw_setup
+	bcc :+
+	txa
+:	asl
+	tax
+	lda modem_drivers,x
+	sta tmp02
+	lda modem_drivers+1,x
+	sta tmp02+1
+	ldx #1
+	ldy #0
+:	lda (tmp02),y
+	sta rs232_funcs,x
+	iny
+	inx
+	lda (tmp02),y
+	sta rs232_funcs,x
+	iny
+	inx
+	inx
+	cpy #2*6
+	bne :-
+
+rs232_funcs:
+; setup
+	jmp $ffff
+func_enable:
+	jmp $ffff
+func_disable:
+	jmp $ffff
+func_getxfer:
+	jmp $ffff
+func_putxfer:
+	jmp $ffff
+func_dropdtr:
+	jmp $ffff
+
+	.res 6*2
+
+modem_drivers:
+	.word rsuser_funcs	; MODEM_TYPE_USERPORT
+	.word up9600_funcs	; MODEM_TYPE_UP9600
+	.word sw_funcs		; MODEM_TYPE_SWIFTLINK_DE, ...
 
 ;----------------------------------------------------------------------
-; RS232 driver dispatch: enable transfer
+; Dispatch: Enable transfer
 enablexfer:
 	pha
 	txa
 	pha
 	tya
 	pha
-	lda modem_type
-	beq @1		; MODEM_TYPE_USERPORT
-	cmp #MODEM_TYPE_UP9600
-	beq @2
-	jsr sw_enable
-	jmp xferout
-@1:	jsr rsuser_enable
-	jmp xferout
-@2:	jsr up9600_enable
+	jsr func_enable
 	jmp xferout
 
 ;----------------------------------------------------------------------
-; RS232 driver dispatch: disable transfer
+; Dispatch: Disable transfer
 disablexfer:
 disablemodem:
 	pha
@@ -84,16 +75,7 @@ disablemodem:
 	pha
 	tya
 	pha
-	lda modem_type
-	beq @2		; MODEM_TYPE_USERPORT
-	cmp #MODEM_TYPE_UP9600
-	beq @1
-	jsr sw_disable
-	jmp xferout
-@1:	jsr up9600_disable
-	jmp xferout
-@2:	jsr rsuser_disable
-	jmp xferout		; [XXX redundant]
+	jsr func_disable
 xferout:
 	pla
 	tay
@@ -103,13 +85,27 @@ xferout:
 	rts
 
 ;----------------------------------------------------------------------
-; RS232 driver dispatch: get byte from modem
+; Dispatch: Get byte from modem
 modget:
-	lda modem_type
-	beq @2			; MODEM_TYPE_USERPORT
-	cmp #MODEM_TYPE_UP9600
-	beq @1
-	jmp sw_getxfer		; swiftlink
-@1:	jmp up9600_getxfer	; up9600
-@2:	jmp rsuser_getxfer	; regular
+	jsr func_getxfer
+	pha
+	php
+	lda #0
+	rol
+	sta status		; some callers want STATUS set
+	plp			; others want C set on error/no data
+	pla
+	rts
 
+;----------------------------------------------------------------------
+; Dispatch: Send byte to modem
+modput:
+	pha
+	lda #0
+	sta status
+	pla
+	jmp func_putxfer
+
+;----------------------------------------------------------------------
+; Dispatch: Hang up
+dropdtr	= func_dropdtr

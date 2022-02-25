@@ -72,7 +72,6 @@ easyflash_support:
 	.include "rs232.s"
 	.include "reu.s"
 	.include "theme.s"
-	.include "easyflash.s"
 
 .segment "S5100"
 
@@ -80,6 +79,7 @@ easyflash_support:
 
 .segment "S5C00"
 
+	.include "easyflash.s"
 	.include "instr.s"
 
 endprg	.byte 0

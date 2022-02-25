@@ -108,7 +108,6 @@ FA	= $ba
 LSTX	= $c5	; last key pressed
 NDX     = $c6   ; number of characters in keyboard queue
 BLNSW   = $cc   ; cursor blinking
-RIBUF	= $f7	; RS232 buffer
 RPTFLA	= $028a	; key repeat flag
 KOUNT	= $028b	; counter for timing delay between key repeats
 SHFLAG	= $028d ; bitfield: modifier keys currently pressed
@@ -161,7 +160,6 @@ COLTAB  = $e8da ; PETSCII codes for the colors 0-15
 ; logical file numbers
 LFN_FILE	= 2	; for upload/download
 LFN_PRINTER     = 4	; printing buffers
-LFN_MODEM	= 5
 LFN_DIR 	= 13
 LFN_DISK_CMD    = 15
 
