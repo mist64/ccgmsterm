@@ -33,7 +33,7 @@ term_mainloop:
 	jsr supercpu_on
 
 @loop1:
-; print tempbuf, unless empty
+; print tempbuf unless empty (see phonebook.s)
 	lda bustemp
 	beq @skip
 	ldy #1

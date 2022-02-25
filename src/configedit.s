@@ -65,7 +65,7 @@ f7chgk
 	sta bautmp
 	lda ascii_mode
 	sta gratmp
-	jmp phbook
+	jmp phonebook
 @no1:
 
 ; B: Baud Rate
