@@ -7,12 +7,6 @@
 ;  based on Novaterm 9.6
 ;
 
-; calls from outside code:
-;  rsuser_setup
-;  rsuser_enable
-;  rsuser_disable
-;  rsuser_getxfer
-
 ;----------------------------------------------------------------------
 rsuser_funcs:
 	.word rsuser_setup

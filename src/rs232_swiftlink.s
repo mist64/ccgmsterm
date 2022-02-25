@@ -7,13 +7,6 @@
 ;  based on Jeff Brown adaptation of Novaterm version
 ;
 
-; calls from outside code:
-;  sw_setup
-;  sw_enable
-;  sw_disable
-;  sw_getxfer
-;  sw_dropdtr
-
 stopsw	= 1
 startsw	= 0
 

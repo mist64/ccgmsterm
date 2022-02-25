@@ -8,12 +8,6 @@
 ;  Message-Id: <199711301621.RAA01078@dosbuster.home.dd>
 ;
 
-; calls from outside code:
-;  up9600_setup
-;  up9600_enable
-;  up9600_disable
-;  up9600_getxfer
-
 RTS_MIN	= 50	; enable Request To Send when buffer reaches this
 RTS_MAX	= 200	; disable Request To Send when buffer reaches this
 
