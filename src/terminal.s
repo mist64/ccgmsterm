@@ -233,7 +233,7 @@ term_mainloop:
 :
 
 ; modem input
-@xxxx:	jsr modget
+	jsr modget
 	cmp #0
 	beq @loop2b	; = @loop2
 	ldx status

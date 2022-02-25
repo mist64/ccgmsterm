@@ -56,7 +56,7 @@ lastring:		; [XXX unused]
 ;----------------------------------------------------------------------
 ; get byte from serial interface
 rsuser_getxfer:
-	jsr $F04F		; XXX necessary for User Port driver
+	jsr $f04f	; KERNAL code to set up user port
 	ldx rhead
 	cpx rtail
 	beq :+		; skip (empty buffer, return with carry set)
@@ -176,9 +176,6 @@ endbyte	lda #0
 
 ;----------------------------------------------------------------------
 rsuser_putxfer:
-;	pha
-;	jsr $EFE3		; XXX maybe necessary for User Port driver
-;	pla
 	sta rsotm
 	stx rsotx
 	sty rsoty

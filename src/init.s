@@ -114,13 +114,6 @@ rsopen:
 	jsr up9600_disable
 	jsr enablemodem
 	jsr clall
-
-;	jsr $F483	; XXX maybe necessary for User Port driver
-
-	lda #<ribuf	; move rs232 buffers
-	sta RIBUF	; for the userport 300-2400 modem nmi handling
-	lda #>ribuf
-	sta RIBUF+1
 	jsr disablemodem
 	rts		; [XXX jmp]
 
