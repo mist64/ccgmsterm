@@ -199,10 +199,11 @@ clren1
 	lda curpik
 	cmp #30
 	bcc clren1
-	jmp phinit
-;
-phinit
-	lda #$30
+	jmp phonebook_init; [XXX remove]
+
+;----------------------------------------------------------------------
+phonebook_init:
+	lda #'0'
 	sta trycnt
 	sta trycnt+1
 	lda #0
@@ -214,26 +215,25 @@ phinit
 	lda #<toetxt
 	ldy #>toetxt
 	jsr outstr
-phini2
-	lda #CSR_RIGHT
+:	lda #CSR_RIGHT
 	jsr chrout
 	jsr phnptr
 	jsr prtent
 	inc curpik
 	lda curpik
 	cmp #15
-	bcc phini2
+	bcc :-
 	lda #<toetxt
 	ldy #>toetxt
 	jsr outstr
-phini3	lda #21  ;col 21
+:	lda #21
 	sta COLUMN
 	jsr phnptr
 	jsr prtent
 	inc curpik
 	lda curpik
 	cmp #30
-	bcc phini3
+	bcc :-
 	lda #<stattx
 	ldy #>stattx
 	jsr outstr
@@ -241,11 +241,17 @@ phini3	lda #21  ;col 21
 	sta curpik
 	lda #<curbtx
 	ldy #>curbtx
-	jsr outstr
+	jsr outstr	; [XXX jmp]
 	rts
-phnroc	.byte SETCSR,0,0,0
-arrowt	.byte 32,93,93,32,60,125,109,62,32,32,0
-hilcur
+
+;----------------------------------------------------------------------
+phnroc:
+	.byte SETCSR,0,0,0
+arrowt:
+	.byte 32,93,93,32,60,125,109,62,32,32,0
+
+;----------------------------------------------------------------------
+hilcur:
 	ldx curpik
 	inx
 	txa
@@ -552,7 +558,7 @@ newena	lda inpbuf,x
 newenb
 	ldy #23
 	lda #$20
-dalun2p	sta 1996,y;$079f
+dalun2p	sta $0400+24*40+12,y
 	dey
 	bpl dalun2p
 newen7a
@@ -721,148 +727,178 @@ zeren2	sta (nlocat),y
 	dey
 	bpl zeren2
 	rts
-;
-tmpopt	.byte 00
-tmpmax	.byte 00
-tmptmp	.byte 00
-newsel
+
+;----------------------------------------------------------------------
+; [XXX this function and its data is unused!]
+tmpopt:
+	.byte 0
+tmpmax:
+	.byte 0
+	.byte 0
+newsel:
 	jsr getin
-	cmp #$2b;+
-	bne newsl2
+	cmp #'+'
+	bne @2
 	inc tmpopt
 	lda tmpopt
 	cmp tmpmax
-	bcc newsl1
+	bcc @1
 	lda #0
 	sta tmpmax
-newsl1	sec
+@1:	sec
 	rts
-newsl2	cmp #$2d
-	bne newsl3
+@2:	cmp #'-'
+	bne @3
 	dec tmpopt
-	bpl newsl1
+	bpl @1
 	ldx tmpmax
 	dex
 	stx tmpopt
 	sec
 	rts
-newsl3	cmp #CR
+@3:	cmp #CR
 	bne newsel
 	clc
 	rts
-;
-phbook
+
+;----------------------------------------------------------------------
+phonebook:
 	lda #CLR
 	jsr chrout
-	jsr phinit
-phloop
-	lda #$30
+	jsr phonebook_init
+
+phonebook_loop:
+	lda #'0'
 	sta trycnt
 	sta trycnt+1
 	lda hilcol
 	sta colbbs
 	jsr hilcur
 	jsr shocur
-phbget
+
+phbget:
 	jsr getin
 	cmp #0
 	beq phbget
+
 	cmp #CSR_LEFT
-	bne phb2
+	bne @2
+
+; LEFT
 	lda curpik
 	sbc #15
-	bcs phnupd
+	bcs set_current_entry
 	adc #30
-	jmp phnupd
-phb2	cmp #CSR_RIGHT
-	bne phb3
+	jmp set_current_entry
+@2:
+
+	cmp #CSR_RIGHT
+	bne @3
+
+; RIGHT
 	lda curpik
 	clc
 	adc #15
 	cmp #30
-	bcc phnupd
+	bcc set_current_entry
 	sbc #30
-	jmp phnupd
-phb3	cmp #CSR_UP
-	bne phb4
+	jmp set_current_entry
+@3:
+
+; UP
+	cmp #CSR_UP
+	bne @4
+
 	lda curpik
 	sbc #1
-	bcs phnupd
+	bcs set_current_entry
 	adc #30
-	jmp phnupd
-phb4	cmp #CSR_DOWN
+	jmp set_current_entry
+@4:
+
+	cmp #CSR_DOWN
 	bne phb5
+
+; DOWN
 	lda curpik
 	clc
 	adc #1
 	cmp #30
-	bcc phnupd
+	bcc set_current_entry
 	sbc #30
-phnupd
+set_current_entry:
 	pha
 	lda entcol
 	sta colbbs
 	jsr hilcur
 	pla
 	sta curpik
-	jmp phloop
-phb5
-	cmp #19
-	bne phb6
-phbhom	lda #0
-	beq phnupd
-phb6
+	jmp phonebook_loop
+
+phb5:
+	cmp #HOME
+	bne @6
+
+; HOME
+	lda #0
+	beq set_current_entry; always
+@6:
+
 	cmp #CLR
-	bne phb7
+	bne @7
+
+; CLR
 	jsr clrent
-	jsr phinit
-	jmp phloop
-phb7
+	jsr phonebook_init
+	jmp phonebook_loop
+@7:
+
 	and #$7f
-	cmp #'X'
-	bne phb8
-	jmp handle_f7_config
-phb8
+	cmp #'X'	; return to menu
+	jeq handle_f7_config
+
 	cmp #' '
-	beq phnsel
+	beq :+
 	cmp #CR
-	bne phb9
-phnsel	ldy #2
+	bne @9
+
+; select
+:	ldy #2
 	lda (nlocat),y
-	bne phntog
-phabrt	jmp phbget
-phntog
+	jeq phbget
 	ldy #0
 	lda (nlocat),y
 	eor #1
 	sta (nlocat),y
-	jmp phloop
-phb9	cmp #'R'
-	bne phb10
+	jmp phonebook_loop
+@9:
+
+	cmp #'R'
+	bne @10
+
+; reverse call
 	jsr xorall
-	jsr phinit
-	jmp phloop
-phb10
+	jsr phonebook_init
+	jmp phonebook_loop
+@10:
+
 	cmp #'E'
-	bne phb11
+	bne @11
+
+; edit current #
 	jsr newent
-	jmp phloop
-phb11
-	cmp #'C'
-	bne phb12
-	jmp dialts
-phb12
-	cmp #'A'
-	bne phb13
-	jmp dalsel
-phb13
-	cmp #'D'
-	bne phb14
-	jmp dalunl
-phb14
+	jmp phonebook_loop
+@11:
+
+	cmp #'C'	; call current #
+	jeq call_current
+	cmp #'A'	; dial selected
+	jeq dial_selected
+	cmp #'D'	; dial unlisted #
+	jeq dial_unlisted
 	jmp phbget
-;
-dialts
+
+call_current:
 	lda #DIALTYPE_CURRENT
 	sta dial_type
 	lda #<txt_call
@@ -907,16 +943,16 @@ dialc3;to be deleted - routine to use baud rate and c/g from phonebook entry
 	lda #0
 	sta unlisted
 	jmp dial
-;
-dalfin
+
+;----------------------------------------------------------------------
+dalfin:
 	lda #0
 	sta unlisted
 	lda connection_status
 	cmp #CONSTAT_CONNECT
-	bne dalf2    ;connected
+	bne @dalf2	; connected
 	lda #<txt_connect
 	ldy #>txt_connect
-dalnv
 	jsr prtstt
 	lda #$100-32
 	sta JIFFIES
@@ -924,44 +960,43 @@ dalnv
 	bne :-
 	lda #$0f
 	sta $d418
-;lda trycnt; this was just to be cute but not neccessary anymore
-;cmp #4
-;bcc dalfc1
-;jsr gong
-;jmp dalfc2
-dalfc1	jsr bell
-dalfc2
-dalterm
+;	lda trycnt	; this was just to be cute but not neccessary anymore
+;	cmp #4
+;	bcc @dalfc1
+;	jsr gong
+;	jmp @dalfc2
+;@dalfc1:
+	jsr bell
+;@dalfc2:
 	jmp term_entry
-dalf2
-	cmp #2		; aborted
-	bne dalf3
-	jmp dalfab
-dalf3
-	cmp #0
+@dalf2:
+
+	cmp #CONSTAT_USERABORT
+	jeq dalfab
+
+	cmp #CONSTAT_BUSY_NOCARRIER
 	bne dalf4
+
 	lda dial_type	; no connect
 	cmp #DIALTYPE_SELECTED
-	bcs dalslc
+	bcs :+
 	lda numbuf
 	cmp #CR
-	bne dalag
-	jmp hayes_userabort
-dalag
+	jeq hayes_userabort
 	jmp dial	; redial for curr/unl
-dalslc
-	lda #<stattx
+:	lda #<stattx
 	ldy #>stattx
 	jsr outstr
 	jmp dalsl0
-dalsel	;dial selected
+
+dial_selected:
 	lda #'0'
 	sta trycnt
 	sta trycnt+1
 	lda #<txt_dial_selected
 	ldy #>txt_dial_selected
 	jsr prtstt
-dalsl0
+dalsl0:
 	lda #DIALTYPE_SELECTED
 	sta dial_type
 	lda curpik
@@ -971,35 +1006,34 @@ dalsl0
 	jsr hilcur
 	lda trycnt+1
 	cmp #'0'
-	beq dalsl3
-dalsl1
-	inc curpik
+	beq @3
+@1:	inc curpik
 	lda curpik
 	cmp #30
-	bcc dalsl2
+	bcc :+
 	lda #0
 	sta curpik
-dalsl2
-	cmp tmppik
-	bne dalsl3
+:	cmp tmppik
+	bne @3
 	jmp hayes_userabort
-dalsl3
-	jsr phnptr
+@3:	jsr phnptr
 	ldy #0
 	lda (nlocat),y
-	beq dalsl1
+	beq @1
 	lda hilcol
 	sta colbbs
 	jsr hilcur
 	jsr shocur
 	jmp dialcr
 dalf4
+
 dalfab
 	lda #<stattx
 	ldy #>stattx
 	jsr outstr
-	jmp phloop
-;
+	jmp phonebook_loop
+
+;----------------------------------------------------------------------
 SET_PETSCII
 curunl
 	.byte CSR_UP,CR," "
@@ -1013,10 +1047,14 @@ tcol28f	.byte CYAN
 	.byte WHITE,0
 SET_ASCII
 
-unlisted
+;----------------------------------------------------------------------
+unlisted:
 	.byte 0
-unltemp	.byte 0
-dalunl
+unltemp:
+	.byte 0
+
+;----------------------------------------------------------------------
+dial_unlisted:
 	lda #DIALTYPE_UNLISTED
 	sta dial_type
 	lda entcol
@@ -1038,7 +1076,7 @@ dalun1
 	jsr outstr
 	ldy #80
 	lda #$20
-dalun2	sta 1951,y;$079f
+dalun2	sta $0400+23*40+7,y
 	dey
 	bpl dalun2
 	lda #7
@@ -1063,7 +1101,7 @@ dalun6
 dalun7
 	ldy #80
 	lda #$20
-dalun9	sta 1951,y;$079f
+dalun9	sta $0400+23*40+7,y
 	dey
 	bpl dalun9
 	lda #<curunl
@@ -1123,13 +1161,14 @@ txt_dialing:
 .endif
 SET_ASCII
 
+;----------------------------------------------------------------------
 numptr:
 	.byte 0
 
 ; 2-digit ASCII retry counter
 trycnt:
 	.byte 0,0
-	.byte 0
+	.byte 0	; terminator
 
 dial_type:
 	.byte 0
@@ -1219,7 +1258,7 @@ dial:
 	cmp #CR		; CR-terminated
 	bne @loop
 	jsr clrchn
-	jmp haybus
+	jmp parse_hayes_answer
 
 ;----------------------------------------------------------------------
 hayes_no_carrier:
@@ -1268,7 +1307,7 @@ hayes_userabort:
 	lda #$100-48
 	sta JIFFIES	; short delay
 :	lda JIFFIES
-	bne :-		; back to phbook
+	bne :-		; back to phonebook
 	lda #CONSTAT_USERABORT
 	sta connection_status
 	jmp dalfin
@@ -1281,7 +1320,7 @@ hayes_redial:
 	bne :-
 	lda #CONSTAT_BUSY_NOCARRIER
 	sta connection_status; set redial flag
-	jmp dalfin	; back to phbook
+	jmp dalfin	; back to phonebook
 
 ;----------------------------------------------------------------------
 ; send string to modem and wait a bit
@@ -1321,65 +1360,66 @@ SET_ASCII
 
 	.byte 0		; [XXX unused]
 
+;----------------------------------------------------------------------
 bustemp:
 	.byte 0
 
 ; [XXX this is all very verbose]
 ;----------------------------------------------------------------------
-haybus:
+parse_hayes_answer:
 	ldy #0
 	sty bustemp
 
 	jsr hmodget
 haybus3
-	jsr puthayes
+	jsr buffer_input
 	cpy #$ff
 	jeq hayout	; get out of routine. send data to terminal, and set connect!
 	jsr hmodget
-	cmp #'B'+$20
+	cmp #'b'
 	bne haynocarr	; move to check for no carrier
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
-	cmp #'U'+$20
+	cmp #'u'
 	bne haybus3
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
-	cmp #'S'+$20
+	cmp #'s'
 	bne haybus3
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
-	cmp #'Y'+$20
+	cmp #'y'
 	bne haybus3
 	ldy #0
 	sty bustemp
 	jmp hayes_busy
 ;
 haynocarr
-	cmp #'N'+$20
-	bne haybusand;move to next char
-	jsr puthayes
+	cmp #'n'
+	bne haybusand	; move to next char
+	jsr buffer_input
 	jsr hmodget
-	cmp #'O'+$20
+	cmp #'o'
 	bne haybus3
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
 	cmp #' '
 	bne haybus3
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
-	cmp #'C'+$20
+	cmp #'c'
 	jne haynoanswer
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
-	cmp #'A'+$20
+	cmp #'a'
 	bne haybus3
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
-	cmp #'R'+$20
+	cmp #'r'
 	bne haybus3
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
-	cmp #'R'+$20
+	cmp #'r'
 	bne haybus3
 	ldy #0
 	sty bustemp
@@ -1387,19 +1427,19 @@ haynocarr
 ;
 haybusand
 	cmp #'B'
-	bne haynocarrand;move to check for no carrier
-	jsr puthayes
+	bne haynocarrand; move to check for no carrier
+	jsr buffer_input
 	jsr hmodget
 	cmp #'U'
 	beq :+
 haybus3b:
 	jmp haybus3
 :
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
 	cmp #'S'
 	bne haybus3b
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
 	cmp #'Y'
 	bne haybus3b
@@ -1410,27 +1450,27 @@ haybus3b:
 haynocarrand
 	cmp #'N'
 	bne haybus3b
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
 	cmp #'O'
 	bne haybus3b
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
 	cmp #' '
 	bne haybus3b
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
 	cmp #'C'
 	bne haynoanswerand
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
 	cmp #'A'
 	bne haybus3b
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
 	cmp #'R'
 	bne haybus3b
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
 	cmp #'R'
 	bne haybus3b
@@ -1441,15 +1481,15 @@ haynocarrand
 haynoanswerand
 	cmp #'A'
 	bne haybus3b
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
 	cmp #'N'
 	bne haybus3b
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
 	cmp #'S'
 	bne haybus3b
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
 	cmp #'W'
 	beq :+
@@ -1461,19 +1501,19 @@ haybus3c
 	jmp hayes_no_carrier
 
 haynoanswer
-	cmp #'A'+$20
+	cmp #'a'
 	bne haybus3c
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
-	cmp #'N'+$20
+	cmp #'n'
 	bne haybus3c
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
-	cmp #'S'+$20
+	cmp #'s'
 	bne haybus3c
-	jsr puthayes
+	jsr buffer_input
 	jsr hmodget
-	cmp #'W'+$20
+	cmp #'w'
 	bne haybus3c
 	ldy #0
 	sty bustemp
@@ -1500,12 +1540,14 @@ hmodget:
 	rts
 
 ;----------------------------------------------------------------------
-puthayes:
+; buffer character so it can be printed once we're in terminal mode again
+buffer_input:
 	ldy bustemp
 	iny
 	sty bustemp
 	sta tempbuf,y
 	rts
 
+;----------------------------------------------------------------------
 waittemp:
 	.byte 0
