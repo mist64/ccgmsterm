@@ -1535,6 +1535,7 @@ hmodget:
 	beq :+
 	jsr modget
 	beq hmodget
+	bcs hmodget
 :	ldx #0
 	stx waittemp
 	rts
