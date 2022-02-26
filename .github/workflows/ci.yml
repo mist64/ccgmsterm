@@ -22,15 +22,13 @@ jobs:
 
     - name: build CCGMS
       run: |
-        make -j$(nproc)
-        c1541 -format ccgms,fu d64 ccgms.d64 -write build/ccgmsterm.prg
-        make clean
+        make -j$(nproc) EXOMIZER=1
+        cp build/disk.d64 ccgms.d64
 
     - name: build CCGMS (EASYFLASH version)
       run: |
-        make -j$(nproc) EASYFLASH=1
-        c1541 -format ccgms-easyflash,fu d64 ccgms-easyflash.d64 -write build/ccgmsterm.prg
-        make clean
+        make -j$(nproc) EASYFLASH=1 EXOMIZER=1
+        cp build/disk.d64 ccgms-exo.d64
 
     - uses: actions/upload-artifact@v2
       with:
