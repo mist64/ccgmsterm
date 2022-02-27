@@ -1,0 +1,3 @@
+[submodule "exomizer"]
+	path = exomizer
+	url = https://bitbucket.org/magli143/exomizer/
