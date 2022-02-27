@@ -18,29 +18,29 @@ jobs:
         submodules: true
 
     - name: install deps
-      run: sudo apt install vice cc65
+      run: sudo apt install cc65
 
     - name: build CCGMS
       run: |
         make -j$(nproc) EXOMIZER=1
-        cp build/disk.d64 ccgms.d64
+        cp build/ccgmsterm-exo.prg ccgms.prg
 
     - name: build CCGMS (EASYFLASH version)
       run: |
         make -j$(nproc) EASYFLASH=1 EXOMIZER=1
-        cp build/disk.d64 ccgms-exo.d64
+        cp build/ccgmsterm-exo.prg ccgms-ezflash.prg
 
     - uses: actions/upload-artifact@v2
       with:
         name: artifacts
         path: |
-          *.d64
+          *.prg
 
     - name: Create release                                                      
       if: startsWith(github.ref, 'refs/tags/')                                  
       uses: softprops/action-gh-release@v1                                      
       with:                                                                     
         files: |
-          *.d64
+          *.prg
         fail_on_unmatched_files: true
         body: "Automatically created release"                                                                            

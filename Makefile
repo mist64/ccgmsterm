@@ -2,17 +2,13 @@ export PATH:=$(abspath bin):$(PATH)
 EASYFLASH ?= 0
 EXOMIZER ?= 0
 
-ifeq ($(EXOMIZER),1)
-	EXO_PATH := build/bin/exomizer
-	EXO_ARGS := sfx sys -q -n -T4 -M256 -Di_perf=2
-else
-	EXO_PATH :=
-endif
+EXO_PATH := build/bin/exomizer
+EXO_ARGS := sfx sys -q -n -T4 -M256 -Di_perf=2
 
-ifeq ($(EASYFLASH),0)
-LABEL = ccgms
+ifeq ($(EXOMIZER),1)
+RUN_PRG = build/ccgmsterm-exo.prg
 else
-LABEL = ccgms-ezflash
+RUN_PRG = build/ccgmsterm.prg
 endif
 
 .PHONY: all
@@ -22,9 +18,6 @@ all: $(EXO_PATH)
 	cl65 -g -C src/ccgmsterm.cfg build/ccgmsterm.o -o build/ccgmsterm.prg -Ln build/ccgmsterm.sym -m build/ccgmsterm.map
 ifeq ($(EXOMIZER),1)
 	$(EXO_PATH) $(EXO_ARGS) -o build/ccgmsterm-exo.prg build/ccgmsterm.prg
-	c1541 -format $(LABEL),fu d64 build/disk.d64 -write build/ccgmsterm-exo.prg ccgms
-else
-	c1541 -format $(LABEL),fu d64 build/disk.d64 -write build/ccgmsterm.prg ccgms
 endif
 
 $(EXO_PATH):
@@ -35,7 +28,7 @@ $(EXO_PATH):
 
 .PHONY: run
 run: all
-	x64sc +cart -acia1 -acia1base 0xDE00 -acia1irq 1 -acia1mode 1 -myaciadev 0 -rsdev1 localhost:25232 -rsdev1baud 9600 build/disk.d64
+	x64sc -silent -autostartprgmode 1 +cart -acia1 -acia1base 0xDE00 -acia1irq 1 -acia1mode 1 -myaciadev 0 -rsdev1 localhost:25232 -rsdev1baud 9600 $(RUN_PRG)
 
 .PHONY: usb
 usb: all
