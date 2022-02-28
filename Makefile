@@ -28,7 +28,8 @@ $(EXO_PATH):
 
 .PHONY: run
 run: all
-	x64sc -silent -autostartprgmode 1 +cart -acia1 -acia1base 0xDE00 -acia1irq 1 -acia1mode 1 -myaciadev 0 -rsdev1 localhost:25232 -rsdev1baud 9600 $(RUN_PRG)
+	c1541 -format ccgms,fu d64 build/disk.d64
+	x64sc -silent -autostartprgmode 1 +cart -acia1 -acia1base 0xDE00 -acia1irq 1 -acia1mode 1 -myaciadev 0 -rsdev1 localhost:25232 -rsdev1baud 9600 -8 build/disk.d64 $(RUN_PRG)
 
 .PHONY: usb
 usb: all
