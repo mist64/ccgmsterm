@@ -8,8 +8,20 @@
 ;  Message-Id: <199711301621.RAA01078@dosbuster.home.dd>
 ;
 
-RTS_MIN	= 50	; enable Request To Send when buffer reaches this
-RTS_MAX	= 200	; disable Request To Send when buffer reaches this
+RTS_MIN	= 50	; buffer low mark, will enable Request To Send
+RTS_MAX	= 200	; buffer high mark, will disable Request To Send
+
+ICR_TA	= %00000001
+ICR_TB	= %00000010
+ICR_SP	= %00001000
+ICR_FLG	= %00010000
+ICR_IR	= %10000000
+
+CR_START= %00000001
+CR_PBON	= %00000010
+CR_LOAD	= %00010000
+CR_SPOUT= %01000000
+CR_TOD	= %10000000
 
 ;----------------------------------------------------------------------
 up9600_funcs:
@@ -22,49 +34,75 @@ up9600_funcs:
 
 ;----------------------------------------------------------------------
 up9600_nmi:
-	bit $dd0d	; check bit 7 (startbit ?)
+	bit cia2icr	; NMI caused by CIA#2?
 nmi_bmi=*+1
-	bmi nmi_startbit; IRQ caused by CIA
-	rti		; ignore if NMI was triggered by RESTORE-key
+	bmi nmi_startbit; yes (pointer to target will be overwritten!)
+	rti		; otherwise triggered by RESTORE key -> ignore
 
+; NMI triggered by start bit (FLAG transition from 1 to 0)
 nmi_startbit:
 	pha
-	lda #$13
-	sta $dd0f	; start timer B (forced reload, signal at PB7)
-	sta $dd0d	; disable timer and FLAG interrupts
-	lda #nmi_bytrdy-nmi_bmi-1; on next NMI call nmi_bytrdy
-	sta nmi_bmi	; (triggered by SDR full)
+
+	; load and start timer B (which is in continuous mode) and
+	; output a pulse to PB7 on every underflow
+	; (The UP9600 hardware wires the PB7 output to the CNT2 input,
+	; so timer B will clock the SDR!)
+	lda #CR_LOAD|CR_PBON|CR_START
+	sta cia2crb
+
+	; disable timer and FLAG NMIs, leave SDR NMI on
+	.assert ICR_FLG|ICR_TB|ICR_TA = CR_LOAD|CR_PBON|CR_START, error
+	sta cia2icr	; (one bitmask used for two purposes!)
+
+	; switch to other handler on next NMI (triggered by SDR full)
+	lda #nmi_bytrdy-nmi_bmi-1
+	sta nmi_bmi
+
 	pla
 	rti
 
+; NMI triggered by SDR full
 nmi_bytrdy:
 	pha
 	txa
 	pha
-	lda #$92
-	sta $dd0f	; stop timer B (keep signalling at PB7!)
-	sta $dd0d	; enable FLAG (and timer) interrupts
-	lda #nmi_startbit-nmi_bmi-1; on next NMI call nmi_startbit
-	sta nmi_bmi	; (triggered by a startbit)
-	lda $dd0c	; read SDR (bit0=databit7,...,bit7=databit0)
-	cmp #$80	; move bit7 into carry-flag
+
+	; set up CIA#2 to tigger NMI on next start bit
+	lda #CR_TOD|CR_LOAD|CR_PBON
+	sta cia2crb	; stop timer B, signal at PB7
+	.assert ICR_IR|ICR_FLG|ICR_TB = CR_TOD|CR_LOAD|CR_PBON, error
+			; (use one bitmask for two purposes)
+	sta cia2icr	; enable FLAG interrupt (and unused timer B)
+
+	; switch to other handler on next NMI (triggered by start bit)
+	lda #nmi_startbit-nmi_bmi-1
+	sta nmi_bmi
+
+	; read data byte and reverse bit order
+	lda cia2sdr	; read data byte from SDR (bit order is reversed)
+	cmp #$80	; move bit 7 into C
 	and #$7f
 	tax
-	lda revtabup,x	; read databits 1-7 from lookup table
-	adc #0		; add databit0
-	ldx rtail	; and write it into the receive buffer
+	lda revtabup,x	; reverse bits 1-7 using lookup table
+	adc #0		; move original bit 7 into bit 0
+
+	; write data byte into receive buffer
+	ldx rtail
 	sta ribuf,x
 	inx
 	stx rtail
+
+	; disable Request To Send (RTS) if buffer almost full
 	sec
 	txa
 	sbc rhead
 	cmp #RTS_MAX
 	bcc :+
-	lda $dd01	; more than RTS_MAX bytes in the receive buffer
-	and #$fd	; then disbale RTS
-	sta $dd01
-:	pla
+	lda cia2pb
+	and #<~2	; disable Request To Send (RTS)
+	sta cia2pb
+:
+	pla
 	tax
 	pla
 	rti
@@ -73,96 +111,117 @@ nmi_bytrdy:
 up9600_setup:
 ; generate lookup table
 	ldx #0
-@1:	stx outstat	; outstat used as temporary variable
+@1:	stx outstat	; (reuse outstat as temp)
 	ldy #8
-:	asl outstat
-	ror a
+@2:	asl outstat
+	ror
 	dey
-	bne :-
+	bne @2
 	sta revtabup,x
 	inx
 	bpl @1
 
 	jsr clear232
 
-	jsr setbaudup
+	jsr up9600_setbaud
+; run into up9600_enable
 
 ;----------------------------------------------------------------------
 ; enable serial interface (IRQ+NMI)
 up9600_enable:
 	sei
 
-	ldx #<new_irq	; install new IRQ-handler
+	ldx #<new_irq	; install new IRQ handler
 	ldy #>new_irq
 	stx $0314
 	sty $0315
 
 	lda #nmi_startbit-nmi_bmi-1
 	sta nmi_bmi
-	ldx #<up9600_nmi; install new NMI-handler
+	ldx #<up9600_nmi; install new NMI handler
 	ldy #>up9600_nmi
 	stx $0318
 	sty $0319
 
-	ldx is_pal_system; PAL or NTSC version ?
-	lda ilotab,x	; (keyscan interrupt once every 1/64 second)
-	sta $dc06	; (sorry this will break code, that uses
-	lda ihitab,x	; the ti$ - variable)
-	sta $dc07	; start value for timer B (of CIA1)
+	; move KERNAL's 60 Hz timer interrupt to timer B
+	ldx is_pal_system
+	lda ilotab,x
+	sta cia1tblo
+	lda ihitab,x
+	sta cia1tbhi
 
+	; set CIA#1 timer A start value: 1/(2*baudrate)
 	lda rcvtim
-	sta $dc04	; start value for timerA (of CIA1)
+	sta cia1talo
 	lda rcvtim+1
-	sta $dc05	; (time is around 1/(2*baudrate) )
+	sta cia1tahi
 
+	; set CIA#2 timer B start value: 1/baudrate
 	lda sndtim
-	sta $dd06	; start value for timerB (of CIA2)
+	sta cia2tblo
 	lda sndtim+1
-	sta $dd07	; (time is around 1/baudrate )
+	sta cia2tbhi
 
-	lda #$41	; start timerA of CIA1, SP1 used as output
-	sta $dc0e	; generates the sender's bit clock
+	; start timer A of CIA#1, SP1 used as output
+	; generates the sender's bit clock
+	lda #CR_SPOUT|CR_START
+	sta cia1cra
+
 	lda #1
 	sta outstat
-	sta $dc0d	; disable timerA (CIA1) interrupt
-	sta $dc0f	; start timerB of CIA1 (generates keyscan IRQ)
-	lda #$92	; stop timerB of CIA2 (enable signal at PB7)
-	sta $dd0f
-	lda #$98
-	bit $dd0d	; clear pending NMIs
-	sta $dd0d	; enable NMI (SDR and FLAG) (CIA2)
-	lda #$8a
-	sta $dc0d	; enable IRQ (timerB and SDR) (CIA1)
-	lda #$ff
-	sta $dd01	; PB0-7 default to 1
-	sta $dc0c	; SP1 defaults to 1
-	lda #2		; enable RTS
-	sta $dd03	; (the RTS line is the only output)
+
+	.assert ICR_TA = 1, error
+	sta cia1icr	; disable timer A (CIA#1) interrupt
+
+	.assert CR_START = 1, error
+	sta cia1crb	; start timer B of CIA#1 (generates keyscan IRQ)
+
+	lda #CR_TOD|CR_LOAD|CR_PBON; stop timer B of CIA#2 (enable signal at PB7)
+	sta cia2crb
+
+	; CIA#2: enable FLAG (start bit) and SDR (byte received) NMIs
+	lda #ICR_IR|ICR_FLG|ICR_SP
+	bit cia2icr	; clear pending NMIs
+	sta cia2icr
+
+	; CIA#1: enable timer B (60 Hz) and SDR (8 bits sent) IRQs
+	lda #%10001010
+	sta cia1icr
+
+	lda #%11111111
+	sta cia2pb	; PB0-7 default to 1
+	sta cia1sdr	; SP1 defaults to 1
+
+	lda #2		; enable Request To Send (RTS)
+	sta cia2ddrb	; (the RTS line is the only output)
+
 	cli
 	rts
 
 ;----------------------------------------------------------------------
 ; new IRQ handler
 new_irq:
-	lda $dc0d	; read IRQ-mask
+	lda cia1icr	; read IRQ mask
 	lsr
-	lsr		; move bit 1 into carry-flag (timer B)
+	lsr		; move bit 1 into C (timer B)
 	and #2		; test bit 3 (SDR)
 	beq @nsdr	; no
-; SDR
+
+; SDR IRQ: count down expected SDR IRQ counter
 	ldx outstat
 	beq :+		; skip, if we're not waiting for an empty SDR
 	dex
 	stx outstat
 :
 
-	bcc @notim	; skip if there was no timer-B-underflow
+	bcc @notim	; skip if there was no timer B underflow
 
-@nsdr:	cli		; [XXX label should be at bcc OR bcc should be removed]
+@nsdr:	cli		; [XXX allow nested IRQs???]
+			; [XXX label should be at bcc OR bcc should be removed]
 			; [XXX there is no other source set up, so the bcc]
 			; [XXX would never be taken anyway]
 	jsr $ffea	; update jiffy clock
-	jsr $ea87	; (jmp) - scan keyboard
+	jsr $ea87	; scan keyboard
 
 @notim:	jmp $ea81
 
@@ -182,7 +241,8 @@ MIN_BAUD	= 300
 TIMER_PAL	= CLOCK_PAL / MIN_BAUD
 TIMER_NTSC	= CLOCK_NTSC / MIN_BAUD
 
-setbaudup:
+up9600_setbaud:
+; [XXX technically, the timer values need to be 1 less]
 	lda #<TIMER_NTSC	; NTSC
 	ldx #>TIMER_NTSC
 	ldy is_pal_system
@@ -218,78 +278,100 @@ up9600_getxfer:
 	lda ribuf,x
 	inx
 	stx rhead
+
+	; if buffer is running low, enable Request To Send (RTS)
 	pha
 	txa
 	sec
 	sbc rtail
 	cmp #RTS_MIN
 	bcc :+
-	lda #2		; enable RTS if there are less than RTS_MIN bytes
-	ora $dd01	; in the receive buffer
-	sta $dd01
+	lda #2
+	ora cia2pb
+	sta cia2pb
 :  	clc
 	pla
+
 @skip:	rts
 
 ;----------------------------------------------------------------------
 up9600_putxfer:
 	sta rsotm
 	stx rsotx
-	sty rsoty
-	pha
-	cmp #$80	; move bit7 into carry-flag
-	and #$7f	; get bits 1-7 from lookup table
-	tax
+	sty rsoty	; [XXX unchanged]
+	pha		; [XXX]
+
+	; reverse bit order (part 1)
+	cmp #$80	; move bit 7 into C
+	and #$7f
+	tax		; (continue later...)
+
+	; wait for previous transmission to finish (with timeout)
 	cli
-	lda #$100-3
+	lda #$100-3	; 50 ms timeout
 	sta JIFFIES
 :	lda outstat
 	beq :+
 	bit JIFFIES
 	bmi :-
-:	lda #$04
-	ora $dd00
-	sta $dd00
-:	lda $dd01	; check DTR/CTS line from RS232 interface
-	and #$44
-	eor #$04
-	beq :-
-	lda revtabup,x
+:
+
+	; set TXD to 1 (stop bit)
+	lda #%00000100
+	ora cia2pa
+	sta cia2pa
+
+	; check Data Terminal Ready (DTR) and Clear To Send (CTS)
+:	lda cia2pb
+	and #%01000100	; CTS and DTR
+	eor #%00000100
+	beq :-		; loop while CTR=0 and DTR=1
+
+	; reverse bit order (part 2)
+	lda revtabup,x	; reverse bits 1-7 using lookup table
 	adc #0		; add bit0
-	lsr
-	sta $dc0c	; send startbit (=0) and the first 7 databits
-	lda #2		; (2 IRQs per byte sent)
+
+	; send first byte
+	lsr		; start bit (0) into MSB, 7 data bits
+	sta cia1sdr	; send through SDR
+
+	lda #2		; expect 2 SDR IRQs per data byte sent
 	sta outstat
-	ror
-	ora #$7f	; then send databit7 and 7 stopbits (=1)
-	sta $dc0c	; (and wait for 2 SDR-empty IRQs or a timeout
-	clc		; before sending the next databyte)
+
+	; send second byte
+	ror		; bit 0 into MSB
+	ora #$7f	; fill with 7 stop bits (1)
+	sta cia1sdr	; send through SDR
+
+	clc
 	lda rsotm
 	ldx rsotx
-	ldy rsoty
-	pla
+	ldy rsoty	; [XXX unchanged]
+	pla		; [XXX]
 	rts
 
 ;----------------------------------------------------------------------
 ; disable serial interface
 up9600_disable:
 	sei
-	lda #$7f
-	sta $dd0d	; disable all CIA interrupts
-	sta $dc0d
+	lda #%01111111
+	sta cia2icr	; disable all CIA#2 NMIs
+	sta cia1icr	; disable all CIA#1 IRQs
 	lda #$41	; quick (and dirty) hack to switch back
-	sta $dc05	; to the default CIA1 configuration
-	lda #$81
-	sta $dc0d	; enable timer1 (this is default)
+	sta cia1tahi	; to the default CIA#1 configuration [XXX use real numbers]
+	lda #ICR_IR|ICR_TA
+	sta cia1icr	; enable timer A (this is default)
 
-	lda #<oldnmi	; restore old NMI-handler
+	; restore original NMI handler
+	lda #<oldnmi
 	sta $0318
 	lda #>oldnmi
 	sta $0319
+	; restore original IRQ handler
 	lda #<oldirq
-	sta $0314	; irq
+	sta $0314
 	lda #>oldirq
-	sta $0315	; irq
+	sta $0315
 	cli
 	rts
 
@@ -300,7 +382,7 @@ up9600_dropdtr:
 	sta cia2ddrb
 	lda #%00000010
 	sta cia2pb
-	ldx #$100-30
+	ldx #$100-30	; 1/2 sec
 	stx JIFFIES
 :	bit JIFFIES
 	bmi :-

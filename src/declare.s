@@ -6,10 +6,24 @@
 ; Global constants
 ;
 
-; CIA#2 I/O (user port RS232)
+; CIA#1 I/O
+cia1talo	= $dc04
+cia1tahi	= $dc05
+cia1tblo	= $dc06
+cia1tbhi	= $dc07
+cia1sdr         = $dc0c
+cia1icr         = $dc0d
+cia1cra         = $dc0e
+cia1crb         = $dc0f
+; CIA#2 I/O
+cia2pa		= $dd00
 cia2pb		= $dd01
 cia2ddrb	= $dd03
-
+cia2tblo	= $dd06
+cia2tbhi	= $dd07
+cia2sdr         = $dd0c
+cia2icr         = $dd0d
+cia2crb         = $dd0f
 
 numfil	= $98
 locat	= $fb
