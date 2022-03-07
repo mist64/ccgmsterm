@@ -26,9 +26,22 @@ $(EXO_PATH):
 	$(MAKE) -C exomizer/src CFLAGS="-Wall -Wstrict-prototypes -pedantic -O3"
 	cp exomizer/src/exomizer build/bin
 
-.PHONY: run
-run: all
+build/disk.d64:
 	c1541 -format ccgms,fu d64 build/disk.d64
+
+# run with User Port interface
+.PHONY: runup
+runup: all build/disk.d64
+	x64sc -silent -autostartprgmode 1 +cart +rsuserup9600 -userportdevice 2 -rsuserdev 0 -rsuserbaud 2400 -rsdev1 localhost:25232 -rsdev1baud 2400 -8 build/disk.d64 build/ccgmsterm.prg
+
+# run with UP9600 interface
+.PHONY: runup9600
+runup9600: all build/disk.d64
+	x64sc -silent -autostartprgmode 1 +cart -rsuserup9600 -userportdevice 2 -rsuserdev 0 -rsuserbaud 9600 -rsdev1 localhost:25232 -rsdev1baud 9600 -8 build/disk.d64 build/ccgmsterm.prg
+
+# run with SwiftLink/DE interface
+.PHONY: runsw
+runsw: all build/disk.d64
 	x64sc -silent -autostartprgmode 1 +cart -acia1 -acia1base 0xDE00 -acia1irq 1 -acia1mode 1 -myaciadev 0 -rsdev1 localhost:25232 -rsdev1baud 9600 -8 build/disk.d64 $(RUN_PRG)
 
 .PHONY: usb
