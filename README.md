@@ -70,6 +70,22 @@ The EasyFlash version gives you the option of loading/saving the phonebook to ca
 
 In either case, the resulting file will be `build/ccgmsterm.prg`.
 
+## Running in VICE
+
+To run CCGMS in x64sc with SwiftLink at $DE00:
+
+	make runsw
+
+x64sc with User Port:
+
+	make runup
+
+x64sc VICE with UP9600 ([receiving OK but sending broken as of VICE 3.6.2](https://sourceforge.net/p/vice-emu/bugs/1219/)):
+
+	make runup9600
+
+The x64sc command line has changed recently, so these need at least VICE 3.6.
+
 ## Changelog
 
 ### 2022-02-25: Future 0.1
