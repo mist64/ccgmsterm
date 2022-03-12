@@ -7,7 +7,7 @@
 ;
 
 ; PAL/NTSC detection
-start
+start:
 @1:	lda $d012
 @2:	cmp $d012
 	beq @2

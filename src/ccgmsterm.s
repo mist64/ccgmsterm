@@ -15,33 +15,21 @@
 	.include "declare.s"
 	.include "encoding.s"
 
-.segment "S07FF"
+.segment "HEADER"
+	.word $0801	; PRG load address
 
-	.word $0801
+.segment "CODE"
 
-.segment "S0801"
-
-	.word entry
-	.word 10
-	.byte $9e,"4096"
+	.word next_line
+easyflash_support:	; encode EasyFlash support into the BASIC line number
+	.word EASYFLASH	; 0 SYS2061 -> no EasyFlash; 1 SYS2061 -> EasyFlash
+	.byte $9e,"2061"
 	.word 0
+next_line:
 	.byte 0
 
-entry:
-	jmp start
-
-.segment "S0812"
-
-	.include "punter.s"
-	.include "misc2.s"
-
-easyflash_support:
-	.byte EASYFLASH
-
-;about 40 bytes still free here to play with before $1000
-
-.segment "S1000"
-
+.assert * = 2061, error
+.assert * = start, error
 	.include "init.s"
 	.include "terminal.s"
 	.include "sound.s"
@@ -72,14 +60,11 @@ easyflash_support:
 	.include "rs232.s"
 	.include "reu.s"
 	.include "theme.s"
-
-.segment "S5100"
-
 	.include "config.s"
-
-.segment "S5C00"
-
 	.include "easyflash.s"
 	.include "instr.s"
+	.include "punter.s"
+	.include "misc2.s"
 
-endprg	.byte 0
+.segment "END"	; empty segment guaranteed by .cfg to be at the end
+endprg:

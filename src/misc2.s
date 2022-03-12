@@ -93,7 +93,7 @@ config_file_loaded:
 prev_char:
 	.byte 0
 
-newbuf	.byte <endprg,>endprg
+newbuf	.word endprg
 
 ; System Timing
 ;  0: NTSC
