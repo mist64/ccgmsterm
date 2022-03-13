@@ -159,9 +159,9 @@ plain_char:
 	lda #UNDERLINE	; [XXX remove]
 	bne ansi_return
 @0:	and #$7f
-	cmp #$7c
+	cmp #'z'+1
 	bcs ansi_return
-	cmp #$60
+	cmp #'a'
 	bcc @1
 	sbc #' '
 	bne ansi_return
@@ -206,21 +206,21 @@ petscii_to_ascii:
 	bne @1		; [XXX no-op]
 	lda #UNDERLINE	; [XXX no-op]
 @1:	cmp #'A'
-	bcc ansi_return  ;if<then no conv
+	bcc ansi_return	; if < then no conv
 	cmp #'Z'+1
 	bcs @2
-	adc #' '    ;lower a...z..._
+	adc #' '	; lower a...z..._
 	bne @exit
 
 @2:	cmp #' '+$80
 	bne @3
-	lda #' '    ;shift to space
+	lda #' '	; shift to space
 	bne @exit
 
 @3:	and #$7f
-	cmp #$41
+	cmp #'A'
 	bcc ansi_return_0b
-	cmp #$60    ;upper a...z
+	cmp #'a'	; upper a...z
 	bcs ansi_return_0b
 @exit:	cmp #0
 	rts
