@@ -32,24 +32,14 @@ print_instr:
 
 	ldx ascii_mode
 	bne @2
-	lda theme
-	bne @1
 	lda #<txt_graphics
 	ldy #>txt_graphics
-	bne @3
-@1:	lda #<txt_graphics2
-	ldy #>txt_graphics2
 	bne @3
 @2:	lda #<txt_ascii
 	ldy #>txt_ascii
 @3:	jsr outstr
-	lda theme
-	bne @4
 	lda #<txt_terminal_ready
 	ldy #>txt_terminal_ready
-	jmp outstr
-@4:	lda #<txt_term_activated
-	ldy #>txt_term_activated
 	jmp outstr
 
 ;----------------------------------------------------------------------

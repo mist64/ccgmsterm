@@ -30,15 +30,11 @@ txt_good_bad_blocks:
 	.byte LTGREEN," ","Good Blocks: ",WHITE,"000",WHITE,"   -   "
 	.byte LTGREEN,"Bad Blocks: ",WHITE,"000",CR,0
 txt_graphics:
-	.byte LTGREEN,"Graphics",0
-txt_graphics2:
-	.byte RVSON,BLUE,"C",LTBLUE,"/",CYAN,"G",RVSOFF,YELLOW,0
+	.byte LTGREEN,"PETSCII",0
 txt_ascii:
-	.byte CYAN,"Anscii",0
+	.byte CYAN,"ASCII",0
 txt_terminal_ready:
-	.byte " Terminal Ready.",LTGRAY,CR,CR,0
-txt_term_activated:
-	.byte " Term Activated.",LTGRAY,CR,CR,0
+	.byte " Mode Ready.",LTGRAY,CR,CR,0
 txt_disconnecting:
 	.byte CR,CR,WHITE,"Disconnecting...",LTGRAY,CR,CR,0
 SET_ASCII
