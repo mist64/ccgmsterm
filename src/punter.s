@@ -108,6 +108,7 @@ CODE_S_B = * - codes
 	.byte "S/B"
 CODE_SYN = * - codes
 	.byte "SYN"
+CODE_XXX = * - codes
 
 MASK_GOO = 1 << 0
 MASK_BAD = 1 << 1
@@ -118,80 +119,99 @@ MASK_SYN = 1 << 4
 ;----------------------------------------------------------------------
 ; read and check code from modem
 accept:
-	sta bitpat	; save required bit pattern
+	; save required bit pattern
+	sta bitpat
+	; clear 3 char window
 	lda #0
 	sta codebuf
 	sta codebuf+1
 	sta codebuf+2
-cd1:	lda #0
-	sta timer1	; clear timer
+
+accept_loop:
+	; clear timer
+	lda #0
+	sta timer1
 	sta timer1+1
-cd2:	jsr exit
-	jsr getnum	; get character from modem
+
+@loop1:	; get char from modem
+	jsr check_abort
+	jsr pmodget
 	lda stat
-	bne cd3		; if no chr, do timer check
+	bne @nodata	; nothing received
+
+	; shift 3 char window, add new char
 	lda codebuf+1
 	sta codebuf
 	lda codebuf+2
 	sta codebuf+1
 	lda lastch
 	sta codebuf+2
+
 	lda #0
 	sta bitcnt	; clear bit counter
 	lda #1
 	sta bitpnt	; initialize bit pointer
-cd4:	lda bitpat	; look at bit pattern
-	bit bitpnt	; is bit set
-	beq cd5		; no, don't check this code word
+
+@loop2:	; check this code word?
+	lda bitpat
+	bit bitpnt
+	beq @skip	; no
+
+	; compare code word
 	ldy bitcnt
 	ldx #0
-cd6:	lda codebuf,x
+:	lda codebuf,x
 	cmp codes,y
-	bne cd5
+	bne @skip
 	iny
 	inx
 	cpx #3
-	bne cd6
-	jmp cd7
+	bne :-
+	jmp @match
 
-cd5:	asl bitpnt	; shift bit pointer
+@skip:	; next code word
+	asl bitpnt	; next mask
 	lda bitcnt
 	clc
 	adc #3
-	sta bitcnt
-	cmp #15
-	bne cd4
-	jmp check_cancel
+	sta bitcnt	; next code word ptr
+	cmp #CODE_XXX
+	bne @loop2
+	jmp check_cancel; loop to accept_loop unless cancelled
 
-cd7:	lda #255
+@match:	lda #$FF	; set timer to -1
 	sta timer1
 	sta timer1+1
-	jmp cd2
+	jmp @loop1	; next char
 
-cd3:	inc timer1
+@nodata:
+	inc timer1
 	bne :+
 	inc timer1+1
 :	lda timer1+1
 	ora timer1
-	beq cd8
-	lda timer1
-	cmp #$07
+	beq @end	; timer reached 0 -> match found
+
+	lda timer1	; [XXX does nothing]
+	cmp #7		; [XXX does nothing]
+
 	lda timer1+1
-	cmp #20
-	jcc cd2
-	lda #1
+	cmp #20		; 20*256 = 5120 iterations yet?
+	jcc @loop1	; no, next char
+
+	lda #1		; timeout
 	sta stat
 	jmp dodelay
 
-cd8:	lda #0
-	sta stat
+@end:	lda #0
+	sta stat	; OK
 	rts
 
 	nop		; [XXX unused]
 
 ;----------------------------------------------------------------------
 ; get character from modem
-getnum:
+pmodget:
 	tya
 	pha
 	jsr modget
@@ -233,23 +253,23 @@ sendcode:
 ;----------------------------------------------------------------------
 ; receive one block
 receive_block:
-	sta gbsave    ;save good or bad signal as needed
-	jsr puntdelay;modded this;modded this. handshaking delay
-	lda #0;delay 0 on 1 off. originally was off
+	sta gbsave	; save good or bad signal as needed
+	jsr puntdelay	; ["modded this. handshaking delay"]
+	lda #0		; delay 0 on 1 off. [originally was off]
 	sta delay
 rc1	lda #$02
 	sta pnta
 	ldy gbsave
-	jsr sendcode ;send g/b signal
+	jsr sendcode	; send g/b signal
 rc9	lda #MASK_ACK
 	jsr accept
 	lda stat
-	beq rc2   ;if ok, send g/b signal again
+	beq rc2		; if ok, send g/b signal again
 	dec pnta
 	bne rc9
 	jmp rc1
 
-rc2	jsr puntdelay;modded this;modded this. handshaking delay
+rc2	jsr puntdelay	; ["modded this. handshaking delay"]
 	ldy #CODE_S_B
 	jsr sendcode
 	lda endflag
@@ -259,22 +279,22 @@ rc2	jsr puntdelay;modded this;modded this. handshaking delay
 rc5	lda buffer+POS_BLKSIZE
 	sta bufcount
 	sta recsize
-	jsr recmodem ;wait for block
+	jsr recmodem	; wait for block
 	lda stat
-	cmp #%0001 ;check for good block
+	cmp #%0001	; check for good block
 	beq rc4
-	cmp #%0010 ;check for blank input
+	cmp #%0010	; check for blank input
 	beq rc2
-	cmp #%0100 ;check for loss of signal
+	cmp #%0100	; check for loss of signal
 	beq rc4
-	cmp #%1000 ;check for "ack" signal
+	cmp #%1000	; check for "ack" signal
 	beq rc2
 rc4	rts
 
 rc6	lda #MASK_SYN
 	jsr accept
 	lda stat
-	bne rc2   ;if not, send "s/b" again
+	bne rc2		; if not, send "s/b" again
 	lda #10
 	sta bufcount
 rc8	ldy #CODE_SYN
@@ -434,8 +454,8 @@ recmodem:
 rcm5	lda #0		; clear timers
 	sta timer1
 	sta timer1+1
-rcm1	jsr exit
-	jsr getnum	; get a chr from the modem
+rcm1	jsr check_abort
+	jsr pmodget
 	lda stat
 	bne rcm2	; no character received
 	lda lastch
@@ -875,7 +895,8 @@ reset:
 terminal:
 	rts
 
-;----------------------------------------------------------------------
+; [XXX patch; should be inline]
+;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 ; cancel transmission if we encounter 3 CRs in a row
 check_cancel:
 	ldx #0
@@ -886,11 +907,12 @@ check_cancel:
 	cpx #3
 	bcc :-
 	jmp punter_cancel
-:	jmp cd1
+:	jmp accept_loop
+;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 ;----------------------------------------------------------------------
 ; check for commodore key
-exit:
+check_abort:
 	lda SHFLAG	; is commodore
 	cmp #SHFLAG_CBM	; key down
 	bne @1
