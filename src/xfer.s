@@ -277,10 +277,10 @@ uplok:
 :	; PUNTER
 	jsr clear232
 	jsr punter_reset
-	jsr p49164
+	jsr punter_trantype; transmit file type header
 	lda inpbuf
 	cmp #1
-	bne :+
+	bne :+		; not user cancelled
 	jsr bell
 	jmp ui_abort
 
@@ -288,7 +288,7 @@ uplok:
 	jsr punter_reset
 	lda #$ff
 	sta maxsize
-	jsr p49158
+	jsr punter_transmit; transmit file contents
 xfrend:
 	jsr disablexfer
 	lda #LFN_FILE
@@ -335,7 +335,7 @@ dowmen:
 	pha
 	jsr clrchn
 	jsr punter_reset; enable rs232 to receive;reset
-	jsr p49161	; zero out punter buffers for new download and get file info from sender
+	jsr punter_rectype; zero out punter buffers for new download and get file info from sender
 	ldx inpbuf
 	pla
 	sta inpbuf
@@ -423,7 +423,7 @@ dowopn:
 	jmp xmodem_download; pick punter or xmodem here to really start downloading
 
 :	jsr punter_reset; reset
-	jsr p49155	; get data
+	jsr punter_receive; get data
 	jsr clear232
 	jmp xfrend	; close file
 
