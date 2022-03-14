@@ -53,6 +53,10 @@
 ## Changes since CCGMS Future 0.1
 
 * rewrote RS232 driver model – this may cause regressions; needs testing, especially PUNTER and Multi-PUNTER
+* cleaned up memory layout
+* changed "Graphics", "C/G", "Anscii" wording to (imho) clearer "PETSCII" and "ASCII"
+* changed "Author's Message" to (imho) clearer "Instructions"
+* fixed ASCII<->PETSCII conversion of codes 0x60 and 0x7B (was caused by off-by-one errors)
 
 ## Build
 
