@@ -18,7 +18,7 @@ pnt11	= $028d
 startloc	= $c000
 c64	= 1
 pnta	= $62
-pntb	= $64
+bufptr	= $64
 stat	= $96
 
 ;codebuf	             	; buffer for incoming 3 chr codes
@@ -33,7 +33,7 @@ skpdelay	= codebuf+$0c	; delay skip counter
 endflag		= codebuf+$0d	; flag to indicate last block
 check		= codebuf+$0e	; save place for checksum (4)
 check1		= codebuf+$12	; secondary checksum holding place (4)
-bufpnt		= codebuf+$16	; pointer to current buffer
+bufidx		= codebuf+$16	; index of current buffer (0 or 1)
 recsize		= codebuf+$17	; size of received buffer
 maxsize		= codebuf+$18	; maximum block size
 blocknum	= codebuf+$19	; block number (2)
@@ -44,30 +44,39 @@ specmode	= codebuf+$1e	; flag to send special start code
 buffer		= $0400      	; buffer for block
 
 ;
-;buffer positions
+; header offsets
 ;
-sizepos	= 4
-numpos	= 5
-datapos	= 7
+; checksums	= 0-3
+POS_BLKSIZE	= 4
+POS_BLKNUM	= 5 ; & 6
+POS_PAYLOAD	= 7
 
-punter	; source code $0812
-;referenced by old $c000 addresses
-p49152	lda #00   ;sys 49152
+; [XXX get rid of jump table nonsense]
+punter_accept:		; [XXX unused]
+	lda #00
 	.byte $2c
-p49155	lda #03   ;sys 49155
+punter_receive:
+	lda #03
 	.byte $2c
-p49158	lda #06   ;sys 49158
+punter_transmit:
+	lda #06
 	.byte $2c
-p49161	lda #09   ;sys 49161
+punter_rectype:
+	lda #09
 	.byte $2c
-p49164	lda #12   ;sys 49164
+punter_trantype:
+	lda #12
 	.byte $2c
-p49167	lda #15   ;sys 49167
+punter_terminal:	; [XXX unused]
+	lda #15
 	nop
 	jmp over
-punter_reset	jmp reset
-;
-over	sta pnta
+
+punter_reset:
+	jmp reset	; [XXX remove indirection]
+
+over:
+	sta pnta
 	tsx
 	stx stack
 	lda #<table
@@ -77,35 +86,50 @@ over	sta pnta
 	lda #>table
 	adc #0
 	sta jmppoint+2
-jmppoint	jmp table
-;
-table	jmp accept
+jmppoint:
+	jmp table
+
+table	jmp accept	; [XXX unused]
 	jmp receive
 	jmp transmit
 	jmp rectype
 	jmp trantype
-	jmp terminal
-;
-codes	.byte "GOO"
+	jmp terminal	; [XXX unused]
+
+;----------------------------------------------------------------------
+codes:
+CODE_GOO = * - codes
+	.byte "GOO"
+CODE_BAD = * - codes
 	.byte "BAD"
+CODE_ACK = * - codes
 	.byte "ACK"
+CODE_S_B = * - codes
 	.byte "S/B"
+CODE_SYN = * - codes
 	.byte "SYN"
-;
-;accept characters and check for codes
-;
-accept	sta bitpat    ;save required bit pattern
+
+MASK_GOO = 1 << 0
+MASK_BAD = 1 << 1
+MASK_ACK = 1 << 2
+MASK_S_B = 1 << 3
+MASK_SYN = 1 << 4
+
+;----------------------------------------------------------------------
+; read and check code from modem
+accept:
+	sta bitpat	; save required bit pattern
 	lda #0
 	sta codebuf
 	sta codebuf+1
 	sta codebuf+2
-cd1	lda #0
-	sta timer1 ;clear timer
+cd1:	lda #0
+	sta timer1	; clear timer
 	sta timer1+1
-cd2	jsr exit
-	jsr getnum ;get#5,a$
+cd2:	jsr exit
+	jsr getnum	; get character from modem
 	lda stat
-	bne cd3   ;if no chr, do timer check
+	bne cd3		; if no chr, do timer check
 	lda codebuf+1
 	sta codebuf
 	lda codebuf+2
@@ -113,41 +137,41 @@ cd2	jsr exit
 	lda lastch
 	sta codebuf+2
 	lda #0
-	sta bitcnt ;clear bit counter
+	sta bitcnt	; clear bit counter
 	lda #1
-	sta bitpnt ;initialize bit pointer
-cd4	lda bitpat    ;look at bit pattern
-	bit bitpnt ;is bit set
-	beq cd5   ;no, don't check this code word
+	sta bitpnt	; initialize bit pointer
+cd4:	lda bitpat	; look at bit pattern
+	bit bitpnt	; is bit set
+	beq cd5		; no, don't check this code word
 	ldy bitcnt
 	ldx #0
-cd6	lda codebuf,x
+cd6:	lda codebuf,x
 	cmp codes,y
 	bne cd5
 	iny
 	inx
-	cpx #$03
+	cpx #3
 	bne cd6
 	jmp cd7
-;
-cd5	asl bitpnt    ;shift bit pointer
+
+cd5:	asl bitpnt	; shift bit pointer
 	lda bitcnt
 	clc
-	adc #$03
+	adc #3
 	sta bitcnt
 	cmp #15
 	bne cd4
-	jmp cd1b
-;
-cd7	lda #255
+	jmp check_cancel
+
+cd7:	lda #255
 	sta timer1
 	sta timer1+1
 	jmp cd2
-;
-cd3	inc timer1
-	bne cd9
+
+cd3:	inc timer1
+	bne :+
 	inc timer1+1
-cd9	lda timer1+1
+:	lda timer1+1
 	ora timer1
 	beq cd8
 	lda timer1
@@ -158,57 +182,58 @@ cd9	lda timer1+1
 	lda #1
 	sta stat
 	jmp dodelay
-;
-cd8	lda #0
+
+cd8:	lda #0
 	sta stat
 	rts
-;
-;get# for c64
-;
-getnum1	nop
-getnum	tya
+
+	nop		; [XXX unused]
+
+;----------------------------------------------------------------------
+; get character from modem
+getnum:
+	tya
 	pha
 	jsr modget
-	bcs get1
+	bcs @1
 	sta lastch
 	lda #0
 	sta stat
 	pla
 	tay
-	jmp dorts
-;
-get1	lda #$02
+	jmp @2
+@1:	lda #2
 	sta stat
 	lda #0
 	sta lastch
 	pla
 	tay
-;
-dorts	pha
-	lda #$03
-	sta $ba
+@2:	pha
+	lda #3
+	sta FA		; current device [XXX ???]
 	pla
 	rts
-;
-;send a code
-;
-sendcode
+
+;----------------------------------------------------------------------
+; send a code
+sendcode:
 	jsr clear232
 	jsr enablexfer
 	ldx #LFN_MODEM
 	jsr chkout
 	ldx #0
-sn1	lda codes,y
+:	lda codes,y
 	jsr chrout
 	iny
 	inx
-	cpx #$03
-	bne sn1
+	cpx #3
+	bne :-
 	jmp clrchn
-;
-;do handshaking for reception end
-;
-rechand	sta gbsave    ;save good or bad signal as needed
+
+;----------------------------------------------------------------------
+; receive one block
+receive_block:
+	sta gbsave    ;save good or bad signal as needed
 	jsr puntdelay;modded this;modded this. handshaking delay
 	lda #0;delay 0 on 1 off. originally was off
 	sta delay
@@ -216,22 +241,22 @@ rc1	lda #$02
 	sta pnta
 	ldy gbsave
 	jsr sendcode ;send g/b signal
-rc9	lda #%00100   ;allow "ack" signals
-	jsr accept ;wait for code
+rc9	lda #MASK_ACK
+	jsr accept
 	lda stat
 	beq rc2   ;if ok, send g/b signal again
 	dec pnta
 	bne rc9
 	jmp rc1
-;
+
 rc2	jsr puntdelay;modded this;modded this. handshaking delay
-	ldy #$09
-	jsr sendcode ;send "s/b" code
+	ldy #CODE_S_B
+	jsr sendcode
 	lda endflag
 	beq rc5
 	lda gbsave
 	beq rc6
-rc5	lda buffer+sizepos
+rc5	lda buffer+POS_BLKSIZE
 	sta bufcount
 	sta recsize
 	jsr recmodem ;wait for block
@@ -245,122 +270,156 @@ rc5	lda buffer+sizepos
 	cmp #%1000 ;check for "ack" signal
 	beq rc2
 rc4	rts
-;
-rc6	lda #%10000   ;wait for "syn" signal
+
+rc6	lda #MASK_SYN
 	jsr accept
 	lda stat
 	bne rc2   ;if not, send "s/b" again
 	lda #10
 	sta bufcount
-rc8	ldy #12       ;send "syn" signal
+rc8	ldy #CODE_SYN
 	jsr sendcode
-	lda #%01000 ;wait for "s/b" signal
+	lda #MASK_S_B
 	jsr accept
 	lda stat
 	beq rc7
 	dec bufcount
 	bne rc8
 rc7	rts
-;
-;do handshaking for transmission end
-;
-tranhand
-	lda #0;add delay back in
+
+;----------------------------------------------------------------------
+; transmit one block
+transmit_block:
+	lda #0		; ["add delay back in"]
 	sta delay
-tx2	jsr puntdelay;modded this. handshaking delay
+
+@again:	jsr puntdelay	; ["modded this. handshaking delay"]
+
+	; send GOO
 	lda specmode
-	beq tx20
-	ldy #0
-	jsr sendcode ;send a "goo" signal
-	jsr puntdelay;modded this. handshaking delay
-tx20	lda #%01011   ;allow "goo", "bad", and "s/b"
-	jsr accept ;wait for codes
+	beq :+
+	ldy #CODE_GOO
+	jsr sendcode
+	jsr puntdelay	; ["modded this. handshaking delay"]
+:
+	; repeat until we have code from receiver
+	lda #MASK_GOO|MASK_BAD|MASK_S_B
+	jsr accept
 	lda stat
-	bne tx2   ;if no signal, wait again
+	bne @again	; if no signal, wait again
+
+	; reset flag to send GOO at the start
 	lda #0
 	sta specmode
+
+	; not GOO: resend old block
 	lda bitcnt
-	cmp #0  ;"good" signal
-	bne tx10  ;no, resend old block
+	cmp #CODE_GOO
+	bne @resend
+
+	; has all data been sent?
 	lda endflag
-	bne tx4
+	bne @eot	; yes, send finalize handshake
+
 	inc blocknum
-	bne tx7
+	bne :+
 	inc blocknum+1
-tx7	jsr thisbuf
-	ldy #numpos ;block number high order part
+:
+	; is it a pre-created file type header block?
+	jsr thisbuf
+	ldy #POS_BLKNUM	; [XXX ldy #POS_BLKNUM+1]
 	iny
-	lda (pntb),y
-	cmp #255
-	bne tx3
+	lda (bufptr),y
+	cmp #$ff
+	bne @data	; no, create block from disk data
+
+	; file type block: just checksum it, then send it
 	lda #1
-	sta endflag
-	lda bufpnt
+	sta endflag	; last one
+	lda bufidx
 	eor #1
-	sta bufpnt
+	sta bufidx
 	jsr thisbuf
-	jsr dummybl1
-	jmp tx1
-;
-tx3	jsr dummyblk  ;yes, get new block
-tx1	lda #'-'
+	jsr create_dummy_block
+	jmp @send
+
+@data:	jsr create_data_block; create block from disk data
+
+@send:	lda #'-'
 	.byte $2c
-tx10	lda #':'
+@resend:
+	lda #':'
 	jsr prtdash
-	ldy #$06
-	jsr sendcode ;send "ack" code
-	lda #%01000 ;allow only "s/b" code
-	jsr accept ;wait for code
+
+	; send ACK, expect S/B
+	ldy #CODE_ACK
+	jsr sendcode
+	lda #MASK_S_B
+	jsr accept
 	lda stat
-	bne tx1
+	bne @send
+
+	; get size of block
 	jsr thisbuf
-	ldy #sizepos ;block size
-	lda (pntb),y
+	ldy #POS_BLKSIZE
+	lda (bufptr),y
 	sta bufcount
+
+	; transmit alternate buffer
 	jsr altbuf
 	jsr clear232
 	jsr enablexfer
 	ldx #LFN_MODEM
 	jsr chkout
 	ldy #0
-tx6	lda (pntb),y  ;transmit alternate buffer
+:	lda (bufptr),y
 	jsr chrout
 	iny
 	cpy bufcount
-	bne tx6
+	bne :-
 	jsr clrchn
-	lda #0
+
+	lda #0		; not end of transmission
 	rts
-;
-tx4	lda #'*'
+
+@eot:	; end of transmission handshake
+	lda #'*'
 	jsr prtdash
-	ldy #$06
-	jsr sendcode ;send "ack" signal
-	lda #%01000
-	jsr accept ;wait for "s/b" signal
+
+	; send ACK, expect S/B
+	ldy #CODE_ACK
+	jsr sendcode
+	lda #MASK_S_B
+	jsr accept
 	lda stat
-	bne tx4   ;if not, resend "ack" signal
-	lda #10
+	bne @eot	; if not, resend "ack" signal
+
+	; send SYN, expect SYN
+	lda #10		; retries
 	sta bufcount
-tx5	ldy #12
-	jsr sendcode ;send "syn" signal
-	lda #%10000
-	jsr accept ;wait for "syn" signal back
+:	ldy #CODE_SYN
+	jsr sendcode
+	lda #MASK_SYN
+	jsr accept
 	lda stat
-	beq tx8
+	beq :+
 	dec bufcount
-	bne tx5
-tx8	lda #$03
+	bne :-
+
+	; send S/B, expect anything
+:	lda #3		; retries
 	sta bufcount
-tx9	ldy #$09
-	jsr sendcode ;send "s/b" signal
+:	ldy #CODE_S_B
+	jsr sendcode
 	lda #0
-	jsr accept ;just wait
+	jsr accept	; just wait
 	dec bufcount
-	bne tx9
-	lda #1
+	bne :-
+
+	lda #1		; end of transmission
 	rts
-;
+
+;----------------------------------------------------------------------
 ;receive a block from the modem
 ;
 ; stat returns with:
@@ -370,23 +429,23 @@ tx9	ldy #$09
 ;  bit 2 - insufficient characters received
 ;  bit 3 - "ack" signal received
 ;
-recmodem
-	ldy #0      ;start index
-rcm5	lda #0      ;clear timers
+recmodem:
+	ldy #0		; start index
+rcm5	lda #0		; clear timers
 	sta timer1
 	sta timer1+1
 rcm1	jsr exit
-	jsr getnum ;get a chr from the modem
+	jsr getnum	; get a chr from the modem
 	lda stat
-	bne rcm2  ;no character received
+	bne rcm2	; no character received
 	lda lastch
-	sta buffer,y ;save chr in buffer
-	cpy #$03  ;chr one of the first 3
-	bcs rcm3  ;no, skip code check
-	sta codebuf,y ;save chr in code buffer
-	cpy #$02  ;on the 3rd chr
-	bne rcm3  ;no, don't look at chrs yet
-	lda codebuf ;check for a "ack" signal
+	sta buffer,y	; save chr in buffer
+	cpy #$03	; chr one of the first 3
+	bcs rcm3	; no, skip code check
+	sta codebuf,y	; save chr in code buffer
+	cpy #$02	; on the 3rd chr
+	bne rcm3	; no, don't look at chrs yet
+	lda codebuf	; check for a "ack" signal
 	cmp #'A'
 	bne rcm3
 	lda codebuf+1
@@ -394,136 +453,161 @@ rcm1	jsr exit
 	bne rcm3
 	lda codebuf+2
 	cmp #'K'
-	beq rcm4  ;"ack" found
-rcm3	iny           ;inc index
-	cpy bufcount ;buffered all chrs
-	bne rcm5  ;no, buffer next
-	lda #%0001 ;yes, return bit 0 set
+	beq rcm4	; "ack" found
+rcm3	iny		; inc index
+	cpy bufcount	; buffered all chrs
+	bne rcm5	; no, buffer next
+	lda #%0001	; yes, return bit 0 set
 	sta stat
 	rts
-;
-rcm4	lda #$ff      ;"syn" found, set timer to -1
+
+rcm4	lda #$ff	; "syn" found, set timer to -1
 	sta timer1
 	sta timer1+1
-	jmp rcm1  ;see if there is another chr
-;
-rcm2	inc timer1    ;inc timer
+	jmp rcm1	; see if there is another chr
+
+rcm2	inc timer1	; inc timer
 	bne rcm6
 	inc timer1+1
 rcm6	lda timer1
-	ora timer1+1 ;timer now at zero
-	beq rcm7  ;"syn" found with no following chrs
+	ora timer1+1	; timer now at zero
+	beq rcm7	; "syn" found with no following chrs
 	lda timer1
 	cmp #$06
 	lda timer1+1
-	cmp #16 ;time out yet
-	bne rcm1  ;no, get next chr
-	lda #%0010 ;yes, set bit 1
+	cmp #16		; time out yet
+	bne rcm1	; no, get next chr
+	lda #%0010	; yes, set bit 1
 	sta stat
 	cpy #0
 	beq rcm9
-	lda #%0100 ;but if chrs received, set bit 2
+	lda #%0100	; but if chrs received, set bit 2
 	sta stat
 rcm9	jmp dodelay
-;
-rcm7	lda #%1000    ;"ack" found, set bit 2
+
+rcm7	lda #%1000	; "ack" found, set bit 2
 	sta stat
 	rts
-;
-;create dummy block for transmission
-;
-dummyblk	lda bufpnt
+
+;----------------------------------------------------------------------
+; create next data block for transmission
+create_data_block:
+	lda bufidx
 	eor #1
-	sta bufpnt
-	jsr thisbuf ;read block into "this" buffer
-	ldy #numpos ;block number
+	sta bufidx
+	jsr thisbuf	; read block into "this" buffer
+
+	; set block number
+	ldy #POS_BLKNUM
 	lda blocknum
 	clc
 	adc #1
-	sta (pntb),y ;set block number low part
+	sta (bufptr),y	; lo
 	iny
 	lda blocknum+1
 	adc #0
-	sta (pntb),y ;set block number high part
+	sta (bufptr),y	; hi
 	jsr disablexfer
+
+	; read data from file into block
 	ldx #LFN_FILE
 	jsr chkin
-	ldy #datapos ;actual block
-db1	jsr chrin
-	sta (pntb),y
+	ldy #POS_PAYLOAD
+:	jsr chrin
+	sta (bufptr),y
 	iny
 	jsr readst
-	bne db4
+	bne @eof	; EOF or error
 	cpy maxsize
-	bne db1
+	bne :-
+
+	; block full
 	tya
-	pha
-	jmp db5
-;
-db4	tya
-	pha
-	ldy #numpos ;block number
-	iny       ;high part
-	lda #255
-	sta (pntb),y
-	jmp db5
-;
-dummybl1	pha           ;save size of just read block
-db5	jsr clrchn
+	pha		; save size of block
+	jmp create_block_cont
+
+@eof:	tya
+	pha		; save size of block
+
+	; last block: set block number (hi) to $FF
+	ldy #POS_BLKNUM
+	iny
+	lda #$ff
+	sta (bufptr),y
+	jmp create_block_cont
+
+;----------------------------------------------------------------------
+; create dummy (header) block
+create_dummy_block:
+	pha		; save size of block
+			; [XXX this is garbage data]
+
+;----------------------------------------------------------------------
+; common code for block creation
+create_block_cont:
+	jsr clrchn
 	jsr reset
-	jsr dod2
+	jsr dodelay2
 	jsr reset
-	ldy #sizepos ;block size
-	lda (pntb),y
-	sta bufcount ;set bufcount for checksum
+
+	; set bufcount for checksum
+	ldy #POS_BLKSIZE
+	lda (bufptr),y
+	sta bufcount
+
+	; put next block size into current block
 	jsr altbuf
 	pla
-	ldy #sizepos ;block size
-	sta (pntb),y
-	jsr checksum
+	ldy #POS_BLKSIZE
+	sta (bufptr),y
+
+	; checksum
+	jsr checksum	; [XXX jmp]
 	rts
-;
-;set pointers for current buffer
-;
-thisbuf	lda #<buffer
-	sta pntb
-	lda bufpnt
+
+;----------------------------------------------------------------------
+; set bufptr to current buffer
+thisbuf:
+	lda #<buffer
+	sta bufptr
+	lda bufidx
 	clc
 	adc #>buffer
-	sta pntb+1
+	sta bufptr+1
 	rts
-;
-;set pointer b for alternate buffer
-;
-altbuf	lda #<buffer
-	sta pntb
-	lda bufpnt
+
+;----------------------------------------------------------------------
+; set bufptr to alternate buffer
+altbuf:
+	lda #<buffer
+	sta bufptr
+	lda bufidx
 	eor #1
 	clc
 	adc #>buffer
-	sta pntb+1
+	sta bufptr+1
 	rts
-;
-;calculate checksum
-;
-checksum
+
+;----------------------------------------------------------------------
+; calculate checksum
+checksum:
 	lda #0
 	sta check1
 	sta check1+1
 	sta check1+2
 	sta check1+3
-	ldy #sizepos
+	ldy #POS_BLKSIZE
 cks1	lda check1
 	clc
-	adc (pntb),y
+	adc (bufptr),y
 	sta check1
 	bcc cks2
 	inc check1+1
 cks2	lda check1+2
-	eor (pntb),y
+	eor (bufptr),y
 	sta check1+2
 	lda check1+3
-	rol a     ;set or clear carry flag
+	rol		;set or clear carry flag
 	rol check1+2
 	rol check1+3
 	iny
@@ -531,80 +615,86 @@ cks2	lda check1+2
 	bne cks1
 	ldy #0
 	lda check1
-	sta (pntb),y
+	sta (bufptr),y
 	iny
 	lda check1+1
-	sta (pntb),y
+	sta (bufptr),y
 	iny
 	lda check1+2
-	sta (pntb),y
+	sta (bufptr),y
 	iny
 	lda check1+3
-	sta (pntb),y
+	sta (bufptr),y
 	rts
-;
-;transmit a program
-;
-transmit
+
+;----------------------------------------------------------------------
+; transmit a file
+transmit:
 	lda #0
 	sta endflag
 	sta skpdelay
 	sta dontdash
 	lda #1
-	sta bufpnt
+	sta bufidx
 	lda #$ff
 	sta blocknum
 	sta blocknum+1
+
+	; create first block: no payload
 	jsr altbuf
-	ldy #sizepos ;block size
-	lda #datapos
-	sta (pntb),y
+	ldy #POS_BLKSIZE
+	lda #POS_PAYLOAD
+	sta (bufptr),y
+	; and block number 0
 	jsr thisbuf
-	ldy #numpos ;block number
+	ldy #POS_BLKNUM
 	lda #0
-	sta (pntb),y
+	sta (bufptr),y
 	iny
-	sta (pntb),y
-trm1	jsr tranhand
-	beq trm1
-rec3	lda #0
+	sta (bufptr),y
+
+:	jsr transmit_block
+	beq :-
+
+rec3:	lda #0
 	sta lastch
 	rts
-;
-;receive a file
-;
-receive	lda #1
+
+;----------------------------------------------------------------------
+; receive file contents
+receive:
+	lda #1
 	sta blocknum
 	lda #0
 	sta blocknum+1
 	sta endflag
-	sta bufpnt
-	sta buffer+numpos ;block number
-	sta buffer+numpos+1
+	sta bufidx
+	sta buffer+POS_BLKNUM
+	sta buffer+POS_BLKNUM+1
 	sta skpdelay
-	lda #datapos
-	sta buffer+sizepos ;block size
+	lda #POS_PAYLOAD
+	sta buffer+POS_BLKSIZE
 	lda #0
-rec1	jsr rechand
+rec1	jsr receive_block
 	lda endflag
 	bne rec3
-	jsr match ;do checksums match
-	bne rec2  ;no
+	jsr match	; do checksums match
+	bne rec2	; no
 	jsr clrchn
 	lda bufcount
-	cmp #datapos
+	cmp #POS_PAYLOAD
 	beq rec7
 	jsr disablexfer
 	ldx #LFN_FILE
 	jsr chkout
-	ldy #datapos
+	ldy #POS_PAYLOAD
 rec6	lda buffer,y
 	jsr chrout
 	iny
 	cpy bufcount
 	bne rec6
 	jsr clrchn
-rec7	lda buffer+numpos+1 ;block number high order part
+rec7	lda buffer+POS_BLKNUM+1; block number (hi)
 	cmp #$ff
 	bne rec4
 	lda #1
@@ -616,18 +706,19 @@ rec4	lda #'-'
 	jsr reset
 	lda #0
 	jmp rec1
-;
+
 rec2	jsr clrchn
 	lda #':'
 	jsr goobad
 	lda recsize
-	sta buffer+sizepos
+	sta buffer+POS_BLKSIZE
 	lda #$03
 	jmp rec1
-;
-;see if checksums match
-;
-match	lda buffer
+
+;----------------------------------------------------------------------
+; verify checksums
+match:
+	lda buffer
 	sta check
 	lda buffer+1
 	sta check+1
@@ -641,170 +732,188 @@ match	lda buffer
 	jsr checksum
 	lda buffer
 	cmp check
-	bne mtc1
+	bne @bad
 	lda buffer+1
 	cmp check+1
-	bne mtc1
+	bne @bad
 	lda buffer+2
 	cmp check+2
-	bne mtc1
+	bne @bad
 	lda buffer+3
 	cmp check+3
-	bne mtc1
+	bne @bad
 	lda #0
 	rts
-;
-mtc1	lda #1
+
+@bad:	lda #1
 	rts
-;
-;receive file type block
-;
-rectype	lda #0
+
+;----------------------------------------------------------------------
+; receive file type block
+rectype:
+	lda #0
 	sta blocknum
 	sta blocknum+1
 	sta endflag
-	sta bufpnt
+	sta bufidx
 	sta skpdelay
-	lda #datapos
+	lda #POS_PAYLOAD
 	clc
 	adc #1
-	sta buffer+sizepos
+	sta buffer+POS_BLKSIZE
 	lda #0
-rct3	jsr rechand
+rct3	jsr receive_block
 	lda endflag
 	bne rct1
 	jsr match
 	bne rct2
-	lda buffer+datapos
+	lda buffer+POS_PAYLOAD
 	sta filetype
 	lda #1
 	sta endflag
 	lda #0
 	jmp rct3
-;
+
 rct2	lda recsize
-	sta buffer+sizepos
+	sta buffer+POS_BLKSIZE
 	lda #3
 	jmp rct3
-;
+
 rct1	lda #0
 	sta lastch
 	rts
-;
-;transmit file type
-;
-trantype	lda #0
+
+;----------------------------------------------------------------------
+; transmit file type block
+trantype:
+	lda #0
 	sta endflag
 	sta skpdelay
 	lda #1
-	sta bufpnt
+	sta bufidx
 	sta dontdash
 	lda #255
 	sta blocknum
 	sta blocknum+1
+
+	; set file type block size: one payload byte
 	jsr altbuf
-	ldy #sizepos ;block size
-	lda #datapos
+	ldy #POS_BLKSIZE
+	lda #POS_PAYLOAD	; [XXX lda #POS_PAYLOAD+1]
 	clc
 	adc #1
-	sta (pntb),y
+	sta (bufptr),y
+
+	; set block number $FFFF
 	jsr thisbuf
-	ldy #numpos ;block number
+	ldy #POS_BLKNUM
 	lda #255
-	sta (pntb),y
+	sta (bufptr),y
 	iny
-	sta (pntb),y
-	ldy #datapos
+	sta (bufptr),y
+
+	; fill file type
+	ldy #POS_PAYLOAD
 	lda filetype
-	sta (pntb),y
+	sta (bufptr),y
+
+	; flag: send GOO once at the start
 	lda #1
 	sta specmode
-trf1	jsr tranhand
-	beq trf1
+
+:	jsr transmit_block
+	beq :-
+
 	lda #0
-	sta lastch
+	sta lastch	; no user abort
 	rts
-;
-;do delay for timing
-;
-dodelay	inc skpdelay
+
+;----------------------------------------------------------------------
+; timing delay
+dodelay:
+	inc skpdelay
 	lda skpdelay
-	cmp #$03
-	bcc dod1
+	cmp #3
+	bcc :+
 	lda #0
 	sta skpdelay
-dod1
-	;lda delay;delay is always forced on no matter what now
-	;beq dod2
-	;bne dod3
+:
+;	lda delay	; delay is always forced on no matter what now
+;	beq dodelay2
+;	bne dod3
 	nop
-dod2	ldx #0
-lp1	ldy #0
-lp2	iny
-	bne lp2
+
+dodelay2:
+	ldx #0
+@1:	ldy #0
+@2:	iny
+	bne @2
 	inx
 	;cpx #120
-	bne lp1
+	bne @1
 dod3	rts
-;
-;print dash, colon, or star
-;
-prtdash	pha
+
+;----------------------------------------------------------------------
+; print dash, colon, or star
+prtdash:
+	pha
 	lda blocknum
 	ora blocknum+1
-	beq prtd1
+	beq :+
 	lda dontdash
-	bne prtd1
+	bne :+
 	pla
 	jsr goobad
 	pha
-prtd1	pla
+:	pla
 	rts
-;
-;reset rs232 port
-;
-reset
+
+;----------------------------------------------------------------------
+; reset RS232 port
+reset:
 	jsr enablexfer
-;
-;terminal emulation routine
-;
-terminal	rts
-;
+terminal:
+	rts
+
 ;----------------------------------------------------------------------
-cd1b	ldx #0
-pnt112	lda buffer,x
-	cmp #$0d
-	bne pnt113
+; cancel transmission if we encounter 3 CRs in a row
+check_cancel:
+	ldx #0
+:	lda buffer,x
+	cmp #CR
+	bne :+
 	inx
-	cpx #$03
-	bcc pnt112
-	jmp pnt120
-pnt113	jmp cd1
+	cpx #3
+	bcc :-
+	jmp punter_cancel
+:	jmp cd1
+
 ;----------------------------------------------------------------------
-;
-;check for commodore key
-;
-exit	lda $028d     ;is commodore
-	cmp #$02         ;key down
-	bne exit1
-exit2	pla
+; check for commodore key
+exit:
+	lda SHFLAG	; is commodore
+	cmp #SHFLAG_CBM	; key down
+	bne @1
+@2:	pla
 	tsx
 	cpx stack
-	bne exit2
-exit1	lda #1
+	bne @2
+@1:	lda #1
 	sta lastch
 	rts
+
 ;----------------------------------------------------------------------
-pnt120	tsx
+punter_cancel:
+	tsx		; [XXX just assign stack pointer]
 	cpx stack
-	beq pnt121
+	beq :+
 	pla
 	sec
-	bcs pnt120
-pnt121	lda #$80
+	bcs punter_cancel
+:	lda #$80
 	sta lastch
-	jsr clrchn
+	jsr clrchn	; [XXX jmp]
 	rts
-;----------------------------------------------------------------------
-	brk
+
+	brk		; [XXX unused]
 	brk
