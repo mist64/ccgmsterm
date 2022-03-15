@@ -3,7 +3,7 @@
 ; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
 ; This project is licensed under the BSD 3-Clause License.
 ;
-; RS232 Swiftlink Driver
+; RS232 SwiftLink/Turbo232 (MOS 6551 ACIA) Driver
 ;  based on Jeff Brown adaptation of Novaterm version
 ;
 
@@ -17,9 +17,9 @@
 stopsw	= 1
 startsw	= 0
 
-swift	= $de00		; can be d to df00 or d700 depending
-
-sw_data	= swift		; swiftlink registers
+; SwiftLink registers
+swift	= $de00		; will be runtime-patched to $DE00/$DF00/$D700
+sw_data	= swift
 sw_stat	= swift+1
 sw_cmd	= swift+2
 sw_ctrl	= swift+3
@@ -240,6 +240,32 @@ paused:
 	.byte 0
 
 ;----------------------------------------------------------------------
-swbaud:
-	.byte $15,$17,$18,$1a,$1c,$1e,$1f,$10,$10,$10
+; MOS 6551 ACIA baud rate constants
+SW_BAUD_50	= %10001
+SW_BAUD_75	= %10010
+SW_BAUD_109_92	= %10011
+SW_BAUD_134_58	= %10100
+SW_BAUD_150	= %10101
+SW_BAUD_300	= %10110
+SW_BAUD_600	= %10111
+SW_BAUD_1200	= %11000
+SW_BAUD_1800	= %11001
+SW_BAUD_2400	= %11010
+SW_BAUD_3600	= %11011
+SW_BAUD_4800	= %11100
+SW_BAUD_7200	= %11101
+SW_BAUD_9600	= %11110
+SW_BAUD_19200	= %11111
 
+swbaud:
+; The SwiftLink/Turbo232 baud rate generator is 2x that of the spec,
+; so the ACIA has half the rates set up.
+	.byte SW_BAUD_150	; 300
+	.byte SW_BAUD_600	; 1200
+	.byte SW_BAUD_1200	; 2400
+	.byte SW_BAUD_2400	; 2400
+	.byte SW_BAUD_4800	; 4800
+	.byte SW_BAUD_9600	; 9600
+	.byte SW_BAUD_19200	; 38400
+
+	.byte $10,$10,$10	; [XXX unused]
