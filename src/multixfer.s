@@ -110,16 +110,16 @@ mlsgo
 	jsr mlshdr
 	ldy #0
 mlsgo1	lda inpbuf,y
-	jsr modput
+	jsr rs232_put
 	iny
 	cpy max
 	bne mlsgo1
 	lda inpbuf,y
-	jsr modput
+	jsr rs232_put
 	lda inpbuf+1,y
-	jsr modput
+	jsr rs232_put
 	lda #CR
-	jsr modput
+	jsr rs232_put
 	jsr clrchn
 	jsr uplmen	; disk setup
 	ldx SHFLAG
@@ -141,11 +141,11 @@ mlss5
 	jsr mlshdr
 	ldx #16
 	lda #4		; ctrl-d
-:	jsr modput
+:	jsr rs232_put
 	dex
 	bne :-
 	lda #CR
-	jsr modput
+	jsr rs232_put
 mlssab	jsr clrchn
 	jsr text_color_restore
 	jsr gong
@@ -154,11 +154,11 @@ mlssab	jsr clrchn
 ;----------------------------------------------------------------------
 ; send 16 TABs
 mlshdr:
-	jsr clear232
-	jsr enablexfer
+	jsr rs232_clear
+	jsr rs232_on
 	ldx #16
 	lda #9		; ctrl-i
-:	jsr modput
+:	jsr rs232_put
 	dex
 	bne :-
 	rts
@@ -176,12 +176,12 @@ mulab2
 	cmp #MODEM_TYPE_SWIFTLINK_DE
 	bmi mulab3
 mulab3
-	jsr enablexfer
+	jsr rs232_on
 	jmp term_entry
 
 ;----------------------------------------------------------------------
 cf3_multi_receive:
-	jsr disablexfer
+	jsr rs232_off
 	jsr text_color_save
 	lda protoc
 	beq mulrav	; PROTOCOL_PUNTER
@@ -199,21 +199,21 @@ mrllgc
 	ldx SHFLAG
 	bne mrllgc
 mlrnew
-	jsr enablexfer
+	jsr rs232_on
 	ldy #0
 	sty max
 mlrwat
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	beq mulab2
-	jsr modget
+	jsr rs232_get
 	cmp #9		; ctrl-i
 	bne mlrwat
 mlrwt2
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	beq mulab2
-	jsr modget
+	jsr rs232_get
 	cmp #0
 	beq mlrwt2
 	cmp #9		; ctrl-i
@@ -223,7 +223,7 @@ mlrflp
 	ldx SHFLAG
 	cpx #SHFLAG_CBM
 	beq mulab2
-	jsr modget
+	jsr rs232_get
 	cmp #0
 	beq mlrflp
 mlrfl1
@@ -295,7 +295,7 @@ SET_ASCII
 
 ;----------------------------------------------------------------------
 select_files_from_disk:
-	jsr disablexfer
+	jsr rs232_off
 	lda device_disk
 	jsr listen
 	lda #$f0
@@ -436,7 +436,7 @@ mdrext	lda device_disk
 	jsr unlsn
 	jsr clrchn
 	jsr ercopn ; possible fix for multi upload crash on up9600 - 2018 fix
-	jmp enablexfer
+	jmp rs232_on
 
 ;----------------------------------------------------------------------
 mdrret:

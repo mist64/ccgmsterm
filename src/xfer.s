@@ -121,10 +121,10 @@ ui_abort:
 	ldy #>txt_aborted
 	jsr outstr
 	jsr text_color_restore
-	jsr disablexfer
+	jsr rs232_off
 	lda #LFN_FILE
 	jsr close
-	jsr enablexfer
+	jsr rs232_on
 	jmp term_mainloop
 
 ;----------------------------------------------------------------------
@@ -194,7 +194,7 @@ upltyp:
 ;----------------------------------------------------------------------
 handle_f1_upload:
 	jsr supercpu_off
-	jsr disablexfer
+	jsr rs232_off
 	jsr text_color_save
 	lda #0
 	sta mulcnt
@@ -275,7 +275,7 @@ uplok:
 	jmp xmodem_upload
 
 :	; PUNTER
-	jsr clear232
+	jsr rs232_clear
 	jsr punter_reset
 	jsr punter_trantype; transmit file type header
 	lda inpbuf
@@ -290,7 +290,7 @@ uplok:
 	sta maxsize
 	jsr punter_transmit; transmit file contents
 xfrend:
-	jsr disablexfer
+	jsr rs232_off
 	lda #LFN_FILE
 	jsr close
 	jsr clrchn
@@ -310,7 +310,7 @@ xfrdun:
 
 ;----------------------------------------------------------------------
 handle_f3_download:
-	jsr disablexfer
+	jsr rs232_off
 	lda #0
 	sta mulcnt
 	jsr text_color_save
@@ -348,7 +348,7 @@ dowmen:
 
 @1:	ldx #$ff
 	stx maxsize
-	jsr disablexfer
+	jsr rs232_off
 	jsr ercopn
 	ldx #LFN_DISK_CMD
 	jsr chkout
@@ -424,7 +424,7 @@ dowopn:
 
 :	jsr punter_reset; reset
 	jsr punter_receive; get data
-	jsr clear232
+	jsr rs232_clear
 	jmp xfrend	; close file
 
 ;----------------------------------------------------------------------
@@ -445,7 +445,7 @@ handle_f2_send_read:
 ;----------------------------------------------------------------------
 ; send text file
 send:
-	jsr disablexfer
+	jsr rs232_off
 	jsr text_color_save
 	lda #<txt_read_or_send
 	ldy #>txt_read_or_send
@@ -493,7 +493,7 @@ send:
 	lda #LFN_FILE
 	jsr close
 	lda #0
-	jsr enablexfer
+	jsr rs232_on
 	jsr text_color_set
 	lda #CR
 	jsr chrout

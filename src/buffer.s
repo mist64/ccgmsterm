@@ -131,7 +131,7 @@ return_to_term:
 	jsr chrout
 	jsr chrout
 	jsr text_color_restore
-	jsr enablexfer
+	jsr rs232_on
 	jmp term_mainloop
 
 bufcmd:
@@ -293,7 +293,7 @@ solfil
 	jmp ui_abort
 solfok	rts
 savbuf
-	jsr disablexfer;to be save 5-13 fix?? worked without it, but this should be here
+	jsr rs232_off	;to be save 5-13 fix?? worked without it, but this should be here
 	lda #0
 	sta mulcnt
 	lda #2
@@ -369,7 +369,7 @@ af624	jsr $fcd1	; check the tape read/write pointer
 ;----------------------------------------------------------------------
 
 bsaved
-	jsr enablexfer
+	jsr rs232_on
 	jmp return_to_term
 no6
 
@@ -378,7 +378,7 @@ no6
 	bne bufcm7
 	jsr solfil
 lodbuf
-	jsr disablexfer;5-13 put in, didnt seem to need it, need to test with it. might crash with it cause the program does that sometimes....
+	jsr rs232_off	;5-13 put in, didnt seem to need it, need to test with it. might crash with it cause the program does that sometimes....
 	lda #2
 	ldx device_disk
 	tay
@@ -417,7 +417,7 @@ lodbex
 	jsr clrchn
 	lda #2
 	jsr close
-	jsr enablexfer
+	jsr rs232_on
 	jmp return_to_term
 bufcm7
 
@@ -448,12 +448,12 @@ send_buffer:
 	sta buffl2
 	jsr prtbuf
 	jsr text_color_save
-	jsr clear232
+	jsr rs232_clear
 	lda #<txt_done
 	ldy #>txt_done
 	jsr outstr
 	jsr text_color_restore
-	jsr enablexfer
+	jsr rs232_on
 	jmp term_mainloop
 
 ;----------------------------------------------------------------------
@@ -567,7 +567,7 @@ print_buffer:
 	ldy #>txt_done
 	jsr outstr
 	jsr text_color_restore
-	jsr enablexfer
+	jsr rs232_on
 	jmp term_mainloop
 
 ;----------------------------------------------------------------------

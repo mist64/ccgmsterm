@@ -8,7 +8,7 @@
 
 ;----------------------------------------------------------------------
 losvco:
-	jsr disablexfer
+	jsr rs232_off
 	jsr ercopn
 	lda #<txt_filename
 	ldy #>txt_filename
@@ -98,7 +98,7 @@ load_config_easyflash:
 
 ;----------------------------------------------------------------------
 losver:
-	jsr disablemodem
+	jsr rs232_off
 	ldx #LFN_DISK_CMD
 	jsr chkin
 :	jsr getin

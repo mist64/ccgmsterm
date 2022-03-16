@@ -30,7 +30,7 @@ dskout:
 
 ; disk
 @dskmo:
-	jsr disablexfer
+	jsr rs232_off
 	ldx #LFN_FILE
 	jsr chkin
 	jsr getin	; get byte from disk
@@ -59,21 +59,21 @@ dskout:
 
 ; output to modem
 @dskmo1:
-	jsr clear232
-	jsr enablexfer
-	jsr clear232
+	jsr rs232_clear
+	jsr rs232_on
+	jsr rs232_clear
 	pla
 	ldx ascii_mode
 	beq :+
 	jsr petscii_to_ascii
-:	jsr modput
+:	jsr rs232_put
 
 ; eat echo from modem
 ; (this timeout failsafe makes sure the byte is received back from modem
 ;  before accessing disk for another byte otherwise we can have
 ;  all sorts of nmi related issues.... this solves everything.
 ;  uses the 'fake' rtc / jiffy counter function / same as xmmget...)
-; [XXX this is a duplicate of modget_timeout]
+; [XXX this is a duplicate of rs232_get_timeout]
 	lda #70		; timeout failsafe
 	sta xmodel
 	lda #0
@@ -81,7 +81,7 @@ dskout:
 	sta rtca2
 	sta rtca0
 
-:	jsr modget	; get byte (and ignore)
+:	jsr rs232_get	; get byte (and ignore)
 	jcc @chkkey	; done
 	jsr xmmrtc	; count up
 	lda rtca1
@@ -96,7 +96,7 @@ dskout:
 	cmp #3		; STOP key
 	beq @dskex2
 
-	jsr enablexfer
+	jsr rs232_on
 	cmp #'S'
 	bne @nos
 
@@ -106,17 +106,17 @@ dskout:
 	jsr buffer_skip_256
 	ldx status	; EOI?
 	bne @dskex2	; end
-	jsr enablexfer
+	jsr rs232_on
 	jmp dskout	; loop
 @nos:
 
 :	jsr get_key
 	beq :-
 
-	jsr enablexfer
+	jsr rs232_on
 	jmp dskout
 @dskext:
-	jsr enablexfer
+	jsr rs232_on
 	pla
 @dskex2:
 	jsr clrchn

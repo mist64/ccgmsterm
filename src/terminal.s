@@ -8,7 +8,7 @@
 
 ; enter here on program start
 term_entry_first:
-	jsr enablemodem
+	jsr rs232_init
 	jsr bell
 	jsr themeroutine
 
@@ -124,7 +124,7 @@ term_mainloop:
 	lda #<txt_disconnecting
 	ldy #>txt_disconnecting
 	jsr outstr
-	jsr dropdtr
+	jsr rs232_dropdtr
 :	jmp term_mainloop
 @no4:
 
@@ -182,7 +182,7 @@ term_mainloop:
 :
 
 ; send to modem
-	jsr modput
+	jsr rs232_put
 
 ; convert back to PETSCII
 	ldx ascii_mode
@@ -236,7 +236,7 @@ term_mainloop:
 :
 
 ; modem input
-	jsr modget
+	jsr rs232_get
 	cmp #0
 	beq @loop2b	; = @loop2
 	ldx status
@@ -246,7 +246,7 @@ term_mainloop:
 	cmp #3		; code 3 (STOP)
 	bne @nauto
 	ldy #0
-:	jsr modget
+:	jsr rs232_get
 	ldx status
 	bne :-
 	sta KEYD,y	; keyboard buffer

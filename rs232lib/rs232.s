@@ -20,8 +20,8 @@ tmpzp	= $a7	; reused KERNAL RS-232 driver vars
 .segment "RS232"
 
 ;----------------------------------------------------------------------
-; Dispatch: Enable modem
-enablemodem:
+; Dispatch: Init modem
+rs232_init:
 	ldx #MODEM_TYPE_SWIFTLINK_DE
 	lda modem_type
 	cmp #MODEM_TYPE_SWIFTLINK_DE
@@ -51,7 +51,7 @@ enablemodem:
 	ldx baud_rate
 	ldy is_pal_system
 	jsr func_setup
-	jmp clear232
+	jmp rs232_clear
 
 rs232_funcs:
 func_setup:
@@ -75,8 +75,8 @@ modem_drivers:
 	.word sw_funcs		; MODEM_TYPE_SWIFTLINK_DE, ...
 
 ;----------------------------------------------------------------------
-; Dispatch: Enable transfer
-enablexfer:
+; Dispatch: Enable
+rs232_on:
 	pha
 	txa
 	pha
@@ -86,9 +86,8 @@ enablexfer:
 	jmp xferout
 
 ;----------------------------------------------------------------------
-; Dispatch: Disable transfer
-disablexfer:
-disablemodem:
+; Dispatch: Disable
+rs232_off:
 	pha
 	txa
 	pha
@@ -105,7 +104,7 @@ xferout:
 
 ;----------------------------------------------------------------------
 ; Dispatch: Get byte from modem
-modget:
+rs232_get:
 	jsr func_getxfer
 	pha
 	php
@@ -118,7 +117,7 @@ modget:
 
 ;----------------------------------------------------------------------
 ; Dispatch: Send byte to modem
-modput:
+rs232_put:
 	pha
 	lda #0
 	sta STATUS
@@ -127,11 +126,11 @@ modput:
 
 ;----------------------------------------------------------------------
 ; Dispatch: Hang up
-dropdtr	= func_dropdtr
+rs232_dropdtr	= func_dropdtr
 
 ;----------------------------------------------------------------------
 ; Clear RS232 buffer
-clear232:
+rs232_clear:
 	pha
 	lda #0
 	sta rtail

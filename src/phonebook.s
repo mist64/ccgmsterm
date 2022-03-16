@@ -1226,8 +1226,8 @@ dial:
 
 ;----------------------------------------------------------------------
 ; hayes dial
-	jsr clear232
-	jsr enablemodem
+	jsr rs232_clear
+	jsr rs232_init
 	lda #<txt_atv1	; send word result codes (as opposed to numeric)
 	ldy #>txt_atv1
 	jsr strmod_delay
@@ -1246,7 +1246,7 @@ dial:
 	sta $d800+23*40+7,x
 	ldx numptr
 	lda numbuf,x
-	jsr modput
+	jsr rs232_put
 	ldx numptr
 	inx
 	cmp #CR		; CR-terminated
@@ -1285,7 +1285,7 @@ hayes_connected:
 flush_modem:
 	lda #$100-24
 	sta JIFFIES
-:	jsr modget
+:	jsr rs232_get
 	cmp #CR
 	beq :+
 	lda JIFFIES
@@ -1320,7 +1320,7 @@ strmod:
 	ldy #0
 @loop:	lda (zpoutstr),y
 	beq @rts
-	jsr modput
+	jsr rs232_put
 	iny
 	bne @loop
 @rts:	rts
@@ -1372,24 +1372,24 @@ parse_hayes_answer:
 	ldy #0
 	sty bustemp
 
-	jsr hmodget
+	jsr hrs232_get
 haybus3
 	jsr buffer_input
 	cpy #$ff
 	jeq hayout	; get out of routine. send data to terminal, and set connect!
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'b'
 	bne haynocarr	; move to check for no carrier
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'u'
 	bne haybus3
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'s'
 	bne haybus3
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'y'
 	bne haybus3
 	ldy #0
@@ -1400,27 +1400,27 @@ haynocarr
 	cmp #'n'
 	bne haybusand	; move to next char
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'o'
 	bne haybus3
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #' '
 	bne haybus3
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'c'
 	jne haynoanswer
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'a'
 	bne haybus3
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'r'
 	bne haybus3
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'r'
 	bne haybus3
 	ldy #0
@@ -1431,18 +1431,18 @@ haybusand
 	cmp #'B'
 	bne haynocarrand; move to check for no carrier
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'U'
 	beq :+
 haybus3b:
 	jmp haybus3
 :
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'S'
 	bne haybus3b
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'Y'
 	bne haybus3b
 	ldy #0
@@ -1453,27 +1453,27 @@ haynocarrand
 	cmp #'N'
 	bne haybus3b
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'O'
 	bne haybus3b
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #' '
 	bne haybus3b
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'C'
 	bne haynoanswerand
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'A'
 	bne haybus3b
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'R'
 	bne haybus3b
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'R'
 	bne haybus3b
 	ldy #0
@@ -1484,15 +1484,15 @@ haynoanswerand
 	cmp #'A'
 	bne haybus3b
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'N'
 	bne haybus3b
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'S'
 	bne haybus3b
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'W'
 	beq :+
 haybus3c
@@ -1506,15 +1506,15 @@ haynoanswer
 	cmp #'a'
 	bne haybus3c
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'n'
 	bne haybus3c
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'s'
 	bne haybus3c
 	jsr buffer_input
-	jsr hmodget
+	jsr hrs232_get
 	cmp #'w'
 	bne haybus3c
 	ldy #0
@@ -1528,14 +1528,14 @@ hayout
 
 ;----------------------------------------------------------------------
 ; get modem byte with timeout
-hmodget:
+hrs232_get:
 	inc waittemp	; timeout for no character loop
 	ldx waittemp	; so it doesn't lock up
 	cpx #144	; maybe change for various baud rates
 	beq :+
-	jsr modget
-	beq hmodget
-	bcs hmodget
+	jsr rs232_get
+	beq hrs232_get
+	bcs hrs232_get
 :	ldx #0
 	stx waittemp
 	rts

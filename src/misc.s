@@ -29,7 +29,7 @@ handle_f6_directory:
 dodir:
 	jsr setnam
 	jsr dir
-	jsr enablexfer
+	jsr rs232_on
 	jmp term_mainloop
 
 ;----------------------------------------------------------------------

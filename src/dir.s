@@ -16,7 +16,7 @@ dirfn:
 ; Show the disk directory, optionally send it to the modem
 ; (the filename has to be set already)
 dir:
-	jsr disablexfer
+	jsr rs232_off
 	lda #LFN_DIR
 	ldx device_disk
 	ldy #0
@@ -77,7 +77,7 @@ dir_exit:
 	lda #LFN_DIR
 	jsr chrout	; [XXX ugly: LFN matches code for CR]
 	jsr close
-	jmp enablexfer
+	jmp rs232_on
 
 ;----------------------------------------------------------------------
 dir_once_per_line:
@@ -110,35 +110,35 @@ dir_once_per_line:
 ; eat all bytes from the modem
 	lda #5
 	sta timeout
-	jsr modget_timeout
+	jsr rs232_get_timeout
 	bcs :+		; nothing
 	jmp @loop	; [XXX bcc @loop would work]
 :
 
-	jsr disablexfer
+	jsr rs232_off
 	jsr getin	; input from screen
-	jsr enablexfer
-	jsr modput
+	jsr rs232_on
+	jsr rs232_put
 	tya
 	pha
 	lda #21
 	sta timeout
-	jsr modget_timeout; eat echo
+	jsr rs232_get_timeout; eat echo
 	pla
 	tay
 	iny
 	cpy #27		; max with (will send extra spaces at the end)
 	bcc @loop
 	lda #CR
-	jsr modput
+	jsr rs232_put
 	jsr clrchn
 	lda #CR
 	jsr chrout	; screen
 
 ; eat all bytes in the RS232 buffer
-:	jsr modget
+:	jsr rs232_get
 	lda RIDBE
-	cmp RIDBS	; [XXX isn't this what clear232 does?]
+	cmp RIDBS	; [XXX isn't this what rs232_clear does?]
 	bne :-
 
 @skip:
@@ -167,7 +167,7 @@ is_drive_present:
 ;  before accessing disk for another byte otherwise we can have
 ;  all sorts of nmi related issues.... this solves everything.
 ;  uses the 'fake' rtc / jiffy counter function / same as xmmget...)
-modget_timeout:
+rs232_get_timeout:
 timeout=*+1
 	lda #10		; timeout failsafe
 	sta xmodel
@@ -175,7 +175,7 @@ timeout=*+1
 	sta rtca1
 	sta rtca2
 	sta rtca0
-@1:	jsr modget
+@1:	jsr rs232_get
 	bcs :+		; [XXX bcc @rts]
 	jmp @rts
 :	jsr xmmrtc

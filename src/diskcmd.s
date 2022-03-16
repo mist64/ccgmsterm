@@ -41,7 +41,7 @@ int2dectab:
 
 ;----------------------------------------------------------------------
 handle_f5_diskcommand:
-	jsr disablexfer
+	jsr rs232_off
 	jsr ercopn
 	jsr text_color_save
 dskcmd
@@ -92,7 +92,7 @@ drvext
 	jsr text_color_restore
 	lda #CR
 	jsr chrout
-	jsr enablexfer
+	jsr rs232_on
 	jmp term_mainloop
 drverr
 	jsr is_drive_present

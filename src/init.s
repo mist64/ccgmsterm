@@ -116,9 +116,9 @@ start:
 ; [XXX It needs to be called once though ("jsr rsopen" above!) to  ]
 ; [XXX init the RS232 dispatch jump table.                         ]
 rsopen:
-	jsr enablemodem
+	jsr rs232_init
 	jsr clall
-	jsr disablemodem
+	jsr rs232_off
 	rts		; [XXX jmp]
 
 ;----------------------------------------------------------------------
@@ -153,7 +153,7 @@ init
 	beq @noload	; no drive exists
 
 ; load config file from disk
-	jsr disablemodem
+	jsr rs232_off
 	lda #1
 	sta config_file_loaded
 	ldx #<filename_config

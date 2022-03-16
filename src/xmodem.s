@@ -53,18 +53,18 @@ xmobuf	= $fd	; zero page pointer to access the buffer
 ;  gong		play sound when printing error
 ;  xfrdun	jumped to after a transfer has succeeded
 ;  outstr	print error message
-;  clear232	clear buffer
-;  modget	receive byte
+;  rs232_clear	clear buffer
+;  rs232_get	receive byte
 ;  goobad	show transmission status "key" to user
 ;  crclo	pre-computed crc table
 ;  crchi	pre-computed crc table
-;  enablexfer	enable serial driver
-;  disablexfer	disable serial driver
-;  reset	same as "enablexfer" (no punter dep)
+;  rs232_on	enable serial driver
+;  rs232_off	disable serial driver
+;  reset	same as "rs232_on" (no punter dep)
 ;  protoc	protocol (XMODEM, -CRC, -1K)
 ;  buffer	contains 3 XMODEM buffers
 
-_enablexfer = reset
+_rs232_on = reset
 
 xmstat	.byte 0		; final error code
 xmoblk	.byte 0		; current block index
@@ -106,7 +106,7 @@ xmodem_send:
 	stx xmostk
 
 	jsr init_transfer
-	jsr _enablexfer
+	jsr _rs232_on
 
 	lda protoc
 	cmp #PROTOCOL_XMODEM_1K
@@ -140,7 +140,7 @@ xmodem_send:
 	sty xmoend	; reset EOT flag
 	sty xmobad	; init error counter
 
-	jsr disablexfer
+	jsr rs232_off
 
 ; read block into buffer
 	ldx #LFN_FILE
@@ -170,7 +170,7 @@ xmodem_send:
 
 @send_again:
 	jsr clear_buffers
-	jsr enablexfer
+	jsr rs232_on
 
 ; send block header
 	lda #SOH
@@ -178,18 +178,18 @@ xmodem_send:
 	cpx #PROTOCOL_XMODEM_1K
 	bne :+
 	lda #STX_
-:	jsr modput	; 0: SOH/STX (128/1K)
+:	jsr rs232_put	; 0: SOH/STX (128/1K)
 	lda xmoblk
-	jsr modput	; 1: block index
+	jsr rs232_put	; 1: block index
 	eor #$ff
-	jsr modput	; 2: block index ^ $FF
+	jsr rs232_put	; 2: block index ^ $FF
 
 	jsr setup_buffer
 
 	ldx pagectr
 	ldy #0
 :	lda (xmobuf),y
-	jsr modput
+	jsr rs232_put
 	iny
 	cpy firstpagebytes
 	bne :-
@@ -203,13 +203,13 @@ xmodem_send:
 
 ; send CRC
 	lda crcz+1
-	jsr modput
+	jsr rs232_put
 	lda crcz
 	jmp @send_crc_cont
 @ncrc:
 	lda xmochk
 @send_crc_cont:
-	jsr modput
+	jsr rs232_put
 
 	jsr clrchn
 	jsr clear_input_buffer
@@ -247,9 +247,9 @@ xmodem_send:
 
 ; send EOT
 @sne1:
-	jsr enablexfer
+	jsr rs232_on
 	lda #EOT
-	jsr modput	; send EOT
+	jsr rs232_put	; send EOT
 	lda #3		; timeout
 	jsr modem_get
 	bne :+
@@ -357,7 +357,7 @@ modem_get:
 	sta rtca2
 	sta rtca0
 
-@1:	jsr modget	; receive byte
+@1:	jsr rs232_get	; receive byte
 	bcs :+
 	ldx #0		; ok
 	rts
@@ -447,16 +447,16 @@ xmcmab	lda #STAT_USER_ABORTED
 	bcc @ex4
 
 	; send CAN if STAT_SYNC_LOST and STAT_USER_ABORTED
-	jsr _enablexfer
+	jsr _rs232_on
 
 	ldy #8
 	lda #CAN
-:	jsr modput
+:	jsr rs232_put
 	dey
 	bpl :-		; 9x CAN
 
 @ex4:	jsr clrchn
-	jsr disablexfer
+	jsr rs232_off
 	lda #LFN_FILE
 	jmp close	; close file on disk
 
@@ -486,7 +486,7 @@ xmodem_receive:
 	lda #CRC	; XMODEM-CRC and -1K: send 'C' before first block
 :	sta @receive_nak_code
 
-	jsr _enablexfer
+	jsr _rs232_on
 	jsr init_transfer
 	jmp :+
 @retry1:	; receive error
@@ -495,12 +495,12 @@ xmodem_receive:
 	sta xmoend	; reset EOT counter
 
 @retry2:
-	jsr clear232
-	jsr enablexfer
+	jsr rs232_clear
+	jsr rs232_on
 
 @receive_nak_code = *+1
 	lda #NAK
-	jsr modput
+	jsr rs232_put
 	jsr clrchn
 
 ; block loop
@@ -594,7 +594,7 @@ xmodem_receive:
 
 ; check whether it's the expected block, a re-send, or the wrong block
 @chksum_cont:
-	jsr disablexfer
+	jsr rs232_off
 
 	lda block_index
 	cmp xmoblk	; expected block?
@@ -616,7 +616,7 @@ xmodem_receive:
 
 ; we just received the next block intact
 @okblk:	jsr clrchn
-	jsr disablexfer
+	jsr rs232_off
 
 ; write payload to disk
 	jsr setup_buffer
@@ -641,12 +641,12 @@ xmodem_receive:
 	jsr goobad
 
 @ackblk:
-	jsr clear232
+	jsr rs232_clear
 
 ; send ACK
-	jsr enablexfer
+	jsr rs232_on
 	lda #ACK
-	jsr modput
+	jsr rs232_put
 	jsr clrchn
 
 	lda #0

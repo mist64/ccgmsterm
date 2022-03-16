@@ -69,7 +69,7 @@ prtmc0
 	ldx ascii_mode
 	beq :+
 	jsr petscii_to_ascii
-:	jsr modput
+:	jsr rs232_put
 	lda #$100-3
 	sta JIFFIES
 :	lda JIFFIES
@@ -80,7 +80,7 @@ prtmc0
 	bne :-		; wait 50 msec [XXX combine]
 
 ; get echo
-	jsr modget
+	jsr rs232_get
 	cmp #0
 	bne @mci
 	ldx half_duplex

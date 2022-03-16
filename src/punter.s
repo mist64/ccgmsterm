@@ -135,7 +135,7 @@ accept_loop:
 
 @loop1:	; get char from modem
 	jsr check_abort
-	jsr pmodget
+	jsr prs232_get
 	lda stat
 	bne @nodata	; nothing received
 
@@ -211,10 +211,10 @@ accept_loop:
 
 ;----------------------------------------------------------------------
 ; get character from modem
-pmodget:
+prs232_get:
 	tya
 	pha
-	jsr modget
+	jsr rs232_get
 	bcs @1
 	sta lastch
 	lda #0
@@ -237,11 +237,11 @@ pmodget:
 ;----------------------------------------------------------------------
 ; send a code
 sendcode:
-	jsr clear232
-	jsr enablexfer
+	jsr rs232_clear
+	jsr rs232_on
 	ldx #0
 :	lda codes,y
-	jsr modput
+	jsr rs232_put
 	iny
 	inx
 	cpx #3
@@ -408,11 +408,11 @@ transmit_block:
 
 	; transmit alternate buffer
 	jsr altbuf
-	jsr clear232
-	jsr enablexfer
+	jsr rs232_clear
+	jsr rs232_on
 	ldy #0
 :	lda (bufptr),y
-	jsr modput
+	jsr rs232_put
 	iny
 	cpy bufcount
 	bne :-
@@ -481,7 +481,7 @@ recmodem:
 	sta timer1+1
 
 @loop2:	jsr check_abort
-	jsr pmodget
+	jsr prs232_get
 	lda stat
 	bne @nochr	; no character received
 
@@ -563,7 +563,7 @@ create_data_block:
 	lda blocknum+1
 	adc #0
 	sta (bufptr),y	; hi
-	jsr disablexfer
+	jsr rs232_off
 
 	; read data from file into block
 	ldx #LFN_FILE
@@ -750,7 +750,7 @@ receive:
 	beq @skip
 
 	; write to disk
-	jsr disablexfer
+	jsr rs232_off
 	ldx #LFN_FILE
 	jsr chkout
 	ldy #POS_PAYLOAD
@@ -950,7 +950,7 @@ prtdash:
 ;----------------------------------------------------------------------
 ; reset RS232 port
 reset:
-	jsr enablexfer
+	jsr rs232_on
 terminal:
 	rts
 

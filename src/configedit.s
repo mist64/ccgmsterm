@@ -9,7 +9,7 @@
 ;----------------------------------------------------------------------
 ; change terminal params/dial
 handle_f7_config:
-	jsr disablemodem
+	jsr rs232_off
 	lda #0
 	sta $d020
 	sta $d021
@@ -213,7 +213,7 @@ f7chgk
 	lda nicktemp	; [XXX no-op]
 	beq *+2		; [XXX no-op]
 
-	jsr enablemodem
+	jsr rs232_init
 	jmp term_entry
 
 ;----------------------------------------------------------------------

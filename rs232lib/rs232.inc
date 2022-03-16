@@ -21,11 +21,10 @@ BAUD_19200	= 5
 BAUD_38400	= 6
 
 ; API
-.global enablemodem
-.global disablemodem
-.global enablexfer
-.global disablexfer
-.global modget
-.global modput
-.global dropdtr
-.global clear232
+.global rs232_init
+.global rs232_on
+.global rs232_off
+.global rs232_get
+.global rs232_put
+.global rs232_dropdtr
+.global rs232_clear
