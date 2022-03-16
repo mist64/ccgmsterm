@@ -239,6 +239,22 @@ term_mainloop:
 	ldx status
 	bne @loop2b	; = @loop2
 
+.if AUTOMATION	; only enabled for automated tests
+	cmp #3		; code 3 (STOP)
+	bne @nauto
+	ldy #0
+:	jsr modget
+	ldx status
+	bne :-
+	sta KEYD,y	; keyboard buffer
+	iny
+	cmp #3		; code 3 (STOP)
+	bne :-
+	sty NDX		; buffer count
+	jmp @loop2
+@nauto:
+.endif
+
 ; ASCII conversion
 	ldx ascii_mode
 	beq :+

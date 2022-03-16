@@ -52,7 +52,7 @@
 
 ## Changes since CCGMS Future 0.1
 
-* rewrote RS232 driver model – this may cause regressions; needs testing, especially PUNTER and Multi-PUNTER
+* rewrote RS232 driver model – this may cause regressions; needs testing, especially Multi-PUNTER
 * cleaned up memory layout
 * changed "Graphics", "C/G", "Anscii" wording to (imho) clearer "PETSCII" and "ASCII"
 * changed "Author's Message" to (imho) clearer "Instructions"
@@ -89,6 +89,10 @@ x64sc VICE with UP9600 ([receiving OK but sending broken as of VICE 3.6.2](https
 	make runup9600
 
 The x64sc command line has changed recently, so these need at least VICE 3.6.
+
+## Testing
+
+This repository includes automated and manual tests. See [Testing](Testing.md).
 
 ## Changelog
 

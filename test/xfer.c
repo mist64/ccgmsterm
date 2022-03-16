@@ -22,9 +22,19 @@ int xfer_save_data(unsigned char *data, int length) {
 FILE *f;
 
 void
-announce(char *s) {
-	printf("\r\n%s\r\n", s);
+automate(char *s) {
+	printf("\x03%s\x03", s);
 	fflush(stdout);
+}
+
+char *
+config_str(int i) {
+	switch (i) {
+		case 0: return "XMODEM";
+		case 1: return "XMODEM-CRC";
+		case 2: return "XMODEM-1K";
+	}
+	return NULL;
 }
 
 int
@@ -44,70 +54,86 @@ main(int argc, char **argv) {
 	unsigned char *data_out1 = malloc(capacity);
 	unsigned char *data_out2 = malloc(capacity);
 
-	sleep(4);
+	int failed = 0;
 
-  // PUNTER DOWNLOAD
-	announce("punter\r\n* select \x12 f3 download \x92\r\n* filename: 'a'");
-	sleep(5);
+	sleep(4);
+	printf("\r\nxfer test...\r\n");
+	fflush(stdout);
+	sleep(1);
+
+#define F1 "\x85"
+#define F3 "\x86"
+#define F7 "\x88"
+#define CR "\r"
+
+	// PUNTER DOWNLOAD
+	automate(F3 "A" CR);
 	punter_xmit(data_in, size_in);
 
 	sleep(5);
 
 	// PUNTER UPLOAD
-	announce("punter\r\n* select \x12 f1 upload \x92\r\n* filename: 'a'");
+	automate(F1 "A" CR);
 	data_out_punter_index = 0;
 	punter_recv();
-
-	sleep(5);
-
-	if (!memcmp(data_in, data_out_punter, size_in) && data_out_punter_index == size_in) {
-		fprintf(stderr, "***** SERVER: PUNTER OK\n");
-		announce("punter ok\n");
-	} else {
-		fprintf(stderr, "***** SERVER: PUNTER BAD\n");
-		announce("punter bad\n");
-	}
-
-	announce("now switch to xmodem:\r\n\x12 f7 \x92 \x12 p \x92 \x12 return \r\nthen:");
-
-	// XMODEM 512B DOWNLOAD
-	announce("xmodem 512b\r\n* select \x12 f3 download \x92\r\n* filename: 'a', type p");
-	xmodemTransmit(data_in, size_in, 0);
-
-	sleep(4);
-
-	// XMODEM 1KB DOWNLOAD
-	announce("xmodem 1kb\r\n* select \x12 f3 download \x92\r\n* filename: 'b', type p");
-	xmodemTransmit(data_in, size_in, 1);
-
-	sleep(4);
-
-	// XMODEM CHKSUM UPLOAD
-	announce("xmodem chksum\r\n* select \x12 f1 upload \x92\r\n* filename: 'a'");
-	sleep(5);
-	int size_out1 = xmodemReceive(data_out1, capacity, 0);
-
-	sleep(4);
-
-	// XMODEM CRC16 UPLOAD
-	announce("xmodem crc16\r\n* select \x12 f1 upload \x92\r\n* filename: 'b'");
-	sleep(5);
-	int size_out2 = xmodemReceive(data_out2, capacity, 0);
+	sleep(8);
 
 	// compare input and output
-	if (!memcmp(data_in, data_out2, size_in)) {
-		fprintf(stderr, "***** SERVER: XMODEM PART1 OK\n");
-		announce("xmodem part1 ok\n");
-	} else {
-		fprintf(stderr, "***** SERVER: XMODEM PART1 BAD\n");
-		announce("xmodem part1 bad\n");
+	int good = !memcmp(data_in, data_out_punter, size_in);
+	fprintf(stderr, "***** TEST_XFER: PUNTER %s\n", good ? "OK" : "BAD");
+	if (!good) {
+		failed++;
 	}
-	if (!memcmp(data_in, data_out2, size_in)) {
-		fprintf(stderr, "***** SERVER: XMODEM PART2 OK\n");
-		announce("xmodem part2 ok\n");
+
+	for (int i = 0; i < 3; i++) {
+		// switch protocol
+		// 0: XMODEM
+		// 1: XMODEM-CRC
+		// 2: XMODEM-1K
+		automate(F7 "P" CR); // // "F7", "P", "RETURN"
+		sleep(1);
+
+		// XMODEM 512B DOWNLOAD
+		automate(F3 "B" CR "P" CR);
+		xmodemTransmit(data_in, size_in, 0);
+		sleep(4);
+
+		// XMODEM CHKSUM UPLOAD
+		automate(F1 "B" CR);
+		int size_out1 = xmodemReceive(data_out1, capacity, 0);
+		sleep(4);
+
+		// compare input and output
+		good = !memcmp(data_in, data_out1, size_in);
+		fprintf(stderr, "***** TEST_XFER: XMODEM; client: %s, server: 512B/CHKSUM: %s\n", config_str(i), good ? "OK" : "BAD");
+		if (!good) {
+			failed++;
+		}
+
+		// XMODEM 1KB DOWNLOAD
+		automate(F3 "C" CR "P" CR);
+		xmodemTransmit(data_in, size_in, 1);
+		sleep(4);
+
+		// XMODEM CRC16 UPLOAD
+		automate(F1 "C" CR);
+		int size_out2 = xmodemReceive(data_out2, capacity, 0);
+		sleep(4);
+
+		int good = !memcmp(data_in, data_out2, size_in);
+		fprintf(stderr, "***** TEST_XFER: XMODEM; client: %s, server: 1KB/CRC16:   %s\n", config_str(i), good ? "OK" : "BAD");
+		if (!good) {
+			failed++;
+		}
+	}
+	if (failed == 0) {
+		fprintf(stderr, "***** TEST_XFER: Succeeded!\n");
+		printf("\r\nxfer test succeeded!\r\n");
+		fflush(stdout);
 	} else {
-		fprintf(stderr, "***** SERVER: XMODEM PART2 BAD\n");
-		announce("xmodem part2 bad\n");
+		fprintf(stderr, "***** TEST_XFER: Failed!\n");
+		printf("\r\nxfer test failed!\r\n");
+		fflush(stdout);
 	}
 }
 

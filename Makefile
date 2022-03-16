@@ -1,6 +1,7 @@
 export PATH:=$(abspath bin):$(PATH)
 EASYFLASH ?= 0
 EXOMIZER ?= 0
+AUTOMATION ?= 0
 
 EXO_PATH := build/bin/exomizer
 EXO_ARGS := sfx sys -q -n -T4 -M256 -Di_perf=2
@@ -14,7 +15,7 @@ endif
 .PHONY: all
 all: $(EXO_PATH)
 	mkdir -p build
-	ca65 -g src/ccgmsterm.s -o build/ccgmsterm.o -DEASYFLASH=$(EASYFLASH)
+	ca65 -g src/ccgmsterm.s -o build/ccgmsterm.o -DEASYFLASH=$(EASYFLASH) -DAUTOMATION=$(AUTOMATION)
 	cl65 -g -C src/ccgmsterm.cfg build/ccgmsterm.o -o build/ccgmsterm.prg -Ln build/ccgmsterm.sym -m build/ccgmsterm.map
 ifeq ($(EXOMIZER),1)
 	$(EXO_PATH) $(EXO_ARGS) -o build/ccgmsterm-exo.prg build/ccgmsterm.prg
@@ -47,6 +48,11 @@ runsw: all build/disk.d64
 .PHONY: usb
 usb: all
 	cp build/ccgmsterm.prg /Volumes/C64/; diskutil unmountDisk force /Volumes/C64
+
+.PHONY: test
+test:
+	(cd test; ./xfer.sh 2>&1 | grep TEST_XFER) &
+	AUTOMATION=1 make clean all runup
 
 .PHONY: clean
 clean:
