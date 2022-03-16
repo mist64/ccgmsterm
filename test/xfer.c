@@ -6,6 +6,7 @@
 
 extern int xmodemTransmit(unsigned char *src, int srcsz, int use_1k);
 extern int xmodemReceive(unsigned char *dest, int destsz, int crc);
+extern int punter_xmit(void *data, int len);
 extern int punter_recv(void);
 
 unsigned char *data_out_punter;
@@ -44,6 +45,13 @@ main(int argc, char **argv) {
 	unsigned char *data_out2 = malloc(capacity);
 
 	sleep(4);
+
+  // PUNTER DOWNLOAD
+	announce("punter\r\n* select \x12 f3 download \x92\r\n* filename: 'a'");
+	sleep(5);
+	punter_xmit(data_in, size_in);
+
+	sleep(5);
 
 	// PUNTER UPLOAD
 	announce("punter\r\n* select \x12 f1 upload \x92\r\n* filename: 'a'");

@@ -41,6 +41,11 @@ void menu_update_xfer_progress(char *message, int a, int b) {
 
 #define gfx_vbl(...)
 
+#define MIN(a,b) \
+  ({ __typeof__ (a) _a = (a); \
+     __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+
 void punter_fail(char *message) {
   fprintf(stderr, "punter_fail: %s\n", message);
   menu_update_xfer_progress(message, xfer_saved_bytes, 0);
@@ -130,7 +135,7 @@ int punter_handshake(char *sendstring, char *waitstring) {
 }
 
 
-int punter_checksum(int len) {
+void punter_checksum(int len, unsigned short *c1, unsigned short *c2) {
   unsigned short cksum = 0;
   unsigned short clc = 0;
   unsigned char *data = xfer_buffer + 4;
@@ -141,14 +146,34 @@ int punter_checksum(int len) {
     clc ^= *data++;
     clc = (clc<<1) | (clc>>15);
   }
+  *c1 = cksum;
+  *c2 = clc;
+}
+
+
+int punter_checksum_verify(int len) {
+  unsigned short cksum;
+  unsigned short clc;
+  punter_checksum(len, &cksum, &clc);
   if (cksum == (xfer_buffer[0] | (xfer_buffer[1]<<8))) {
     if (clc == (xfer_buffer[2] | (xfer_buffer[3]<<8))) {
       return(1);
     }
   }
-  fprintf(stderr, "punter_checksum: cksum = %04x (%04x)\n", cksum, xfer_buffer[0] | (xfer_buffer[1]<<8));
-  fprintf(stderr, "punter_checksum:   clc = %04x (%04x)\n", clc, xfer_buffer[2] | (xfer_buffer[3]<<8));
+  fprintf(stderr, "punter_checksum_verify: cksum = %04x (%04x)\n", cksum, xfer_buffer[0] | (xfer_buffer[1]<<8));
+  fprintf(stderr, "punter_checksum_verify:   clc = %04x (%04x)\n", clc, xfer_buffer[2] | (xfer_buffer[3]<<8));
   return(0);
+}
+
+
+void punter_checksum_create(int len) {
+  unsigned short cksum;
+  unsigned short clc;
+  punter_checksum(len, &cksum, &clc);
+  xfer_buffer[0] = cksum & 0xff;
+  xfer_buffer[1] = cksum >> 8;
+  xfer_buffer[2] = clc & 0xff;
+  xfer_buffer[3] = clc >> 8;
 }
 
 
@@ -228,7 +253,7 @@ signed int punter_recv_block(int len) {
       }
     }
   }
-  if (punter_checksum(bytecnt)) {
+  if (punter_checksum_verify(bytecnt)) {
     if (punter_handshake("GOO", "ACK") == 0) {
       menu_update_xfer_progress("Handshake timed out", xfer_saved_bytes, 0);
       gfx_vbl();
@@ -369,5 +394,75 @@ int punter_recv(void) {
     menu_update_xfer_progress("Done, but handshake timed out", xfer_saved_bytes, 0);
     gfx_vbl();
   }
+  return(1);
+}
+
+void xmit_block(int len) {
+  for (int i = 0; i < len; i++) {
+    xfer_send_byte(xfer_buffer[i]);
+  }
+}
+
+// very simple Punter transmit implementation with zero error handling
+int punter_xmit(void *data, int data_len) {
+  // A1
+  fprintf(stderr, "punter_send: A1\n");
+  punter_handshake("GOO", "GOO");
+
+  // A2
+  fprintf(stderr, "punter_send: A2\n");
+  punter_handshake("ACK", "S/B");
+  xfer_buffer[5] = 0xff;
+  xfer_buffer[6] = 0xff;
+  xfer_buffer[7] = 1; // SEQ
+  punter_checksum_create(8);
+  xmit_block(8);
+  punter_handshake(NULL, "GOO");
+
+  // A3
+  fprintf(stderr, "punter_send: A3\n");
+  punter_handshake("ACK", "S/B");
+  punter_handshake("SYN", "SYN");
+	punter_send_string("S/B");
+
+  // B1
+  fprintf(stderr, "punter_send: B1\n");
+  punter_handshake(NULL, "GOO");
+
+  // B2
+  int max_block = 255;
+  int index = 0;
+  int data_ptr = 0;
+  int len = 7;
+  int next_len;
+  int is_last_block = 0;
+  do {
+    int next_data_ptr = data_ptr + len - 7;
+    next_len = MIN(data_len - next_data_ptr, max_block - 7) + 7;
+    if (len < max_block && index) {
+      index = 0xffff;
+      is_last_block = 1;
+    }
+    fprintf(stderr, "punter_send: B2\n");
+    punter_handshake("ACK", "S/B");
+    xfer_buffer[5] = index & 0xff;
+    xfer_buffer[6] = index >> 8;
+    xfer_buffer[4] = next_len;
+    memcpy(&xfer_buffer[7], &data[data_ptr], len - 7);
+    punter_checksum_create(len);
+    xmit_block(len);
+    punter_handshake(NULL, "GOO");
+    index++;
+    data_ptr = next_data_ptr;
+    len = next_len;
+    fprintf(stderr, "punter_send: len = %d\n", len);
+  } while(!is_last_block);
+
+  // B3
+  fprintf(stderr, "punter_send: B3\n");
+  punter_handshake("ACK", "S/B");
+  punter_handshake("SYN", "SYN");
+	punter_send_string("S/B");
+
   return(1);
 }

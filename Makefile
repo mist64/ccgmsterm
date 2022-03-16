@@ -27,7 +27,7 @@ $(EXO_PATH):
 	cp exomizer/src/exomizer build/bin
 
 build/disk.d64:
-	c1541 -format ccgms,fu d64 build/disk.d64 -write test/crc16.h a
+	c1541 -format ccgms,fu d64 build/disk.d64
 
 # run with User Port interface
 .PHONY: runup
