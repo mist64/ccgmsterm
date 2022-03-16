@@ -2,9 +2,10 @@
 
 ## Transfer Test
 
-The command
+The commands
 
-        make test
+        make testup # User Port
+        make testsw # SwiftLink/DE
 
 will build CCGMS with automation support and run an automated test in VICE for all file transfer protocols and their combinations.
 
@@ -21,7 +22,7 @@ It should print
 
 You will have to quit VICE manually after the test has finished.
 
-The test uses the User Port driver at 2400 baud and takes about 5 minutes. You can speed it up using warp mode. With minimal modifications to the Makefile, you can run the test with other drivers and/or on real hardware.
+The tests uses the respective driver at 2400 baud and takes about 5 minutes. You can speed it up using warp mode. UP9600 has to be tested on real hardware. Refer to the Makefile on how to run the `xfer.sh` server.
 
 ## Echo
 

@@ -12,7 +12,14 @@
 config_data:
 
 baud_rate:
+; DEFAULT_BAUDRATE: defined by build system
+.if DEFAULT_BAUDRATE = 2400
 	.byte BAUD_2400
+.elseif DEFAULT_BAUDRATE = 9600
+	.byte BAUD_9600
+.else
+.error
+.endif
 
 ; indicates whether dialing should use ATD, followed by a quote
 firmware_zimmers:
@@ -22,9 +29,7 @@ mopo2:
 	.byte $20	; unused, but needs to stay for bin compat
 
 modem_type:
-	.byte MODEM_TYPE_USERPORT
-;	.byte MODEM_TYPE_UP9600
-;	.byte MODEM_TYPE_SWIFTLINK_DE
+	.byte DEFAULT_DRIVER; defined by build system
 
 ;----------------------------------------------------------------------
 ; Phone book

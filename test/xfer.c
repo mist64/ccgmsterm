@@ -68,12 +68,14 @@ main(int argc, char **argv) {
 
 	// PUNTER DOWNLOAD
 	automate(F3 "A" CR);
+	sleep(1);
 	punter_xmit(data_in, size_in);
 
 	sleep(5);
 
 	// PUNTER UPLOAD
 	automate(F1 "A" CR);
+	sleep(1);
 	data_out_punter_index = 0;
 	punter_recv();
 	sleep(8);
@@ -95,11 +97,13 @@ main(int argc, char **argv) {
 
 		// XMODEM 512B DOWNLOAD
 		automate(F3 "B" CR "P" CR);
+		sleep(1);
 		xmodemTransmit(data_in, size_in, 0);
 		sleep(4);
 
 		// XMODEM CHKSUM UPLOAD
 		automate(F1 "B" CR);
+		sleep(1);
 		int size_out1 = xmodemReceive(data_out1, capacity, 0);
 		sleep(4);
 
@@ -112,11 +116,13 @@ main(int argc, char **argv) {
 
 		// XMODEM 1KB DOWNLOAD
 		automate(F3 "C" CR "P" CR);
+		sleep(1);
 		xmodemTransmit(data_in, size_in, 1);
 		sleep(4);
 
 		// XMODEM CRC16 UPLOAD
 		automate(F1 "C" CR);
+		sleep(1);
 		int size_out2 = xmodemReceive(data_out2, capacity, 0);
 		sleep(4);
 
