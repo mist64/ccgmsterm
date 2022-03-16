@@ -161,17 +161,6 @@ supercpu_off:
 	rts
 
 ;----------------------------------------------------------------------
-; Clear RS232 buffer
-clear232:
-	pha
-	lda #0
-	sta rtail
-	sta rhead
-	sta rfree
-	pla
-	rts
-
-;----------------------------------------------------------------------
 ; [XXX this should be closer to the PUNTER code]
 puntdelay:
 ; you got a better way to do this? have at it!

@@ -1,11 +1,27 @@
 ; CCGMS Terminal
 ;
-; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; Copyright (c) 2016,2022, Craig Smith, alwyz, Michael Steil. All rights reserved.
 ; This project is licensed under the BSD 3-Clause License.
 ;
 ; RS232 Userport Driver, 300-2400 baud
 ;  based on Novaterm 9.6
 ;
+
+.include "rs232_kernal.inc"
+.include "c64.inc"		; CIA#1/CIA#2 defines
+.import ribuf			; external
+
+; zero page: this reuses the KERNAL's RS232 locations
+inbits	= $a8	; BITCI: Bit counter during RS232 input
+inbyte	= $aa	; RIDATA: Byte buffer during RS232 input
+outbits	= $b4	; BITTS: Bit counter and stop bit switch during RS232 output
+outbit	= $b5	; NXTBIT: Bit buffer (in bit #2) during RS232 output
+outbyte	= $b6	; RODATA: Byte buffer during RS232 output
+
+; function table for dispatcher
+.export rsuser_funcs
+
+.segment "RS232"
 
 ;----------------------------------------------------------------------
 rsuser_funcs:
@@ -28,8 +44,7 @@ rsuser_setup:
 	sty $0319
 
 	cli
-
-	jmp clear232
+	rts
 
 ;----------------------------------------------------------------------
 bdloc:
@@ -116,7 +131,7 @@ fullhi=*+1
 ;notcia	ldy #0
 ;	jmp rstkey	; or jmp norest
 
-nmion	lda ENABL	; receive a bit
+nmion:	lda ENABL	; receive a bit
 	sta $dd0d
 	txa
 	and #$02
@@ -133,23 +148,24 @@ nmion	lda ENABL	; receive a bit
 	lda #0
 	sta $dd0f
 	lda #$12
-switch	ldy #$7f
+switch:	ldy #$7f
 	sty $dd0d
 	sty $dd0d
 	eor ENABL
 	sta ENABL
 	sta $dd0d
-txd	txa
+txd:	txa
 	lsr
-chktxd	bcc nmiflow
+chktxd:	bcc @nmiflow
 	dec outbits
-	bmi endbyte
+	bmi @endbyte
 	lda #4
 	ror outbyte
 	bcs :+
 	lda #0
 :	sta outbit
-nmiflow	lda inbits
+@nmiflow:
+	lda inbits
 	and #8
 	beq :+
 	clc
@@ -160,7 +176,8 @@ nmiflow	lda inbits
 	pla
 	rti
 
-endbyte	lda #0
+@endbyte:
+	lda #0
 	sta isbyte
 	ldx #0		;  turn transmit int off
 	stx $dd0e
@@ -170,10 +187,9 @@ endbyte	lda #0
 
 ;----------------------------------------------------------------------
 rsuser_putxfer:
-	sta rsotm
-	stx rsotx
-	sty rsoty
-	lda rsotm
+	pha
+	stx save_x
+	sty save_y
 	sta outbyte
 	lda #0
 	sta outbit
@@ -190,22 +206,13 @@ xmithi=*+1
 	lda #$11
 	sta $dd0e
 	lda #$81
-change	sta $dd0d
-	php
-	sei
-	ldy #$7f
-	sty $dd0d
-	sty $dd0d
-	ora ENABL
-	sta ENABL
-	sta $dd0d
-	plp
-:	bit isbyte
-	bmi :-
-ret1	clc
-	ldx rsotx
-	ldy rsoty
-	lda rsotm
+	jsr change
+	clc
+save_x=*+1
+	ldx #0
+save_y=*+1
+	ldy #0
+	pla
 	rts
 
 ;----------------------------------------------------------------------
@@ -230,21 +237,34 @@ rsuser_disable:
 ;----------------------------------------------------------------------
 ; enable rs232 input
 rsuser_enable:
-	stx rsotx
-	sty rsoty
-	sta rsotm
 	lda ENABL
 	and #$12
-	bne ret1
-	sta $dd0f
+	beq :+
+	rts
+:	sta $dd0f
 	lda #$90
-	jmp change
+change:
+	sta $dd0d
+	php
+	sei
+	ldy #$7f
+	sty $dd0d
+	sty $dd0d
+	ora ENABL
+	sta ENABL
+	sta $dd0d
+	plp
+:	bit isbyte
+	bmi :-
+	rts
 
 ;----------------------------------------------------------------------
+; X: baud_rate
+; Y: is_pal_system
 rsuser_setbaud:
-	lda baud_rate
+	txa		; baud_rate
 	asl
-	ldy is_pal_system
+	cpy #0		; is_pal_system
 	beq :+
 	clc
 	adc #OFFSET

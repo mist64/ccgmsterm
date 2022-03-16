@@ -71,6 +71,7 @@ term_mainloop:
 	cmp #0
 	jeq @input_loop	; skip output code
 
+.if 0	; [XXX I don't think this makes sense any more]
 ; cbm-ctrl-f: reset/init user port RS-232
 	cmp #6		; ctrl-f
 	bne @no1
@@ -85,6 +86,8 @@ term_mainloop:
 	stx cia2pb
 	jmp @loop2
 @no1
+.endif
+
 ;	cmp #UNDERLINE
 ;	bne @no2
 ;	ldx SHFLAG	; shift <- toggles

@@ -10,13 +10,6 @@ MAX_RETRIES		= 10
 PAYLOAD_SIZE_128	= 128
 PAYLOAD_SIZE_1K		= 1024
 
-; KERNAL
-STATUS	= $90	; channel I/O error/EOF indicator
-RIDBE = $029b
-RIDBS = $029c
-RODBS = $029d
-RODBE = $029e
-
 ; protocol constants
 SOH	= $01	; Start of Heading
 STX_	= $02	; Start of Heading (1K blocks)
@@ -159,7 +152,7 @@ xmodem_send:
 
 	ldy #0
 @snd2:	jsr getin	; read from file
-	ldx STATUS
+	ldx status
 	stx xmoend	; set EOT flag if end of file (or error)
 @snd3:	jsr store_byte
 	bne :+

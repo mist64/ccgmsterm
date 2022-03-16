@@ -6,25 +6,6 @@
 ; Global constants
 ;
 
-; CIA#1 I/O
-cia1talo	= $dc04
-cia1tahi	= $dc05
-cia1tblo	= $dc06
-cia1tbhi	= $dc07
-cia1sdr         = $dc0c
-cia1icr         = $dc0d
-cia1cra         = $dc0e
-cia1crb         = $dc0f
-; CIA#2 I/O
-cia2pa		= $dd00
-cia2pb		= $dd01
-cia2ddrb	= $dd03
-cia2tblo	= $dd06
-cia2tbhi	= $dd07
-cia2sdr         = $dd0c
-cia2icr         = $dd0d
-cia2crb         = $dd0f
-
 numfil	= $98
 locat	= $fb
 nlocat	= $fd
@@ -72,11 +53,6 @@ rtail	= RIDBE ; friendlier name
 rhead	= RIDBS ; friendlier name
 rfree	= RODBS ; re-purposed; SwiftLink only
 
-; register saving, used by rs_user, swiftlink, up9600
-rsotm	= $97
-rsotx	= $9e
-rsoty	= $9f
-
 ; zero page
 tmp02	= $02
 max	= $02
@@ -93,22 +69,13 @@ buffl2	= $0c
 buffer_open	= $10
 half_duplex	= $12
 zpoutstr	= $22 ; 2 bytes
-sndtim  = $24   ; 2 bytes, UP9600
-rcvtim  = $26   ; 2 bytes, UP9600
 tmp9e	= $9e
 tmp9f	= $9f
-inbits	= $a8
-outstat	= $a9	; re-used KERNAL symbol RER/RINONE
-inbyte	= $aa
 endpos	= $ac
 buffer_ptr	= $b0 ; 2 bytes
 buffst	= $b2
-outbits	= $b4
-outbit	= $b5
-outbyte	= $b6
 tmpfd	= $fd
 cursor_flag	= $fe
-
 
 ; BASIC symbols
 outnum	= $bdcd
@@ -131,6 +98,10 @@ SHFLAG	= $028d ; bitfield: modifier keys currently pressed
  SHFLAG_CTRL	= 4
 KEYLOG	= $028f
 MODE	= $0291
+RIDBE   = $029b
+RIDBS   = $029c
+RODBS   = $029d
+RODBE   = $029e
 ENABL	= $02a1
 
 untalk	= $ffab
@@ -165,8 +136,6 @@ oldout	= $f1ca
 oldchk	= $f21b
 ochrin	= $f157
 ogetin	= $f13e
-oldirq	= $ea31
-oldnmi	= $fe47
 findfn	= $f30f
 devnum	= $f31f
 nofile	= $f701
@@ -216,20 +185,6 @@ LTBLUE		= $9a
 LTGRAY		= $9b
 
 CURSOR	= '_'	; cursor, ASCII "_"
-
-MODEM_TYPE_USERPORT	= 0
-MODEM_TYPE_UP9600	= 1
-MODEM_TYPE_SWIFTLINK_DE	= 2
-MODEM_TYPE_SWIFTLINK_DF	= 3
-MODEM_TYPE_SWIFTLINK_D7	= 4
-
-BAUD_300	= 0
-BAUD_1200	= 1
-BAUD_2400	= 2
-BAUD_4800	= 3
-BAUD_9600	= 4
-BAUD_19200	= 5
-BAUD_38400	= 6
 
 PROTOCOL_PUNTER		= 0
 PROTOCOL_XMODEM		= 1

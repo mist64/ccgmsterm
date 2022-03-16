@@ -1,11 +1,18 @@
 ; CCGMS Terminal
 ;
-; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; Copyright (c) 2016,2022, Craig Smith, alwyz, Michael Steil. All rights reserved.
 ; This project is licensed under the BSD 3-Clause License.
 ;
 ; RS232 SwiftLink/Turbo232 (MOS 6551 ACIA) Driver
 ;  based on Jeff Brown adaptation of Novaterm version
 ;
+
+.include "rs232_kernal.inc"
+.include "rs232.inc"		; for MODEM_TYPE_*
+.import ribuf			; external
+
+; function table for dispatcher
+.export sw_funcs
 
 stopsw	= 1
 startsw	= 0
@@ -17,6 +24,8 @@ sw_stat	= swift+1
 sw_cmd	= swift+2
 sw_ctrl	= swift+3
 sw_baud	= swift+7
+
+.segment "RS232"
 
 ;----------------------------------------------------------------------
 sw_funcs:
@@ -35,15 +44,15 @@ nmisw:
 	pha
 	tya
 	pha
-sm1	lda sw_stat
+sm1:	lda sw_stat
 	and #%00001000	; mask out all but receive interrupt reg
 	bne sm2		; get outta here if interrupts are disabled (disk access etc)
 	sec		; set carry upon return
 	bcs recch1
-sm2	lda sw_cmd
+sm2:	lda sw_cmd
 	ora #%00000010	; disable receive interrupts
-sm3	sta sw_cmd
-sm4	lda sw_data
+sm3:	sta sw_cmd
+sm4:	lda sw_data
 	ldx rtail
 	sta ribuf,x
 	inc rtail
@@ -55,11 +64,11 @@ sm4	lda sw_data
 	stx paused	; x=1 for stop, by the way
 	jsr flow
 :
-sm5	lda sw_cmd
+sm5:	lda sw_cmd
 	and #%11111101	; re-enable receive interrupt
-sm6	sta sw_cmd
+sm6:	sta sw_cmd
 	clc
-recch1	pla
+recch1:	pla
 	tay
 	pla
 	tax
@@ -68,43 +77,44 @@ recch1	pla
 
 ;----------------------------------------------------------------------
 flow:
-sm7	lda sw_cmd
+sm7:	lda sw_cmd
 	and #%11110011
 	cpx #stopsw
-	beq fl1
+	beq :+
 	ora #%00001000
-fl1
-sm8	sta sw_cmd
+:
+sm8:	sta sw_cmd
 	rts
 
 ;----------------------------------------------------------------------
 swwait:
-sm9	lda sw_cmd
+sm9:	lda sw_cmd
 	ora #%00001000	; enable transmitter
-sm10	sta sw_cmd
-sm11	lda sw_stat
+sm10:	sta sw_cmd
+sm11:	lda sw_stat
 	and #%00110000
 	beq swwait
 	rts
 
 ;----------------------------------------------------------------------
 sw_disable:
-sm12	lda sw_cmd
+sm12:	lda sw_cmd
 	ora #%00000010	; disable receive interrupt
-sm13	sta sw_cmd
+sm13:	sta sw_cmd
 	rts
 
 ;----------------------------------------------------------------------
 sw_enable:
-sm14	lda sw_cmd
+sm14:	lda sw_cmd
 	and #%11111101	; enable receive interrupt
-sm15	sta sw_cmd
+sm15:	sta sw_cmd
 	rts
 
 ;----------------------------------------------------------------------
+; A: modem_type
+; X: baud_rate
 sw_setup:
 ; set SwiftLink address by modifying all access code
-	lda modem_type
 	cmp #MODEM_TYPE_SWIFTLINK_DE
 	beq @de
 	cmp #MODEM_TYPE_SWIFTLINK_DF
@@ -154,7 +164,7 @@ sw_setup:
 ;             :::::::
 ;             :::::::.--- DTR control, 1=DTR low
 	lda #%00001001
-sm16	sta sw_cmd
+sm16:	sta sw_cmd
 ;             .------------------------- 0 = one stop bit
 ;             :
 ;             :.-------------------- word length, bits 6-7
@@ -167,55 +177,50 @@ sm16	sta sw_cmd
 ;             ::::::.--- bits   ;1010 == 4800 baud, changes later
 ;             :::::::.-- 0-3
 	lda #%00010000
-sm17	sta sw_ctrl
+sm17:	sta sw_ctrl
 
-	lda baud_rate
-	tax
-sm18	lda sw_ctrl
+sm18:	lda sw_ctrl
 	and #$f0
-	ora swbaud,x
-sm19	sta sw_ctrl
+	ora swbaud,x	; baud_rate
+sm19:	sta sw_ctrl
 
 	lda #<nmisw
 	ldx #>nmisw
 	sta $0318 ; NMINV
 	stx $0319
 
-	jsr clear232
 	cli
 	rts
 
 ;----------------------------------------------------------------------
 sw_putxfer:
-	sta rsotm
-	stx rsotx
-	sty rsoty
-sm20	lda sw_cmd
+	pha
+sm20:	lda sw_cmd
 	sta temp
 	jsr swwait
-	lda rsotm
-sm21	sta sw_data
+	pla
+	pha
+sm21:	sta sw_data
 	jsr swwait
-	lda temp	; restore rts state
-sm22	sta sw_cmd
-	lda rsotm
-	ldx rsotx
-	ldy rsoty
+temp=*+1
+	lda #0		; restore rts state
+sm22:	sta sw_cmd
+	pla
 	clc
 	rts
 
 ;----------------------------------------------------------------------
 ; Hang up
 sw_dropdtr:
-sm23	lda sw_cmd
+sm23:	lda sw_cmd
 	and #%11111110
-sm24	sta sw_cmd
+sm24:	sta sw_cmd
 	ldx #226
 	stx JIFFIES
 :	bit JIFFIES
 	bmi :-
 	ora #%00000001
-sm25	sta sw_cmd
+sm25:	sta sw_cmd
 	rts
 
 ;----------------------------------------------------------------------
@@ -241,8 +246,6 @@ sw_getxfer:
 @1:	rts
 
 ;----------------------------------------------------------------------
-temp:
-	.byte 0
 paused:
 	.byte 0
 

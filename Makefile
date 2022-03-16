@@ -15,10 +15,16 @@ RUN_PRG = build/ccgmsterm.prg
 endif
 
 .PHONY: all
-all: $(EXO_PATH)
+all: $(EXO_PATH) build/rs232.lib
 	mkdir -p build
+
 	ca65 -g src/ccgmsterm.s -o build/ccgmsterm.o -DEASYFLASH=$(EASYFLASH) -DAUTOMATION=$(AUTOMATION) -DDEFAULT_DRIVER=$(DEFAULT_DRIVER) -DDEFAULT_BAUDRATE=$(DEFAULT_BAUDRATE)
-	cl65 -g -C src/ccgmsterm.cfg build/ccgmsterm.o -o build/ccgmsterm.prg -Ln build/ccgmsterm.sym -m build/ccgmsterm.map
+
+	cl65 -g -C src/ccgmsterm.cfg \
+		-o build/ccgmsterm.prg \
+		-Ln build/ccgmsterm.sym -m build/ccgmsterm.map \
+		build/ccgmsterm.o \
+		build/rs232.lib
 ifeq ($(EXOMIZER),1)
 	$(EXO_PATH) $(EXO_ARGS) -o build/ccgmsterm-exo.prg build/ccgmsterm.prg
 endif
@@ -28,6 +34,14 @@ $(EXO_PATH):
 	mkdir -p build/bin
 	$(MAKE) -C exomizer/src CFLAGS="-Wall -Wstrict-prototypes -pedantic -O3"
 	cp exomizer/src/exomizer build/bin
+
+build/rs232.lib:
+	mkdir -p build
+	ca65 -g rs232lib/rs232.s -o build/rs232.o
+	ca65 -g rs232lib/rs232_userport.s -o build/rs232_userport.o
+	ca65 -g rs232lib/rs232_up9600.s -o build/rs232_up9600.o
+	ca65 -g rs232lib/rs232_swiftlink.s -o build/rs232_swiftlink.o
+	ar65 a build/rs232.lib build/rs232.o build/rs232_userport.o build/rs232_up9600.o build/rs232_swiftlink.o
 
 build/disk.d64:
 	c1541 -format ccgms,fu d64 build/disk.d64

@@ -1,6 +1,6 @@
 ; CCGMS Terminal
 ;
-; Copyright (c) 2016,2020, Craig Smith, alwyz. All rights reserved.
+; Copyright (c) 2016,2022, Craig Smith, alwyz, Michael Steil. All rights reserved.
 ; This project is licensed under the BSD 3-Clause License.
 ;
 ; Main .s file
@@ -10,10 +10,16 @@
 	.feature string_escapes
 	.macpack longbranch
 
+; RS232 driver API
+.include "../rs232lib/rs232.inc"
+; symbols required by rs232lib
+.export modem_type, baud_rate, is_pal_system	; modem settings
+.export ribuf, revtabup				; buffer, temp storage
+
 .define VERSION "0.1"
 
-	.include "declare.s"
-	.include "encoding.s"
+	.include "declare.inc"
+	.include "encoding.inc"
 
 .segment "HEADER"
 	.word $0801	; PRG load address
@@ -54,10 +60,6 @@ next_line:
 	.include "instrprint.s"
 	.include "macro.s"
 	.include "configedit.s"
-	.include "rs232_userport.s"
-	.include "rs232_swiftlink.s"
-	.include "rs232_up9600.s"
-	.include "rs232.s"
 	.include "reu.s"
 	.include "theme.s"
 	.include "config.s"

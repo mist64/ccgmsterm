@@ -109,9 +109,13 @@ start:
 
 ;----------------------------------------------------------------------
 ; open rs232 file
+; [XXX This used to open a channel on device #2, which most serial ]
+; [XXX communication went through. Now, this doesn't do much any   ]
+; [XXX more, but it's still called from several places, which is   ]
+; [XXX probably not necessary.                                     ]
+; [XXX It needs to be called once though ("jsr rsopen" above!) to  ]
+; [XXX init the RS232 dispatch jump table.                         ]
 rsopen:
-	jsr rsuser_disable
-	jsr up9600_disable
 	jsr enablemodem
 	jsr clall
 	jsr disablemodem

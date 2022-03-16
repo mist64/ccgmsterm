@@ -1,6 +1,6 @@
 ; CCGMS Terminal
 ;
-; Copyright (c) 2016,2020, Craig Smith, alwyz, Michael Steil. All rights reserved.
+; Copyright (c) 2016,2022, Craig Smith, alwyz, Michael Steil. All rights reserved.
 ; This project is licensed under the BSD 3-Clause License.
 ;
 ; RS232 UP9600 Driver
@@ -8,20 +8,38 @@
 ;  Message-Id: <199711301621.RAA01078@dosbuster.home.dd>
 ;
 
+.include "rs232_kernal.inc"
+.include "c64.inc"		; CIA#1/CIA#2 defines
+.import ribuf, revtabup		; external
+
+; function table for dispatcher
+.export up9600_funcs
+
+oldirq	= $ea31
+oldnmi	= $fe47
+
+; zero page
+sndtim  = $a7   ; reuse range $a7-$ab,
+rcvtim  = $a9   ; which is used by the
+outstat	= $ab	; KERNAL RS-232 driver
+
 RTS_MIN	= 50	; buffer low mark, will enable Request To Send
 RTS_MAX	= 200	; buffer high mark, will disable Request To Send
 
+; CIA ICR
 ICR_TA	= %00000001
 ICR_TB	= %00000010
 ICR_SP	= %00001000
 ICR_FLG	= %00010000
 ICR_IR	= %10000000
-
+; CIA CR
 CR_START= %00000001
 CR_PBON	= %00000010
 CR_LOAD	= %00010000
 CR_SPOUT= %01000000
 CR_TOD	= %10000000
+
+.segment "RS232"
 
 ;----------------------------------------------------------------------
 up9600_funcs:
@@ -108,7 +126,13 @@ nmi_bytrdy:
 	rti
 
 ;----------------------------------------------------------------------
+; A: modem_type
+; X: baud_rate
+; Y: is_pal_system
 up9600_setup:
+	sty is_pal_system
+	jsr up9600_setbaud
+
 ; generate lookup table
 	ldx #0
 @1:	stx outstat	; (reuse outstat as temp)
@@ -121,9 +145,6 @@ up9600_setup:
 	inx
 	bpl @1
 
-	jsr clear232
-
-	jsr up9600_setbaud
 ; run into up9600_enable
 
 ;----------------------------------------------------------------------
@@ -144,7 +165,8 @@ up9600_enable:
 	sty $0319
 
 	; move KERNAL's 60 Hz timer interrupt to timer B
-	ldx is_pal_system
+is_pal_system = *+1
+	ldx #0
 	lda ilotab,x
 	sta cia1tblo
 	lda ihitab,x
@@ -242,17 +264,23 @@ TIMER_PAL	= CLOCK_PAL / MIN_BAUD
 TIMER_NTSC	= CLOCK_NTSC / MIN_BAUD
 
 up9600_setbaud:
+; X: baud_rate
+; Y: is_pal_system
 ; [XXX technically, the timer values need to be 1 less]
-	lda #<TIMER_NTSC	; NTSC
+	txa
+	pha		; baud_rate
+
+	lda #<TIMER_NTSC
 	ldx #>TIMER_NTSC
-	ldy is_pal_system
+	cpy #0		; is_pal_system
 	beq :+
 	lda #<TIMER_PAL
 	ldx #>TIMER_PAL
 :	sta sndtim
 	stx sndtim+1
 
-	ldx baud_rate	; 0=300, 1=1200, 2=2400 etc.
+	pla		; baud_rate
+	tax		; 0=300, 1=1200, 2=2400 etc.
 	beq :+
 	inx		; -> 0=300, 2=1200, 3=2400 etc.
 :	txa
@@ -296,10 +324,8 @@ up9600_getxfer:
 
 ;----------------------------------------------------------------------
 up9600_putxfer:
-	sta rsotm
-	stx rsotx
-	sty rsoty	; [XXX unchanged]
-	pha		; [XXX]
+	stx save_x
+	pha
 
 	; reverse bit order (part 1)
 	cmp #$80	; move bit 7 into C
@@ -344,10 +370,9 @@ up9600_putxfer:
 	sta cia1sdr	; send through SDR
 
 	clc
-	lda rsotm
-	ldx rsotx
-	ldy rsoty	; [XXX unchanged]
-	pla		; [XXX]
+save_x=*+1
+	ldx #0
+	pla
 	rts
 
 ;----------------------------------------------------------------------
