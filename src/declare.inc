@@ -89,6 +89,7 @@ FA	= $ba
 LSTX	= $c5	; last key pressed
 NDX     = $c6   ; number of characters in keyboard queue
 BLNSW   = $cc   ; cursor blinking
+LDTB1   = $d9   ; screen line link table
 KEYD	= $0277 ; keyboard buffer
 RPTFLA	= $028a	; key repeat flag
 KOUNT	= $028b	; counter for timing delay between key repeats
@@ -139,7 +140,8 @@ ogetin	= $f13e
 findfn	= $f30f
 devnum	= $f31f
 nofile	= $f701
-COLTAB  = $e8da ; PETSCII codes for the colors 0-15
+COLTAB  = $e8da	; PETSCII codes for the colors 0-15
+LDTB2	= $ecf0	; line offsets low
 
 ; logical file numbers
 LFN_FILE	= 2	; for upload/download

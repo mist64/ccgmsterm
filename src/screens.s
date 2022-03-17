@@ -122,9 +122,9 @@ bufclr
 ; calculate screen pointer (and read)
 calc_scr_ptr:
 	ldy LINE
-	lda $ecf0,y	; low byte of screen address for line
+	lda LDTB2,y	; low byte of screen address for line
 	sta locat
-	lda $d9,y	; hi byte
+	lda LDTB1,y	; hi byte
 	and #$7f
 	sta locat+1
 	lda COLUMN
