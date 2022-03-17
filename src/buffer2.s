@@ -17,6 +17,12 @@ tmpchr	= tmp02
 tmpcol	= tmp03
 
 cf7_screen_to_buffer:
+	lda #40
+	bit col80_enabled
+	bpl :+
+	lda #80
+:	sta @mode_line_with
+
 	lda #0
 	sta NDX		; clear kbd buffer
 
@@ -39,9 +45,10 @@ cf7_screen_to_buffer:
 	sta stbcol	; illegal col, different to any col
 
 	; find screen height by counting empty lines from the bottom
-	ldy #24
-	sty stbyps
-@bf1:	ldx #39
+	lda #24
+	sta stbyps
+@bf1:	ldx @mode_line_with
+	dex
 	stx stbxps
 @bf2:	jsr read_scr_chr
 	cmp #' '
@@ -59,8 +66,7 @@ cf7_screen_to_buffer:
 	jsr buffer_put
 
 	; emit code to switch to correct charset
-	lda $d018
-	and #2
+	jsr get_charset
 	lsr a
 	lsr a
 	ror a
@@ -89,8 +95,9 @@ cf7_screen_to_buffer:
 
 @loop_lines:
 	; find length of line by counting spaces from the right
-	lda #39
-	sta stbxps
+	ldx @mode_line_with
+	dex
+	stx stbxps
 @4:	jsr read_scr_chr
 	cmp #' '
 	bne @5
@@ -126,6 +133,7 @@ cf7_screen_to_buffer:
 	lda tmpcol
 	cmp stbcol
 	beq @nocol
+	sta stbcol
 	tax
 	lda COLTAB,x
 	jsr buffer_put	; emit color code
@@ -153,6 +161,7 @@ cf7_screen_to_buffer:
 
 @brt:
 	lda stbxps
+@mode_line_with=*+1
 	cmp #40
 	bcs :+		; no CR if 40 char wide
 	lda #CR
@@ -181,7 +190,13 @@ cf7_screen_to_buffer:
 ;----------------------------------------------------------------------
 ; read character from screen
 read_scr_chr:
+	bit col80_enabled
+	bpl :+
+	ldx stbxps
 	ldy stbyps
+	jmp col80_read_scr_chr
+
+:	ldy stbyps
 	lda LDTB2,y	; line address lo
 	sta locat
 	lda LDTB1,y	; line address hi
@@ -194,7 +209,13 @@ read_scr_chr:
 ;----------------------------------------------------------------------
 ; read color
 read_scr_col:
-	jsr read_scr_chr	; [XXX redundant]
+	bit col80_enabled
+	bpl :+
+	ldx stbxps
+	ldy stbyps
+	jmp col80_read_scr_col
+
+:	jsr read_scr_chr	; [XXX redundant]
 	lda locat+1
 	clc
 	adc #(>$d800)-(>$0400)

@@ -14,11 +14,20 @@ term_entry_first:
 
 ; enter here to print banner again
 term_entry:
-	jsr print_banner; title screen/CCGMS!
+	bit col80_enabled
+	bpl :+
+	jsr col80_resume
+:	jsr print_banner; title screen/CCGMS!
 	jsr print_instr	; display commands f1 etc to terminal ready
 
 ; enter here to just return into terminal mode
 term_mainloop:
+	; turn on 80 col mode again (if requested)
+	bit col80_active
+	bmi :+		; screen model already enabled
+	jsr col80_resume
+:
+
 	lda supercpu
 	beq @loop1
 	cmp #2		; already printed once
@@ -111,6 +120,9 @@ term_mainloop:
 	dex
 	bpl :-
 	jmp @input_loop
+:	bit col80_active; unsupported in 80col mode
+	bpl :+		; (screen storage already used by bitmap)
+	jmp term_mainloop
 :	jmp swap_screen	; x holds pos 0-3
 @no3:
 
@@ -133,10 +145,8 @@ term_mainloop:
 	bcc @no5
 	cmp #140+1	; > F8
 	bcs @no5
-	ldx #0
-	stx $d020
-	stx $d021
 	pha
+	jsr set_bgcolor_0
 	jsr cursor_off
 	pla
 	sec
@@ -226,7 +236,7 @@ term_mainloop:
 	jmp @loop1
 :
 
-; charset switching
+.if 0	; charset switching [XXX this has no effect ever]
 	cpx #SHFLAG_SHIFT | SHFLAG_CBM
 	bne :+
 	ldx MODE	; charset switching allowed?
@@ -234,6 +244,7 @@ term_mainloop:
 	ldx #$17
 	stx $d018	; set lowercase charset
 :
+.endif
 
 ; modem input
 	jsr rs232_get
@@ -328,9 +339,9 @@ handle_control_codes:
 	cmp #$0e	; ctrl-n: reset background to black
 	bne @3
 
-	ldx #0
-	stx $d020
-	stx $d021
+	pha
+	jsr set_bgcolor_0
+	pla
 
 @3:
 	cmp #$07	; ctrl-g: bell sound from bbs side
@@ -378,8 +389,8 @@ handle_control_codes:
 	dex
 	bpl :-
 	bmi @9
-:	stx $d020
-	stx $d021
+:	txa
+	jsr set_bgcolor
 	lda #$10	; ctrl-p: non printable
 @9:
 	sta prev_char

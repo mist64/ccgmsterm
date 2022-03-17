@@ -6,10 +6,16 @@
 ; Cursor logic
 ;
 
+.import col80_invert, col80_restore
+
 ;----------------------------------------------------------------------
 ; invert character at cursor position
 invert_csr_char:
-	jsr calc_scr_ptr
+	bit col80_active
+	bpl :+
+	jmp col80_invert
+
+:	jsr calc_scr_ptr
 	sta tempch
 	eor #$80
 	sta (locat),y	; invert character
@@ -22,7 +28,11 @@ invert_csr_char:
 ;----------------------------------------------------------------------
 ; restore char at cursor position
 restore_csr_char:
-	jsr calc_scr_ptr
+	bit col80_active
+	bpl :+
+	jmp col80_restore
+
+:	jsr calc_scr_ptr
 	lda tempch
 	sta (locat),y
 	jsr calc_col_ptr

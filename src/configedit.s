@@ -9,6 +9,7 @@
 ;----------------------------------------------------------------------
 ; change terminal params/dial
 handle_f7_config:
+	jsr col80_pause
 	jsr rs232_off
 	lda #0
 	sta $d020

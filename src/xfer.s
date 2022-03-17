@@ -193,6 +193,7 @@ upltyp:
 
 ;----------------------------------------------------------------------
 handle_f1_upload:
+	jsr col80_pause
 	jsr supercpu_off
 	jsr rs232_off
 	jsr text_color_save
@@ -310,6 +311,7 @@ xfrdun:
 
 ;----------------------------------------------------------------------
 handle_f3_download:
+	jsr col80_pause
 	jsr rs232_off
 	lda #0
 	sta mulcnt
@@ -445,6 +447,7 @@ handle_f2_send_read:
 ;----------------------------------------------------------------------
 ; send text file
 send:
+	jsr col80_pause
 	jsr rs232_off
 	jsr text_color_save
 	lda #<txt_read_or_send
@@ -477,6 +480,7 @@ send:
 	beq @abt
 	lda #CR
 	jsr chrout
+	jsr col80_resume
 	lda max
 	ldx #<inpbuf
 	ldy #>inpbuf

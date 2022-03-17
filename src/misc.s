@@ -23,6 +23,7 @@ text_color_restore:
 
 ;----------------------------------------------------------------------
 handle_f6_directory:
+	jsr col80_pause
 	lda #1
 	ldx #<dirfn
 	ldy #>dirfn
@@ -30,6 +31,7 @@ dodir:
 	jsr setnam
 	jsr dir
 	jsr rs232_on
+	jsr col80_wait
 	jmp term_mainloop
 
 ;----------------------------------------------------------------------
@@ -41,7 +43,12 @@ handle_f8_switch_term:
 	lda ascii_mode
 	eor #1
 	sta ascii_mode
-	jsr bell
+	php
+	jsr col80_set_charset
+	plp
+	bne :+
+	jsr term80_toggle
+:	jsr bell
 	jmp term_entry
 
 ;----------------------------------------------------------------------

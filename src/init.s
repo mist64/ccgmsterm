@@ -39,6 +39,10 @@ start:
 	lda #$37
 	sta $01
 
+	jsr setup_ram_irq_nmi
+
+	jsr col80_init
+
 ; editor/screen setup
 	lda #1
 	sta BLNSW	; disable cursor blinking
@@ -53,19 +57,10 @@ start:
 	lda #$0e
 	sta $d418	; *almost* full volume
 
-; clear secondary screens
-	lda #<SCREENS_BASE
-	sta locat
-	lda #>SCREENS_BASE
-	sta locat+1
-	lda #>$2000
-	ldy #0
-:	sta (locat),y
-	iny
-	bne :-
-	inc locat+1
-	bne :-
-
+	bit col80_active
+	bmi :+
+	jsr clear_screens
+:
 	cli
 
 ; find first disk drive
@@ -146,7 +141,8 @@ init
 	;sta allcap     ; upper/lower
 	sta buffer_open
 	sta half_duplex	; full duplex
-	jsr $e544	; clear screen
+	lda #$93
+	jsr chrout	; clear screen
 	lda config_file_loaded; already loaded config file?
 	bne @noload
 	lda drive_present
@@ -166,6 +162,61 @@ init
 	jsr setlfs
 	jsr load_config_file
 
+@noload:
 	jmp term_entry_first
 
-@noload=term_entry_first	; [XXX]
+;----------------------------------------------------------------------
+; clear secondary screens
+.export clear_screens
+clear_screens:
+	lda #<SCREENS_BASE
+	sta locat
+	lda #>SCREENS_BASE
+	sta locat+1
+	lda #$20
+	ldy #0
+	ldx #4*8-1	; 4 screens, 8 pages (4 scr, 4 col) minus last one
+:	sta (locat),y
+	iny
+	bne :-
+	inc locat+1
+	dex
+	bne :-
+	; only clear the necessary part of the last page
+	; so we don't overwrite the $fffa-$ffff NMI & IRQ vectors
+:	sta SCREENS_BASE+(4*8-1)*256,x
+	inx
+	cpx #<1000
+	bne :-
+	rts
+
+;----------------------------------------------------------------------
+get_charset:
+	bit col80_active
+	bpl :+
+	lda #2
+	rts
+:	lda $d018
+	and #2
+	rts
+
+;----------------------------------------------------------------------
+set_bgcolor_0:
+	lda #0
+set_bgcolor:
+	sta $d020
+	sta $d021
+	jmp col80_bg_update
+
+term80_toggle:
+	lda col80_enabled
+	eor #$80
+	sta col80_enabled
+	bne :+
+	jmp col80_off
+:	jmp col80_on
+
+;----------------------------------------------------------------------
+.export col80_enabled
+col80_enabled:
+	.byte 0

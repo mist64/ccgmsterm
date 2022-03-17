@@ -16,6 +16,13 @@
 .export modem_type, baud_rate, is_pal_system	; modem settings
 .export ribuf, revtabup				; buffer, temp storage
 
+; 80columns
+.import col80_init, col80_set_charset, col80_on, col80_off, col80_resume, col80_pause
+.import col80_wait
+.import col80_active, col80_bg_update
+.import col80_read_scr_chr, col80_read_scr_col
+.export locat, nlocat   ; for 80col
+
 .define VERSION "0.1"
 
 	.include "declare.inc"
@@ -37,6 +44,7 @@ next_line:
 .assert * = 2061, error
 .assert * = start, error
 	.include "init.s"
+	.include "ramirq.s"
 	.include "terminal.s"
 	.include "sound.s"
 	.include "screens.s"

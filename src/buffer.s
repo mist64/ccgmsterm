@@ -108,6 +108,7 @@ handle_f4_buffer:
 	cpx #SHFLAG_CBM
 	jeq cf3_multi_receive
 
+	jsr col80_pause
 	jsr text_color_save
 bufask
 	lda #CR
@@ -204,6 +205,7 @@ no2
 ; V: view
 	cmp #'V'
 	bne no5
+	jsr col80_resume
 	lda #CLR
 	jsr chrout
 	lda #$80
@@ -440,6 +442,7 @@ bufbak
 send_buffer:
 	ora #$80
 	jsr outcap
+	jsr col80_resume
 	lda #<txt_sending_buffer
 	ldy #>txt_sending_buffer
 	jsr outstr

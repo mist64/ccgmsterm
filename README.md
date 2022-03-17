@@ -10,7 +10,7 @@
 
 ## Features
 
-* 40 column color PETSCII and ASCII/ANSI terminal modes
+* 40/80 column color PETSCII and ASCII/ANSI terminal modes
 * Serial drivers
 	* user port (300-2400 baud)
 	* UP9600 (300-9600 baud)
@@ -52,6 +52,10 @@
 
 ## Changes since CCGMS Future 0.1
 
+* added support for a software 80 column screen mode
+	* F8 now cycles between: 40/80 columns and PETSCII/ASCII
+	* All menus, transfers etc. temporarily switch back to 40 col screen. The 80 column contents will be preserved when temporarily switching.
+	* In 80 color ASCII mode, the characters \^_`{|}~ are available, matching the ASCII spec completely (unlike 40 column ASCII mode).
 * rewrote RS232 driver model – this may cause regressions; needs testing, especially Multi-PUNTER
 * cleaned up memory layout
 * changed "Graphics", "C/G", "Anscii" wording to (imho) clearer "PETSCII" and "ASCII"

@@ -14,6 +14,7 @@ SET_ASCII
 
 ;----------------------------------------------------------------------
 cf1_multi_send:
+	jsr col80_pause
 	jsr text_color_save
 	lda protoc
 	beq mulsav	; PROTOCOL_PUNTER
@@ -181,6 +182,7 @@ mulab3
 
 ;----------------------------------------------------------------------
 cf3_multi_receive:
+	jsr col80_pause
 	jsr rs232_off
 	jsr text_color_save
 	lda protoc

@@ -20,11 +20,17 @@ all: $(EXO_PATH) build/rs232.lib
 
 	ca65 -g src/ccgmsterm.s -o build/ccgmsterm.o -DEASYFLASH=$(EASYFLASH) -DAUTOMATION=$(AUTOMATION) -DDEFAULT_DRIVER=$(DEFAULT_DRIVER) -DDEFAULT_BAUDRATE=$(DEFAULT_BAUDRATE)
 
+	ca65 -g src/80columns.s -o build/80columns.o -DEASYFLASH=$(EASYFLASH)
+	ca65 -g src/charset.s -o build/charset.o -DEASYFLASH=$(EASYFLASH)
+
 	cl65 -g -C src/ccgmsterm.cfg \
 		-o build/ccgmsterm.prg \
 		-Ln build/ccgmsterm.sym -m build/ccgmsterm.map \
 		build/ccgmsterm.o \
+		build/80columns.o \
+		build/charset.o \
 		build/rs232.lib
+
 ifeq ($(EXOMIZER),1)
 	$(EXO_PATH) $(EXO_ARGS) -o build/ccgmsterm-exo.prg build/ccgmsterm.prg
 endif

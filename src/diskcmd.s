@@ -41,6 +41,7 @@ int2dectab:
 
 ;----------------------------------------------------------------------
 handle_f5_diskcommand:
+	jsr col80_pause
 	jsr rs232_off
 	jsr ercopn
 	jsr text_color_save
@@ -106,7 +107,9 @@ drver3
 	jsr chrout
 	cmp #CR
 	bne drver2
-	beq drvext
+	jsr clrchn
+	jsr col80_wait
+	jmp drvext
 
 ;----------------------------------------------------------------------
 chgdev:
