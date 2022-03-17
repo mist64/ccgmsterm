@@ -44,9 +44,11 @@ edtmac:
 	ldy #>txt_edit_which_macro
 	jsr outstr
 	jsr invert_csr_char
-edtmlp	lda LSTX
-	cmp #1    ;return
+edtmlp	lda LSTX	; key code
+	cmp #1		; RETURN
 	bne edtmc2
+	lda #0
+	sta NDX		; clear key from buffer
 edtmab	rts
 edtmc2	cmp #4
 	bcc edtmlp

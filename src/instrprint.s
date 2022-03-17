@@ -10,15 +10,10 @@ show_instructions:
 	lda #<txt_instructions1
 	ldy #>txt_instructions1
 	jsr outstr
-	lda #0		; [XXX replace with call to identical code below]
-	sta NDX
-:	lda NDX
-	beq :-
+	jsr @wait
 	lda #<txt_instructions2
 	ldy #>txt_instructions2
 	jsr outstr
-	lda #0
-	sta NDX
-:	lda NDX
-	beq :-
+@wait:	jsr getin
+	beq @wait
 	rts
