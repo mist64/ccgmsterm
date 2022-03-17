@@ -273,9 +273,9 @@ hilcu2
 	bne hilcu7
 	ldx toetxt+1
 hilcu3
-	lda $ecf0,x
+	lda LDTB2,x
 	sta nlocat
-	lda $d9,x
+	lda LDTB1,x
 	and #$7f
 	sta nlocat+1
 	ldy #0

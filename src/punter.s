@@ -10,7 +10,7 @@
 ;     https://www.lemon64.com/forum/viewtopic.php?t=56823
 ;     https://groups.google.com/g/net.micro.cbm/c/NWEcf_15nkk/m/MKtq7fyetMYJ
 ;     [Message-ID: <692@utcs.UUCP>]
-; with the CCGSM Term patches applied.
+; with the CCGMS Term patches applied.
 
 lastch	= inpbuf
 pnt11	= $028d

@@ -76,7 +76,7 @@ edtmc3
 	sta wchmac
 edtmen
 	lda #0
-	sta 198
+	sta NDX
 	lda #CLR
 	jsr chrout
 	lda #0

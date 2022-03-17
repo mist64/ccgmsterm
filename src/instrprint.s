@@ -11,14 +11,14 @@ show_instructions:
 	ldy #>txt_instructions1
 	jsr outstr
 	lda #0		; [XXX replace with call to identical code below]
-	sta 198
-:	lda 198
+	sta NDX
+:	lda NDX
 	beq :-
 	lda #<txt_instructions2
 	ldy #>txt_instructions2
 	jsr outstr
 	lda #0
-	sta 198
-:	lda 198
+	sta NDX
+:	lda NDX
 	beq :-
 	rts

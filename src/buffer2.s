@@ -6,22 +6,27 @@
 ; Screen to Buffer
 ;
 
-stbrvs	.byte 0
-stbcol	.byte 0
-stbxps	.byte 0
-stbyps	.byte 0
-stbmax	.byte 0
-stbmay	.byte 0
+stbrvs	.byte 0	; current reverse state
+stbcol	.byte 0	; current color
+stbxps	.byte 0	; current x position
+stbyps	.byte 0	; current y position
+stbmax	.byte 0	; max x for this line
+stbmay	.byte 0	; max y
+
+tmpchr	= tmp02
+tmpcol	= tmp03
 
 cf7_screen_to_buffer:
 	lda #0
-	sta 198
-	lda #$100-15
+	sta NDX		; clear kbd buffer
+
+	lda #$100-15	; delay .25s
 	sta JIFFIES
 :	lda JIFFIES
 	bne :-
+
 	jsr getin
-	cmp #140
+	cmp #$8c	; f8
 	bne :+
 	jsr bufclr
 :	lda buffer_open
@@ -31,24 +36,29 @@ cf7_screen_to_buffer:
 	lda #0
 	sta stbrvs
 	lda #255
-	sta stbcol
+	sta stbcol	; illegal col, different to any col
+
+	; find screen height by counting empty lines from the bottom
 	ldy #24
 	sty stbyps
-scnbf1	ldx #39
+@bf1:	ldx #39
 	stx stbxps
-scnbf2	jsr finscp
-	cmp #$20
-	bne scnbf3
+@bf2:	jsr read_scr_chr
+	cmp #' '
+	bne :+
 	dec stbxps
-	bpl scnbf2
+	bpl @bf2
 	dec stbyps
-	bpl scnbf1
-	jmp scnbr4
-scnbf3
+	bpl @bf1
+	jmp @br4	; empty screen - skip everything
+:
+
 	lda #CR
-	jsr buffer_put
+	jsr buffer_put	; [XXX why?]
 	lda #CLR
 	jsr buffer_put
+
+	; emit code to switch to correct charset
 	lda $d018
 	and #2
 	lsr a
@@ -56,126 +66,139 @@ scnbf3
 	ror a
 	eor #$8e
 	jsr buffer_put
+
+	; emit code to set background color
 	lda $d021
 	and #15
-	beq scnbnc
+	beq :+		; 0 is default, so skip
 	tax
 	lda COLTAB,x
 	pha
-	lda #2
-	jsr buffer_put
+	lda #2		; CCGMS-specific code that next
+	jsr buffer_put	; color code will change bg color
 	pla
 	jsr buffer_put
-scnbnc
+:
+
 	lda #10
 	jsr buffer_put
 	lda stbyps
 	sta stbmay
 	lda #0
 	sta stbyps
-scnbnl
+
+@loop_lines:
+	; find length of line by counting spaces from the right
 	lda #39
 	sta stbxps
-scnbf4
-	jsr finscp
-	cmp #$20
-	bne scnbf5
+@4:	jsr read_scr_chr
+	cmp #' '
+	bne @5
 	dec stbxps
-	bpl scnbf4
+	bpl @4
 	inc stbxps
-	jmp scnbrt
-scnbf5
-	lda stbxps
+	jmp @brt	; skip line
+@5:	lda stbxps
 	sta stbmax
+
+	; convert line to PETSCII
 	lda #0
 	sta stbxps
-scnbf6
-	jsr finscp
-	sta tmp02
-	jsr finscc
-	sta tmp03
-	lda tmp02
-	and #$80
+@loop_chars:
+	jsr read_scr_chr
+	sta tmpchr
+	jsr read_scr_col
+	sta tmpcol
+	lda tmpchr
+	and #$80	; RVS?
 	cmp stbrvs
-	beq scnbf7
+	beq @norvs
 	lda stbrvs
 	eor #$80
 	sta stbrvs
-	ora #18
+	ora #RVSON
 	eor #$80
-	jsr buffer_put
-scnbf7
-	lda tmp02
-	cmp #$20
-	beq scnbf8
-	lda tmp03
+	jsr buffer_put	; emit RVSON or RVSOFF
+@norvs:
+	lda tmpchr
+	cmp #' '
+	beq @nocol
+	lda tmpcol
 	cmp stbcol
-	beq scnbf8
+	beq @nocol
 	tax
 	lda COLTAB,x
-	jsr buffer_put
-scnbf8
-	lda tmp02
-	and #$7f
+	jsr buffer_put	; emit color code
+@nocol:
+	; convert char to PETSCII
+	lda tmpchr
+	and #$7f	; remove reverse bit
 	cmp #$7f
-	beq scnbf9
+	beq @9
 	cmp #$20
-	bcs scnb10
-scnbf9
-	clc
+	bcs @10
+@9:	clc
 	adc #$40
-	bne scnb11
-scnb10
-	cmp #64
-	bcc scnb11
+	bne @11
+@10:	cmp #$40
+	bcc @11
 	ora #$80
-scnb11
-	jsr buffer_put
+@11:	jsr buffer_put	; emit character
+
 	inc stbxps
 	lda stbxps
 	cmp stbmax
-	bcc scnbf6
-	beq scnbf6
-scnbrt
+	bcc @loop_chars
+	beq @loop_chars
+
+@brt:
 	lda stbxps
 	cmp #40
-	bcs scnbr2
+	bcs :+		; no CR if 40 char wide
 	lda #CR
 	jsr buffer_put
 	lda #0
-	sta stbrvs
-scnbr2
+	sta stbrvs	; CR resets RVS
+:
 	inc stbyps
 	lda stbyps
 	cmp stbmay
-	beq scnbr3
-	bcs scnbre
-scnbr3	jmp scnbnl
-scnbre
+	beq :+
+	bcs @bre
+:	jmp @loop_lines
+
+@bre:
+	; finally, set current cursor color
 	ldx textcl
 	lda COLTAB,x
 	jsr buffer_put
-scnbr4
+
+@br4:
 	pla
 	sta buffer_open
 	jmp term_mainloop
-;
-finscp
+
+;----------------------------------------------------------------------
+; read character from screen
+read_scr_chr:
 	ldy stbyps
-	lda $ecf0,y
+	lda LDTB2,y	; line address lo
 	sta locat
-	lda $d9,y
-	and #$7f
+	lda LDTB1,y	; line address hi
+	and #$7f	; remove double-line bit
 	sta locat+1
 	ldy stbxps
-	lda (locat),y
+	lda (locat),y	; read char
 	rts
-finscc
-	jsr finscp
+
+;----------------------------------------------------------------------
+; read color
+read_scr_col:
+	jsr read_scr_chr	; [XXX redundant]
 	lda locat+1
 	clc
-	adc #$d4
+	adc #(>$d800)-(>$0400)
 	sta locat+1
-	lda (locat),y
+	lda (locat),y	; read color
 	and #15
 	rts
