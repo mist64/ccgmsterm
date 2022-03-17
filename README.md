@@ -8,6 +8,8 @@
 * cleaned up and converted to ca65 by [Michael Steil](https://www.pagetable.com/), 2022 (refer to branch ccgmsterm2021 for the last alwyz version)
 * further improvements by Michael Steil
 
+![](ccgms_40.png) ![](ccgms_80.png)
+
 ## Features
 
 * 40/80 column color PETSCII and ASCII/ANSI terminal modes
