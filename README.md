@@ -12,9 +12,11 @@
 
 ## Features
 
-* 40/80 column color PETSCII and ASCII/ANSI terminal modes
+* 40 column color mode
+* 80 column color mode 🔴
+* PETSCII and ASCII/ANSI encoding
 * Serial drivers
-	* user port (300-2400 baud)
+	* User Port (300-2400 baud)
 	* UP9600 (300-9600 baud)
 	* SwiftLink $DE00/$DF00/$D700/NMI (300-38400 baud)
 * File transfer protocols:
@@ -41,16 +43,16 @@
 
 * [RR-Net support](https://github.com/mist64/ccgmsterm/issues/1)
 * [WiC64 support](https://github.com/mist64/ccgmsterm/issues/3)
-* [80 column support](https://github.com/mist64/ccgmsterm/issues/2)
-* YMODEM/ZMODEM/HMODEM protocols
+* [YMODEM](https://github.com/mist64/ccgmsterm/issues/15)/ZMODEM/HMODEM protocols
 * IDE64 compatibility
 * Additional cartridges (e.g. Lt. Kernal)
-* 100% support for hardware acceleration devices (SuperCPU etc). Certain conditions may affect file transfer handshake timing.
+* 100% support for [hardware acceleration devices](https://github.com/mist64/ccgmsterm/issues/14) (SuperCPU etc). Certain conditions may affect file transfer handshake timing.
 
 ## Known Bugs
 
 * [#5](https://github.com/mist64/ccgmsterm/issues/5): XMODEM (and possibly PUNTER) transmission may be broken for UP9600 devices
 * [#10](https://github.com/mist64/ccgmsterm/issues/10): XMODEM/1K may fail for SwiftLink cartridges with a real 6551 chip
+* [#16](https://github.com/mist64/ccgmsterm/issues/16): UP9600 at 9600 baud does not work in 80 columns mode
 
 ## Changes since CCGMS Future 0.1
 
