@@ -1,12 +1,10 @@
 # CCGMS *Future*
 
-*Commodore Color Graphics Manipulation System Terminal*<br/>
-*by Craig Smith (1985-1988), alwyz (2017-2020), Michael Steil (2022)*
+*Commodore Color Graphics Manipulation System Terminal*<br/>*by Craig Smith (1985-1988), alwyz (2017-2020), Michael Steil (2022)*
 
 * based on 5.5 source by [Craig Smith](https://github.com/spathiwa) 01/1988.
-* 2017/2018/2019/2020/2021 mods by [alwyz](http://1200baud.wordpress.com)
-* cleaned up and converted to ca65 by [Michael Steil](https://www.pagetable.com/), 2022 (refer to branch ccgmsterm2021 for the last alwyz version)
-* further improvements by Michael Steil
+* 2017-2021 mods by [alwyz](http://1200baud.wordpress.com) (see [ccgmsterm2021](https://github.com/mist64/ccgmsterm/tree/ccgmsterm2021) for final alwyz version)
+* fixes and additions by [Michael Steil](https://www.pagetable.com/), 2022 
 
 ![](ccgms_40.png) ![](ccgms_80.png)
 
@@ -15,29 +13,24 @@
 * 40 column color mode
 * 80 column color mode 🔴
 * PETSCII and ASCII/ANSI encoding
-* Serial drivers
+* Serial drivers (stable on NTSC and PAL 🔴)
 	* User Port (300-2400 baud)
 	* UP9600 (300-9600 baud)
 	* SwiftLink $DE00/$DF00/$D700/NMI (300-38400 baud)
 * File transfer protocols:
-	* Punter
-	* Multi-Punter
-	* XMODEM
-	* XMODEM-CRC
-	* XMODEM-1K 🔴
-
-* Correct timing for NTSC and PAL 🔴
-* Phone book
-	* stores BBS addresses, user names, and passwords
-	* autodialer
-* Configuration and phone book load/save
-	* disk
-	* EasyFlash Cartridge
-* DOS command and directory function (drives #8-30)
+	* Punter, Multi-Punter
+	* XMODEM, XMODEM-CRC, XMODEM-1K 🔴
+* Phone book with 30 entries and auto-dialer
+* Configuration & phone book load/save (disk or EasyFlash)
+* DOS command and directory
 * Macros
 * Screenshots
 * Themes
 * REU buffer (64 KB)
+
+## Documentation
+
+[CCGMS Future Documentation](Documentation.md)
 
 ## Missing Features
 
