@@ -15,8 +15,8 @@ RUN_PRG = build/ccgmsterm.prg
 endif
 
 .PHONY: all
-all: $(EXO_PATH) build/rs232.lib
-	mkdir -p build
+all: $(EXO_PATH)
+	make build/rs232.lib
 
 	ca65 -g src/ccgmsterm.s -o build/ccgmsterm.o -DEASYFLASH=$(EASYFLASH) -DAUTOMATION=$(AUTOMATION) -DDEFAULT_DRIVER=$(DEFAULT_DRIVER) -DDEFAULT_BAUDRATE=$(DEFAULT_BAUDRATE)
 
@@ -41,7 +41,7 @@ $(EXO_PATH):
 	$(MAKE) -C exomizer/src CFLAGS="-Wall -Wstrict-prototypes -pedantic -O3"
 	cp exomizer/src/exomizer build/bin
 
-build/rs232.lib:
+build/rs232.lib: rs232lib/c64.inc rs232lib/rs232.inc rs232lib/rs232_kernal.inc rs232lib/rs232.s rs232lib/rs232_swiftlink.s rs232lib/rs232_up9600.s rs232lib/rs232_userport.s
 	mkdir -p build
 	ca65 -g rs232lib/rs232.s -o build/rs232.o
 	ca65 -g rs232lib/rs232_userport.s -o build/rs232_userport.o

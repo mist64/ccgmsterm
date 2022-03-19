@@ -10,6 +10,7 @@
 .include "rs232_kernal.inc"
 .include "c64.inc"		; CIA#1/CIA#2 defines
 .import ribuf			; external
+.import rs232_rti
 
 ; zero page: this reuses the KERNAL's RS232 locations
 inbits	= $a8	; BITCI: Bit counter during RS232 input
@@ -174,7 +175,7 @@ chktxd:	bcc @nmiflow
 	pla
 	tax
 	pla
-	rti
+	jmp rs232_rti
 
 @endbyte:
 	lda #0

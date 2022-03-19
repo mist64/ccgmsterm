@@ -10,6 +10,7 @@
 .include "rs232_kernal.inc"
 .include "rs232.inc"		; for MODEM_TYPE_*
 .import ribuf			; external
+.import rs232_rti
 
 ; function table for dispatcher
 .export sw_funcs
@@ -73,7 +74,7 @@ recch1:	pla
 	pla
 	tax
 	pla
-	rti
+	jmp rs232_rti
 
 ;----------------------------------------------------------------------
 flow:

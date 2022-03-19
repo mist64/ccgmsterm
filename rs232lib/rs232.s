@@ -14,14 +14,18 @@
 
 ; drivers
 .import rsuser_funcs, up9600_funcs, sw_funcs
+.export rs232_rti
 
-tmpzp	= $a7	; reused KERNAL RS-232 driver vars
+tmpzp		= $a7	; reused KERNAL RS-232 driver var
+ram_flag	= $f9	; reused KERNAL RS-232 driver var
 
 .segment "RS232"
 
 ;----------------------------------------------------------------------
 ; Dispatch: Init modem
 rs232_init:
+	jsr setup_ram_irq_nmi
+
 	ldx #MODEM_TYPE_SWIFTLINK_DE
 	lda modem_type
 	cmp #MODEM_TYPE_SWIFTLINK_DE
@@ -139,3 +143,50 @@ rs232_clear:
 	pla
 	rts
 
+;----------------------------------------------------------------------
+setup_ram_irq_nmi:
+	lda #0
+	sta ram_flag
+	lda #<ramnmi
+	sta $fffa
+	lda #>ramnmi
+	sta $fffb
+	lda #<ramirq
+	sta $fffe
+	lda #>ramirq
+	sta $ffff
+	rts
+
+;----------------------------------------------------------------------
+; high-speed version to minimize NMI latency
+ramnmi:
+	inc $01
+	dec ram_flag
+	jmp ($0318)
+rs232_rti:
+	bit ram_flag
+	bpl :+
+	inc ram_flag
+	dec $01
+:	rti
+
+;----------------------------------------------------------------------
+; low-speed version - IRQs are not timing critical
+ramirq:
+	pha
+	lda $01
+	pha
+	lda #$37
+	sta $01
+	lda #>ramirq2
+	pha
+	lda #<ramirq2
+	pha
+	lda #0		; P: B flag clear
+	pha
+	jmp $ff48
+ramirq2:
+	pla
+	sta $01
+	pla
+	rti

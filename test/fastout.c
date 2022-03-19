@@ -7,19 +7,19 @@
 int
 main(int argc, char **argv) {
 	char l = 'A';
-	char c = 'A';
+	char c = '0';
 	for (;;) {
 		fputc(l, stdout);
 		fputc(c, stdout);
 		c++;
-		if (c > 'Z') {
+		if (c > '9') {
 			fputc(13, stdout);
 			fflush(stdout);
 			l++;
 			if (l > 'Z') {
 				l = 'A';
 			}
-			c = 'A';
+			c = '0';
 		}
 	}
 }

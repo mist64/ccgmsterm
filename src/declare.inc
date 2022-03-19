@@ -28,6 +28,8 @@ ascii_mode	= $0313	; PETSCII or ASCII
 
 revtabup = $0380
 
+; Please keep this in sync with Internals.md#Memory_Map
+
 buftop	= $c7fd
 bufptrreu = $c7fe
 buffstreu = $c7ff

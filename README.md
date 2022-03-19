@@ -52,7 +52,6 @@
 
 * [#5](https://github.com/mist64/ccgmsterm/issues/5): XMODEM (and possibly PUNTER) transmission may be broken for UP9600 devices
 * [#10](https://github.com/mist64/ccgmsterm/issues/10): XMODEM/1K may fail for SwiftLink cartridges with a real 6551 chip
-* [#16](https://github.com/mist64/ccgmsterm/issues/16): UP9600 at 9600 baud does not work in 80 columns mode
 
 ## Changes since CCGMS Future 0.1
 

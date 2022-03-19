@@ -44,7 +44,6 @@ next_line:
 .assert * = 2061, error
 .assert * = start, error
 	.include "init.s"
-	.include "ramirq.s"
 	.include "terminal.s"
 	.include "sound.s"
 	.include "screens.s"

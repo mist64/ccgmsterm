@@ -80,6 +80,12 @@ Must be set to the driver/config.
 
 128 bytes of memory the driver can use for temporary storage.
 
+# Banking
+
+rs232lib uses the $0314/$0315 and $0318/$0319 vectors to hook IRQs and NMIs. It also installs vectors at $FFFA/$FFFB and $FFFE/$FFFF to hook IRQs and NMIs even with the KERNAL off, and fowards them through the usual vectors.
+
+This requires all software that turns off the KERNAL ROM to do this by storing #$34 in $01 instead of #$30. It is equivalent, but allows the timing-critical UP9600 code to switch I/O on and off with `inc $01` and `dec $01`.
+
 # License
 
 Copyright (c) 2016,2022, Craig Smith, alwyz, Michael Steil. All rights reserved.

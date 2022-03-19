@@ -31,24 +31,20 @@ swap_screen:
 	pha
 	lda #$0b
 	sta $d011	; screen off
-	lda #$2f
-	sta $00
-	lda #$35	; disable ROMs
+	lda #$34	; disable ROMs - see Internals.md#Banking
 	sta $01
-scrtg1
-	jsr scrnl1
+:	jsr scrnl1
 	cmp #$08
-	bcc scrtg1
+	bcc :-
 	lda #>$d800
 	sta tmp03
-scrtg2
-	jsr scrnl1
+:	jsr scrnl1
 	cmp #>$dc00
-	bcc scrtg2
-	pla
-	sta $d011
+	bcc :-
 	lda #$37
 	sta $01		; enable ROMs
+	pla
+	sta $d011
 	cli
 	jmp term_mainloop
 
@@ -72,11 +68,7 @@ scrnl2	;swap screen page
 	sta (locat),y
 	iny
 	bne scrnl2
-scrnl3	lda #<ramnmi
-	sta $fffa
-	lda #>ramnmi
-	sta $fffb
-	inc locat+1
+scrnl3	inc locat+1
 	inc tmp03
 	lda tmp03
 	rts

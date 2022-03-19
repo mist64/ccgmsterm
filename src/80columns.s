@@ -117,7 +117,7 @@ OP_COPYTO       = $EC
 .macro ENABLE_RAM
 	lda R6510
 	pha
-	lda #$30
+	lda #$34	;  see Internals.md#Banking
 	sta R6510
 .endmacro
 .macro DISABLE_RAM

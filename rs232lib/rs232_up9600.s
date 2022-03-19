@@ -11,6 +11,7 @@
 .include "rs232_kernal.inc"
 .include "c64.inc"		; CIA#1/CIA#2 defines
 .import ribuf, revtabup		; external
+.import rs232_rti
 
 ; function table for dispatcher
 .export up9600_funcs
@@ -55,7 +56,7 @@ up9600_nmi:
 	bit cia2icr	; NMI caused by CIA#2?
 nmi_bmi=*+1
 	bmi nmi_startbit; yes (pointer to target will be overwritten!)
-	rti		; otherwise triggered by RESTORE key -> ignore
+	jmp rs232_rti	; otherwise triggered by RESTORE key -> ignore
 
 ; NMI triggered by start bit (FLAG transition from 1 to 0)
 nmi_startbit:
@@ -77,7 +78,7 @@ nmi_startbit:
 	sta nmi_bmi
 
 	pla
-	rti
+	jmp rs232_rti
 
 ; NMI triggered by SDR full
 nmi_bytrdy:
@@ -123,7 +124,7 @@ nmi_bytrdy:
 	pla
 	tax
 	pla
-	rti
+	jmp rs232_rti
 
 ;----------------------------------------------------------------------
 ; A: modem_type

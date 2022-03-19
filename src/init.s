@@ -39,8 +39,6 @@ start:
 	lda #$37
 	sta $01
 
-	jsr setup_ram_irq_nmi
-
 	jsr col80_init
 
 ; editor/screen setup
