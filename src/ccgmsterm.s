@@ -23,7 +23,7 @@
 .import col80_read_scr_chr, col80_read_scr_col
 .export locat, nlocat   ; for 80col
 
-.define VERSION "0.1"
+.define VERSION "0.2"
 
 	.include "declare.inc"
 	.include "encoding.inc"

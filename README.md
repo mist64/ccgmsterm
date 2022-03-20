@@ -46,18 +46,6 @@
 * [#5](https://github.com/mist64/ccgmsterm/issues/5): XMODEM (and possibly PUNTER) transmission may be broken for UP9600 devices
 * [#10](https://github.com/mist64/ccgmsterm/issues/10): XMODEM/1K may fail for SwiftLink cartridges with a real 6551 chip
 
-## Changes since CCGMS Future 0.1
-
-* added support for a software 80 column screen mode
-	* F8 now cycles between: 40/80 columns and PETSCII/ASCII
-	* All menus, transfers etc. temporarily switch back to 40 col screen. The 80 column contents will be preserved when temporarily switching.
-	* In 80 color ASCII mode, the characters \^_`{|}~ are available, matching the ASCII spec completely (unlike 40 column ASCII mode).
-* rewrote RS232 driver model – this may cause regressions; needs testing, especially Multi-PUNTER
-* cleaned up memory layout
-* changed "Graphics", "C/G", "Anscii" wording to (imho) clearer "PETSCII" and "ASCII"
-* changed "Author's Message" to (imho) clearer "Instructions"
-* fixed ASCII<->PETSCII conversion of codes 0x60 and 0x7B (was caused by off-by-one errors)
-
 ## Build
 
 Build with make & [ca65](https://github.com/cc65/cc65).
@@ -94,7 +82,26 @@ The x64sc command line has changed recently, so these need at least VICE 3.6.
 
 This repository includes automated and manual tests. See [Testing](Testing.md).
 
+## Interals
+
+[Internals](Internals.md).
+
 ## Changelog
+
+### 2022-03-20: Future 0.2
+
+* Added support for a software 80 column screen mode
+	* F8 now cycles: 40c PETSCII -> 40c ASCII -> 80c PETSCII -> 80c ASCII
+	* All menus, transfers etc. temporarily switch back to 40 col screen. The 80 column contents will be preserved when temporarily switching.
+	* In 80 color ASCII mode, the characters <tt>\^_`{|}~</tt> are available, matching ASCII (unlike 40 col ASCII).
+* Fixed ASCII-PETSCII conversion of codes 0x60 and 0x7B
+* Changed some wording to be clearer (imho):
+	* "Graphics" and "C/G" to "PETSCII"
+	* "Anscii" to "ASCII"
+	* "Author's Message" to "Instructions"
+* Internal changes
+	* rewrote RS232 driver model
+	* cleaned up code memory layout
 
 ### 2022-02-25: Future 0.1
 
