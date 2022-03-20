@@ -28,7 +28,7 @@ jobs:
     - name: build CCGMS (EASYFLASH version)
       run: |
         make -j$(nproc) EASYFLASH=1 EXOMIZER=1
-        cp build/ccgmsterm-exo.prg ccgms-ezflash.prg
+        cp build/ccgmsterm-exo.prg ccgms-easyflash.prg
 
     - uses: actions/upload-artifact@v2
       with:
