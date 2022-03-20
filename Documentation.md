@@ -205,7 +205,7 @@ Prints some additional keyboard commands as well as the license of the software.
 
 * ASCII mode uses the standard-ASCII character encoding and supports *some* ANSI control sequences.
 
-# Multi-Upload
+## Multi-Upload
 
 `C=` `F1` uploads one or more file using the Multi-Punter procotol. It will print the directory of the current drive entry by entry and ask for one of the following:
 
@@ -218,15 +218,15 @@ Prints some additional keyboard commands as well as the license of the software.
 
 Multi-Punter will also send the name and type of each file.
 
-# Multi-Download
+## Multi-Download
 
 `C=` `F3`  downloads one or more files. For each file, the BBS will send the name, type and file contents, and CCGMS will write the data to the current drive.
 
-# Send directory
+## Send directory
 
 `C=` `F5` will read the current drive's directory listing and send it to the BBS.
 
-# Screen to buffer
+## Screen to buffer
 
 `C=` `F7` will convert the contents of the screen to a (minimal) sequence of PETSCII characters and codes and store it in the buffer.
 
@@ -234,21 +234,21 @@ If the `SHIFT` key is pressed in addition, the contents of the buffer will be cl
 
 > Note that in 80 columns mode, every two adjacent characters share a foreground color, so having the BBS show PETSCII graphics in 80 columns mode and saving the screen contents is lossy. For this use case, open the buffer before having the graphics printed instead.
 
-# Screen Snapshots
+## Screen Snapshots
 
 * `C=` `CTRL` and the keys `1`-`4` will copy the current screen contents into one of the four buffers.
 * `SHFT` `CTRL` and `1`-`4` will swap the current screen with one of the four buffers.
 
 Note that this feature is disabled in 80 columns mode, and switching into 80 columns mode will clear all four buffers.
 
-# Macros
+## Macros
 
 `CTRL` `F1` and `CTRL` `F3` will send the contents of one of the two macros.
 
-# Send User ID/Password
+## Send User ID/Password
 
 `CTRL` `F5` will send the username and `CTRL` `F7` the password of the current phonebook entry, as if it were typed in.
 
-# Disconnect
+## Disconnect
 
 This will drop the DTR line, which signals the modem that it should disconnect.
