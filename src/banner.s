@@ -97,8 +97,6 @@ print_instr:
 	lda #<txt_banner2d
 	ldy #>txt_banner2d
 	jsr outstr
-	lda #13
-	jsr chrout
 @cont:
 	ldx ascii_mode
 	bne @2
